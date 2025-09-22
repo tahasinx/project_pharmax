@@ -22,35 +22,31 @@
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <!-- Search and Filters -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                <div class="bg-white shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 space-y-4 md:space-y-0">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Search Medicines</label>
                                 <input v-model="search"
                                        type="text"
                                        placeholder="Search medicines..."
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             </div>
-                            <div>
+                            <div class="mb-4 md:mb-0">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                                <select v-model="categoryFilter"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="">All Categories</option>
-                                    <option v-for="category in categories" :key="category.id" :value="category.id">
-                                        {{ category.name }}
-                                    </option>
-                                </select>
+                                <SearchableSelect
+                                    v-model="categoryFilter"
+                                    :options="[{ value: '', label: 'All Categories' }, ...categoryOptions]"
+                                    placeholder="Select Category"
+                                />
                             </div>
-                            <div>
+                            <div class="mb-4 md:mb-0">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Manufacturer</label>
-                                <select v-model="manufacturerFilter"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="">All Manufacturers</option>
-                                    <option v-for="manufacturer in manufacturers" :key="manufacturer.id" :value="manufacturer.id">
-                                        {{ manufacturer.name }}
-                                    </option>
-                                </select>
+                                <SearchableSelect
+                                    v-model="manufacturerFilter"
+                                    :options="[{ value: '', label: 'All Manufacturers' }, ...manufacturerOptions]"
+                                    placeholder="Select Manufacturer"
+                                />
                             </div>
                             <div class="flex items-end">
                                 <button @click="clearFilters"
@@ -224,6 +220,7 @@
 import { ref, computed } from 'vue'
 import { Link, router, Head } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import SearchableSelect from '@/Components/SearchableSelect.vue'
 import Swal from 'sweetalert2'
 
 const props = defineProps({
@@ -237,6 +234,32 @@ const categoryFilter = ref('')
 const manufacturerFilter = ref('')
 const showImportModal = ref(false)
 const fileInput = ref(null)
+
+// Formatted categories for SearchableSelect
+const categoryOptions = computed(() => {
+    let categories = [...props.categories]
+
+    // Sort by name
+    categories.sort((a, b) => a.name.localeCompare(b.name))
+
+    return categories.map(category => ({
+        value: category.id,
+        label: category.name
+    }))
+})
+
+// Formatted manufacturers for SearchableSelect
+const manufacturerOptions = computed(() => {
+    let manufacturers = [...props.manufacturers]
+
+    // Sort by name
+    manufacturers.sort((a, b) => a.name.localeCompare(b.name))
+
+    return manufacturers.map(manufacturer => ({
+        value: manufacturer.id,
+        label: manufacturer.name
+    }))
+})
 
 const filteredMedicines = computed(() => {
     let filtered = props.medicines.data
