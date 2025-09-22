@@ -12,6 +12,7 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\StockController;
 use App\Http\Controllers\UserController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -91,6 +92,11 @@ Route::middleware('auth')->group(function () {
     // Menu Management Routes
     Route::resource('menus', MenuController::class);
     Route::post('menus/{menu}/toggle-status', [MenuController::class, 'toggleStatus'])->name('menus.toggle-status');
+
+    // Stock Management Routes
+    Route::get('stocks/reports', [StockController::class, 'reports'])->name('stocks.reports');
+    Route::get('stocks/alerts', [StockController::class, 'alerts'])->name('stocks.alerts');
+    Route::resource('stocks', StockController::class);
 });
 
 require __DIR__ . '/auth.php';

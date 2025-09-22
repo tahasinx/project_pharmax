@@ -224,6 +224,7 @@
 import { ref, computed } from 'vue'
 import { Link, router, Head } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import Swal from 'sweetalert2'
 
 const props = defineProps({
     medicines: Object,
@@ -265,9 +266,35 @@ const clearFilters = () => {
 }
 
 const deleteMedicine = (id) => {
-    if (confirm('Are you sure you want to delete this medicine?')) {
-        router.delete(route('medicines.destroy', id))
-    }
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            router.delete(route('medicines.destroy', id), {
+                onSuccess: () => {
+                    Swal.fire(
+                        'Deleted!',
+                        'Medicine has been deleted.',
+                        'success'
+                    )
+                },
+                onError: () => {
+                    Swal.fire(
+                        'Error!',
+                        'Something went wrong while deleting.',
+                        'error'
+                    )
+                }
+            })
+        }
+    })
 }
 
 const importMedicines = () => {

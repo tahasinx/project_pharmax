@@ -9,13 +9,32 @@ import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 
 const showingNavigationDropdown = ref(false);
 const showingUserDropdown = ref(false);
+const showingMoreDropdown = ref(false);
 
 const page = usePage();
 const menus = computed(() => page.props.menus || []);
+
+// Separate menus into primary (always visible) and secondary (in dropdown)
+const primaryMenus = computed(() => {
+    const primary = ['Dashboard', 'POS', 'Medicines', 'Customers', 'Invoices'];
+    return menus.value.filter(menu => primary.includes(menu.name));
+});
+
+const secondaryMenus = computed(() => {
+    const primary = ['Dashboard', 'POS', 'Medicines', 'Customers', 'Invoices'];
+    return menus.value.filter(menu => !primary.includes(menu.name));
+});
+
+// Close dropdown when clicking outside
+const closeDropdowns = () => {
+    showingMoreDropdown.value = false;
+    showingUserDropdown.value = false;
+    showingNavigationDropdown.value = false;
+};
 </script>
 
 <template>
-    <div>
+    <div @click="closeDropdowns">
         <div class="min-h-screen bg-gray-100">
             <nav class="bg-white border-b border-gray-100">
                 <!-- Primary Navigation Menu -->
@@ -32,14 +51,37 @@ const menus = computed(() => page.props.menus || []);
                             </div>
 
                             <!-- Navigation Links -->
-                            <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink v-for="menu in menus"
+                            <div class="hidden sm:-my-px sm:ms-6 sm:flex sm:items-center sm:space-x-1">
+                                <!-- Primary Menu Items (always visible) -->
+                                <NavLink v-for="menu in primaryMenus"
                                          :key="menu.id"
                                          :href="route(menu.route)"
-                                         :active="route().current(menu.route + '*')">
+                                         :active="route().current(menu.route + '*')"
+                                         class="text-sm px-2 py-1">
                                     <span v-if="menu.icon" class="mr-1">{{ menu.icon }}</span>
                                     {{ menu.name }}
                                 </NavLink>
+
+                                <!-- More Menu Dropdown (if there are secondary items) -->
+                                <div v-if="secondaryMenus.length > 0" class="relative" @click.stop>
+                                    <button @click="showingMoreDropdown = !showingMoreDropdown"
+                                            class="text-sm px-2 py-1 text-gray-600 hover:text-gray-900 focus:outline-none">
+                                        More ▼
+                                    </button>
+
+                                    <div v-show="showingMoreDropdown"
+                                         class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                                        <NavLink v-for="menu in secondaryMenus"
+                                                 :key="menu.id"
+                                                 :href="route(menu.route)"
+                                                 :active="route().current(menu.route + '*')"
+                                                 class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                 @click="showingMoreDropdown = false">
+                                            <span v-if="menu.icon" class="mr-2">{{ menu.icon }}</span>
+                                            {{ menu.name }}
+                                        </NavLink>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

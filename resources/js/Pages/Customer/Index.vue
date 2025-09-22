@@ -174,6 +174,7 @@
 import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import Swal from 'sweetalert2'
 
 defineOptions({
     title: 'Customers'
@@ -211,8 +212,34 @@ const clearFilters = () => {
 }
 
 const deleteCustomer = (id) => {
-    if (confirm('Are you sure you want to delete this customer?')) {
-        router.delete(route('customers.destroy', id))
-    }
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            router.delete(route('customers.destroy', id), {
+                onSuccess: () => {
+                    Swal.fire(
+                        'Deleted!',
+                        'Customer has been deleted.',
+                        'success'
+                    )
+                },
+                onError: () => {
+                    Swal.fire(
+                        'Error!',
+                        'Something went wrong while deleting.',
+                        'error'
+                    )
+                }
+            })
+        }
+    })
 }
 </script>

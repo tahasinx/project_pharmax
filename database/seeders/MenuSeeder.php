@@ -89,7 +89,7 @@ class MenuSeeder extends Seeder
                 'name' => 'Accounts',
                 'route' => 'accounts.index',
                 'icon' => '💰',
-                'order' => 8,
+                'order' => 9,
                 'is_active' => true,
                 'permission' => 'manage-accounts',
                 'roles' => ['admin', 'manager']
@@ -98,7 +98,7 @@ class MenuSeeder extends Seeder
                 'name' => 'Users',
                 'route' => 'users.index',
                 'icon' => '👤',
-                'order' => 9,
+                'order' => 10,
                 'is_active' => true,
                 'permission' => 'manage-users',
                 'roles' => ['admin']
@@ -107,16 +107,25 @@ class MenuSeeder extends Seeder
                 'name' => 'Menus',
                 'route' => 'menus.index',
                 'icon' => '📋',
-                'order' => 10,
+                'order' => 11,
                 'is_active' => true,
                 'permission' => 'manage-users',
                 'roles' => ['admin']
             ],
             [
+                'name' => 'Stock',
+                'route' => 'stocks.index',
+                'icon' => '📦',
+                'order' => 8,
+                'is_active' => true,
+                'permission' => 'manage-medicines',
+                'roles' => ['admin', 'manager', 'pharmacist']
+            ],
+            [
                 'name' => 'Settings',
                 'route' => 'settings.index',
                 'icon' => '⚙️',
-                'order' => 11,
+                'order' => 12,
                 'is_active' => true,
                 'permission' => 'manage-settings',
                 'roles' => ['admin']

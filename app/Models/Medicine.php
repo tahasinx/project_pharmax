@@ -54,4 +54,21 @@ class Medicine extends Model
     {
         return $this->hasMany(InvoiceItem::class);
     }
+
+    public function stocks(): HasMany
+    {
+        return $this->hasMany(Stock::class);
+    }
+
+    // Get total stock quantity for this medicine
+    public function getTotalStockAttribute(): int
+    {
+        return $this->stocks()->active()->sum('quantity');
+    }
+
+    // Check if medicine is low in stock
+    public function isLowStock(): bool
+    {
+        return $this->stocks()->active()->lowStock()->exists();
+    }
 }
