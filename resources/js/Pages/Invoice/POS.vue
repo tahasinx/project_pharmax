@@ -116,7 +116,7 @@
                                                 </button>
                                             </div>
                                             <div class="w-20 text-right">
-                                                <p class="font-medium">${{ item.total.toFixed(2) }}</p>
+                                                <p class="font-medium">${{ Number(item.total).toFixed(2) }}</p>
                                             </div>
                                             <button @click="removeItem(index)"
                                                     class="text-red-600 hover:text-red-800">
@@ -138,20 +138,20 @@
                                 <div class="space-y-3 mb-6">
                                     <div class="flex justify-between">
                                         <span class="text-gray-600">Subtotal:</span>
-                                        <span class="font-medium">${{ subtotal.toFixed(2) }}</span>
+                                        <span class="font-medium">${{ Number(subtotal).toFixed(2) }}</span>
                                     </div>
                                     <div class="flex justify-between">
                                         <span class="text-gray-600">Tax:</span>
-                                        <span class="font-medium">${{ tax.toFixed(2) }}</span>
+                                        <span class="font-medium">${{ Number(tax).toFixed(2) }}</span>
                                     </div>
                                     <div class="flex justify-between">
                                         <span class="text-gray-600">Discount:</span>
-                                        <span class="font-medium">-${{ discount.toFixed(2) }}</span>
+                                        <span class="font-medium">-${{ Number(discount).toFixed(2) }}</span>
                                     </div>
                                     <hr class="my-2">
                                     <div class="flex justify-between text-lg font-bold">
                                         <span>Total:</span>
-                                        <span>${{ total.toFixed(2) }}</span>
+                                        <span>${{ Number(total).toFixed(2) }}</span>
                                     </div>
                                 </div>
 
@@ -219,11 +219,11 @@ const form = ref({
 })
 
 const subtotal = computed(() => {
-    return cartItems.value.reduce((sum, item) => sum + item.total, 0)
+    return cartItems.value.reduce((sum, item) => sum + (Number(item.total) || 0), 0)
 })
 
 const tax = computed(() => {
-    return subtotal.value * 0.1 // 10% tax
+    return (Number(subtotal.value) || 0) * 0.1 // 10% tax
 })
 
 const discount = computed(() => {
@@ -231,7 +231,7 @@ const discount = computed(() => {
 })
 
 const total = computed(() => {
-    return subtotal.value + tax.value - discount.value
+    return (Number(subtotal.value) || 0) + (Number(tax.value) || 0) - (Number(discount.value) || 0)
 })
 
 watch(() => form.value.paid_amount, (newValue) => {
@@ -276,6 +276,9 @@ const searchProducts = async () => {
 const addProduct = (product) => {
     const existingItem = cartItems.value.find(item => item.id === product.id)
 
+    // Ensure price is a number
+    const price = Number(product.price) || 0
+
     if (existingItem) {
         existingItem.quantity += 1
         updateItemTotal(cartItems.value.indexOf(existingItem))
@@ -285,9 +288,9 @@ const addProduct = (product) => {
             medicine_id: product.id,
             name: product.name,
             generic_name: product.generic_name,
-            price: product.price,
+            price: price,
             quantity: 1,
-            total: product.price
+            total: price
         })
     }
 
@@ -309,7 +312,7 @@ const decreaseQuantity = (index) => {
 
 const updateItemTotal = (index) => {
     const item = cartItems.value[index]
-    item.total = item.price * item.quantity
+    item.total = Number(item.price) * Number(item.quantity)
 }
 
 const removeItem = (index) => {
