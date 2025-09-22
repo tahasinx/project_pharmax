@@ -191,6 +191,10 @@ import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 
+defineOptions({
+    title: 'Invoices'
+})
+
 const props = defineProps({
     invoices: Object
 })

@@ -14,11 +14,14 @@ class MedicineController extends Controller
 {
     public function index()
     {
-        $medicines = Medicine::with(['category', 'manufacturer'])
-            ->paginate(15);
+        $medicines     = Medicine::with(['category', 'manufacturer'])->paginate(15);
+        $categories    = Category::where('status', true)->get();
+        $manufacturers = Manufacturer::where('status', true)->get();
 
         return Inertia::render('Medicine/Index', [
-            'medicines' => $medicines,
+            'medicines'     => $medicines,
+            'categories'    => $categories,
+            'manufacturers' => $manufacturers,
         ]);
     }
 
