@@ -39,6 +39,41 @@ class HandleInertiaRequests extends Middleware
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],
+            'menus' => fn() => $request->user() ? $this->getUserMenus($request->user()) : [],
         ];
+    }
+
+    private function getUserMenus($user)
+    {
+        // Admin users see all menus
+        if ($user->hasRole('admin')) {
+            return \App\Models\Menu::active()
+                ->ordered()
+                ->get()
+                ->filter(function ($menu) use ($user) {
+                    // Check if user has the required permission
+                    if ($menu->permission) {
+                        return $user->can($menu->permission);
+                    }
+                    return true;
+                });
+        }
+
+        // Other users see only menus assigned to their roles
+        $userRoles = $user->roles->pluck('id');
+
+        return \App\Models\Menu::active()
+            ->ordered()
+            ->whereHas('roles', function ($query) use ($userRoles) {
+                $query->whereIn('roles.id', $userRoles);
+            })
+            ->get()
+            ->filter(function ($menu) use ($user) {
+                // Check if user has the required permission
+                if ($menu->permission) {
+                    return $user->can($menu->permission);
+                }
+                return true;
+            });
     }
 }

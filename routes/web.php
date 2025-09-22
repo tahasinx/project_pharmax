@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ManufacturerController;
 use App\Http\Controllers\MedicineController;
+use App\Http\Controllers\MenuController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SettingController;
@@ -86,6 +87,10 @@ Route::middleware('auth')->group(function () {
 
     // User Management Routes
     Route::resource('users', UserController::class);
+
+    // Menu Management Routes
+    Route::resource('menus', MenuController::class);
+    Route::post('menus/{menu}/toggle-status', [MenuController::class, 'toggleStatus'])->name('menus.toggle-status');
 });
 
 require __DIR__ . '/auth.php';

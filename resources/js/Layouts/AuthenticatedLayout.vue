@@ -1,13 +1,17 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
-import { Link } from '@inertiajs/vue3';
 
 const showingNavigationDropdown = ref(false);
+const showingUserDropdown = ref(false);
+
+const page = usePage();
+const menus = computed(() => page.props.menus || []);
 </script>
 
 <template>
@@ -29,35 +33,12 @@ const showingNavigationDropdown = ref(false);
 
                             <!-- Navigation Links -->
                             <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                                    Dashboard
-                                </NavLink>
-                                <NavLink :href="route('pos')" :active="route().current('pos')">
-                                    POS
-                                </NavLink>
-                                <NavLink :href="route('medicines.index')" :active="route().current('medicines.*')">
-                                    Medicines
-                                </NavLink>
-                                <NavLink :href="route('manufacturers.index')" :active="route().current('manufacturers.*')">
-                                    Manufacturers
-                                </NavLink>
-                                <NavLink :href="route('customers.index')" :active="route().current('customers.*')">
-                                    Customers
-                                </NavLink>
-                                <NavLink :href="route('invoices.index')" :active="route().current('invoices.*')">
-                                    Invoices
-                                </NavLink>
-                                <NavLink :href="route('purchases.index')" :active="route().current('purchases.*')">
-                                    Purchases
-                                </NavLink>
-                                <NavLink :href="route('accounts.index')" :active="route().current('accounts.*')">
-                                    Accounts
-                                </NavLink>
-                                <NavLink :href="route('users.index')" :active="route().current('users.*')">
-                                    Users
-                                </NavLink>
-                                <NavLink :href="route('settings.index')" :active="route().current('settings.*')">
-                                    Settings
+                                <NavLink v-for="menu in menus"
+                                         :key="menu.id"
+                                         :href="route(menu.route)"
+                                         :active="route().current(menu.route + '*')">
+                                    <span v-if="menu.icon" class="mr-1">{{ menu.icon }}</span>
+                                    {{ menu.name }}
                                 </NavLink>
                             </div>
                         </div>
@@ -139,35 +120,12 @@ const showingNavigationDropdown = ref(false);
                     class="sm:hidden"
                 >
                     <div class="pt-2 pb-3 space-y-1">
-                        <ResponsiveNavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                            Dashboard
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('pos')" :active="route().current('pos')">
-                            POS
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('medicines.index')" :active="route().current('medicines.*')">
-                            Medicines
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('manufacturers.index')" :active="route().current('manufacturers.*')">
-                            Manufacturers
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('customers.index')" :active="route().current('customers.*')">
-                            Customers
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('invoices.index')" :active="route().current('invoices.*')">
-                            Invoices
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('purchases.index')" :active="route().current('purchases.*')">
-                            Purchases
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('accounts.index')" :active="route().current('accounts.*')">
-                            Accounts
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('users.index')" :active="route().current('users.*')">
-                            Users
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('settings.index')" :active="route().current('settings.*')">
-                            Settings
+                        <ResponsiveNavLink v-for="menu in menus"
+                                           :key="menu.id"
+                                           :href="route(menu.route)"
+                                           :active="route().current(menu.route + '*')">
+                            <span v-if="menu.icon" class="mr-1">{{ menu.icon }}</span>
+                            {{ menu.name }}
                         </ResponsiveNavLink>
                     </div>
 

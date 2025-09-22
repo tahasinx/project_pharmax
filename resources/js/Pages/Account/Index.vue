@@ -1,4 +1,5 @@
 <template>
+    <Head title="Accounts" />
     <AuthenticatedLayout>
         <template #header>
             <div class="flex justify-between items-center">
@@ -131,7 +132,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
+import { Link, router, Head } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 
 const props = defineProps({
