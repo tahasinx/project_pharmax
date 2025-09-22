@@ -36,7 +36,7 @@ const closeDropdowns = () => {
 <template>
     <div @click="closeDropdowns">
         <div class="min-h-screen bg-gray-100">
-            <nav class="bg-white border-b border-gray-100">
+            <nav class="bg-white border-b border-gray-100 relative">
                 <!-- Primary Navigation Menu -->
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex justify-between h-16">
@@ -160,7 +160,8 @@ const closeDropdowns = () => {
                 <!-- Responsive Navigation Menu -->
                 <div
                     v-show="showingNavigationDropdown"
-                    class="sm:hidden bg-white border-t border-gray-200"
+                    class="sm:hidden bg-white border-t border-gray-200 shadow-lg"
+                    style="position: absolute; top: 100%; left: 0; right: 0; z-index: 9999;"
                 >
                     <div class="pt-2 pb-3 space-y-1">
                         <div v-if="menus.length === 0" class="px-4 py-2 text-gray-500">
