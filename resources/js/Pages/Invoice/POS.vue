@@ -158,6 +158,17 @@
 
                                 <div class="space-y-4">
                                     <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Discount Amount</label>
+                                        <input v-model.number="discountAmount"
+                                               @input="updateDiscount"
+                                               type="number"
+                                               step="0.01"
+                                               min="0"
+                                               placeholder="0.00"
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+
+                                    <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Paid Amount</label>
                                         <input v-model.number="form.paid_amount"
                                                type="number"
@@ -208,6 +219,7 @@ const selectedCustomer = ref(null)
 const productSearch = ref('')
 const productSearchResults = ref([])
 const cartItems = ref([])
+const discountAmount = ref(0)
 
 const form = ref({
     customer_id: null,
@@ -228,15 +240,16 @@ const tax = computed(() => {
 })
 
 const discount = computed(() => {
-    return 0 // Can be implemented later
+    return Number(discountAmount.value) || 0
 })
 
 const total = computed(() => {
     return (Number(subtotal.value) || 0) + (Number(tax.value) || 0) - (Number(discount.value) || 0)
 })
 
-watch(() => form.value.paid_amount, (newValue) => {
-    form.value.due_amount = total.value - newValue
+// Watch for changes in paid amount and discount to update due amount
+watch([() => form.value.paid_amount, () => discountAmount.value], () => {
+    form.value.due_amount = total.value - form.value.paid_amount
 })
 
 const searchCustomers = async () => {
@@ -339,10 +352,21 @@ const processSale = () => {
             cartItems.value = []
             selectedCustomer.value = null
             customerSearch.value = ''
+            discountAmount.value = 0
             form.value.paid_amount = 0
             form.value.due_amount = 0
         }
     })
+}
+
+const updateDiscount = () => {
+    // Ensure discount doesn't exceed subtotal
+    const maxDiscount = subtotal.value
+    if (discountAmount.value > maxDiscount) {
+        discountAmount.value = maxDiscount
+    }
+    // Trigger due amount recalculation
+    form.value.due_amount = total.value - form.value.paid_amount
 }
 
 // Click outside handler to close search results
