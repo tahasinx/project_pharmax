@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\MedicineImport;
 
 class MedicineController extends Controller
 {
@@ -123,9 +124,11 @@ class MedicineController extends Controller
 
     public function import(Request $request)
     {
+
         $request->validate([
-            'file' => 'required|file|mimes:csv,xlsx,xls',
+            'file' => 'required|file|max:5120|mimetypes:text/csv,text/plain,application/vnd.ms-excel,application/csv',
         ]);
+
 
         try {
             Excel::import(new MedicineImport, $request->file('file'));

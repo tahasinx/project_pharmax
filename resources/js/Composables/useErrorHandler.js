@@ -32,6 +32,10 @@ export function useErrorHandler() {
 
     // Handle HTTP errors
     const handleError = (error) => {
+        if (!error) {
+            showError('An unexpected error occurred.')
+            return
+        }
         if (error.response) {
             const { status, data } = error.response
 
@@ -56,7 +60,7 @@ export function useErrorHandler() {
                 default:
                     showError(data.message || 'An unexpected error occurred.')
             }
-        } else if (error.message) {
+        } else if (error && error.message) {
             showError(error.message)
         } else {
             showError('An unexpected error occurred.')

@@ -205,28 +205,77 @@
         </div>
 
         <!-- Import Modal -->
-        <div v-if="showImportModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                <div class="mt-3">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Import Medicines</h3>
-                    <form @submit.prevent="importMedicines">
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">CSV File</label>
-                            <input ref="fileInput"
-                                   type="file"
-                                   accept=".csv,.xlsx,.xls"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div class="flex justify-end space-x-2">
-                            <button type="button"
-                                    @click="showImportModal = false"
-                                    class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                                Cancel
-                            </button>
-                            <button type="submit"
-                                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                Import
-                            </button>
+        <div v-if="showImportModal" class="fixed inset-0 z-[9999]">
+            <!-- Backdrop -->
+            <div class="absolute inset-0 bg-black/60" @click="closeImportModal"></div>
+            <!-- Dialog -->
+            <div class="absolute inset-0 flex items-center justify-center p-4 overflow-y-auto">
+                <div class="w-full max-w-2xl bg-white rounded-lg shadow-2xl">
+                    <div class="px-6 py-4 border-b flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-900">Import Medicines from CSV</h3>
+                        <button @click="closeImportModal" class="text-gray-500 hover:text-gray-700">✖</button>
+                    </div>
+
+                    <form @submit.prevent="importMedicines" enctype="multipart/form-data">
+                        <div class="px-6 py-5 space-y-4">
+                            <div class="text-sm text-gray-600">
+                                Required columns (order not important):
+                                <div class="mt-1 flex flex-wrap gap-2">
+                                    <span v-for="h in requiredHeaders" :key="h" class="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-gray-800">{{ h }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Dropzone -->
+                            <label class="block">
+                                <span class="block text-sm font-medium text-gray-700 mb-2">CSV File</span>
+                                <div class="border-2 border-dashed rounded-md px-4 py-8 text-center cursor-pointer hover:border-blue-400"
+                                     @dragover.prevent
+                                     @drop.prevent="onDrop">
+                                    <input ref="fileInput" name="file" type="file" accept=".csv,.xlsx,.xls" class="hidden" @change="onFileChange">
+                                    <div v-if="!selectedFile" class="text-gray-500">
+                                        <p>Drag and drop your .csv here, or
+                                            <span class="text-blue-600 hover:underline" @click.prevent="triggerFile">browse</span>
+                                        </p>
+                                        <p class="text-xs mt-1">Max 5MB. Only .csv supported.</p>
+                                    </div>
+                                    <div v-else class="text-left">
+                                        <p class="font-medium">Selected: {{ selectedFile.name }}</p>
+                                        <p class="text-xs text-gray-500">{{ (selectedFile.size/1024).toFixed(1) }} KB</p>
+                                    </div>
+                                </div>
+                            </label>
+
+                            <!-- Validation -->
+                            <div v-if="csvErrors.length" class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li v-for="(err, idx) in csvErrors" :key="idx">{{ err }}</li>
+                                </ul>
+                            </div>
+
+                            <div class="pt-2">
+                                <div class="mb-3">
+                                    <button type="button" @click="downloadSampleCsv" class="text-blue-600 hover:underline">
+                                        Download sample.csv
+                                    </button>
+                                </div>
+                                <div class="flex items-center justify-end gap-2">
+                                    <button type="button"
+                                            @click="closeImportModal"
+                                            :disabled="isImporting"
+                                            class="bg-gray-500 hover:bg-gray-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded">
+                                        Cancel
+                                    </button>
+                                    <button type="submit"
+                                            :disabled="isImporting || !selectedFile || csvErrors.length > 0"
+                                            class="bg-blue-500 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded inline-flex items-center">
+                                        <svg v-if="isImporting" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                        </svg>
+                                        <span>{{ isImporting ? 'Importing...' : 'Import' }}</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -253,6 +302,16 @@ const categoryFilter = ref('')
 const manufacturerFilter = ref('')
 const showImportModal = ref(false)
 const fileInput = ref(null)
+const selectedFile = ref(null)
+const csvErrors = ref([])
+const isImporting = ref(false)
+const requiredHeaders = [
+    'name',
+    'generic_name',
+    'category',
+    'manufacturer',
+    'price'
+]
 
 // Formatted categories for SearchableSelect
 const categoryOptions = computed(() => {
@@ -339,14 +398,98 @@ const deleteMedicine = (id) => {
     })
 }
 
-const importMedicines = () => {
-    const formData = new FormData()
-    formData.append('file', fileInput.value.files[0])
+const triggerFile = () => fileInput.value?.click()
 
+const closeImportModal = () => {
+    showImportModal.value = false
+    selectedFile.value = null
+    csvErrors.value = []
+    if (fileInput.value) fileInput.value.value = ''
+}
+
+const onDrop = async (e) => {
+    const file = e.dataTransfer.files?.[0]
+    if (file) await handleSelectedFile(file)
+}
+
+const onFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (file) await handleSelectedFile(file)
+}
+
+const handleSelectedFile = async (file) => {
+    selectedFile.value = file
+    csvErrors.value = []
+    const isCsv = /\.csv$/i.test(file.name)
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name)
+    if (!isCsv && !isExcel) {
+        csvErrors.value.push('Only .csv, .xlsx, .xls files are supported')
+        return
+    }
+    // For Excel files, skip client-side header validation (server will parse)
+    if (isExcel) return
+    // Read first line to validate headers for CSV only
+    try {
+        const text = await file.text()
+        const firstLine = text.split(/\r?\n/).find(l => l.trim().length)
+        if (!firstLine) {
+            csvErrors.value.push('CSV appears to be empty')
+            return
+        }
+        const headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).map(h => h.toLowerCase())
+        for (const h of requiredHeaders) {
+            if (!headers.includes(h)) {
+                csvErrors.value.push(`Missing required column: ${h}`)
+            }
+        }
+    } catch (e) {
+        csvErrors.value.push('Unable to read the CSV file')
+    }
+}
+
+const downloadSampleCsv = () => {
+    const rows = [
+        requiredHeaders.join(','),
+        'Paracetamol,Acetaminophen,Pain Relief,ACME Pharma,3.50',
+        'Amoxicillin,Amoxicillin,Antibiotics,HealthCorp,5.75'
+    ]
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'sample_medicines.csv'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+}
+
+const importMedicines = () => {
+    if (!selectedFile.value) return
+    if (csvErrors.value.length > 0) return
+    const formData = new FormData()
+    // Include filename to preserve extension for Laravel's mimes validator
+    formData.append('file', selectedFile.value, selectedFile.value.name)
+
+    isImporting.value = true
     router.post(route('medicines.import'), formData, {
         onSuccess: () => {
-            showImportModal.value = false
-        }
+            closeImportModal()
+        },
+        onError: (errors) => {
+            // Surface backend validation errors inside the modal
+            csvErrors.value = []
+            if (errors && typeof errors === 'object') {
+                if (errors.file) csvErrors.value.push(errors.file)
+                for (const [key, val] of Object.entries(errors)) {
+                    if (key !== 'file' && val) csvErrors.value.push(String(val))
+                }
+            }
+        },
+        onFinish: () => {
+            isImporting.value = false
+        },
+        forceFormData: true
     })
 }
 </script>
