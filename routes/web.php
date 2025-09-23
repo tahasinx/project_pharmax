@@ -89,6 +89,11 @@ Route::middleware('auth')->group(function () {
     // User Management Routes
     Route::resource('users', UserController::class);
 
+    // External medicine save API and MedEx proxies
+    Route::post('api/medicines/store-external', [MedicineController::class, 'storeExternal'])->name('api.medicines.storeExternal');
+    Route::get('api/medex/search', [MedicineController::class, 'medexSearch'])->name('api.medex.search');
+    Route::get('api/medex/product', [MedicineController::class, 'medexProduct'])->name('api.medex.product');
+
     // Menu Management Routes
     Route::resource('menus', MenuController::class);
     Route::post('menus/{menu}/toggle-status', [MenuController::class, 'toggleStatus'])->name('menus.toggle-status');

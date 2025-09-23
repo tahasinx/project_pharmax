@@ -25,6 +25,8 @@ class Medicine extends Model
         'unit',
         'details',
         'image',
+        'medex_id',
+        'medex_name',
         'qr_code_data',
         'qr_code_type',
         'qr_code_image_path',
