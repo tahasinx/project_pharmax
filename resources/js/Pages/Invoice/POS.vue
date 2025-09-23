@@ -243,7 +243,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { Link, router, Head } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import { BrowserMultiFormatReader } from '@zxing/browser'
+// Scanner lib is optional; we lazy-load it when needed to avoid hard dependency
 // Icons replaced with emojis
 
 const props = defineProps({
@@ -439,6 +439,7 @@ const videoRef = ref(null)
 const scanMessage = ref('')
 const canToggleTorch = ref(false)
 const torchOn = ref(false)
+let ZXingReaderClass = null // will be set after dynamic import
 let codeReader = null
 let currentStream = null
 
@@ -456,8 +457,32 @@ const closeScanModal = () => {
 const startScanner = async () => {
     try {
         scanMessage.value = 'Initializing camera...'
-        codeReader = new BrowserMultiFormatReader()
-        const devices = await BrowserMultiFormatReader.listVideoInputDevices()
+
+        // Lazy-load @zxing/browser. If unavailable, disable scanner gracefully
+        if (!ZXingReaderClass) {
+            try {
+                const ZXING_PKG = '@zxing/browser'
+                const mod = await import(/* @vite-ignore */ ZXING_PKG)
+                ZXingReaderClass = mod?.BrowserMultiFormatReader || null
+            } catch (e1) {
+                // Fallback to CDN without hard project dependency
+                try {
+                    const CDN_URL = 'https://cdn.skypack.dev/@zxing/browser'
+                    const modCdn = await import(/* @vite-ignore */ CDN_URL)
+                    ZXingReaderClass = modCdn?.BrowserMultiFormatReader || null
+                } catch (e2) {
+                    ZXingReaderClass = null
+                }
+            }
+        }
+
+        if (!ZXingReaderClass) {
+            scanMessage.value = 'Scanner unavailable (dependency not installed)'
+            return
+        }
+
+        codeReader = new ZXingReaderClass()
+        const devices = await ZXingReaderClass.listVideoInputDevices()
         const deviceId = devices?.[0]?.deviceId
         if (!deviceId) {
             scanMessage.value = 'No camera found'

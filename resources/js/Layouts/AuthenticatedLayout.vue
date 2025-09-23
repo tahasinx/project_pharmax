@@ -72,15 +72,14 @@ const closeDropdowns = () => {
 
                                     <div v-show="showingMoreDropdown"
                                          class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
-                                        <NavLink v-for="menu in secondaryMenus"
-                                                 :key="menu.id"
-                                                 :href="route(menu.route)"
-                                                 :active="route().current(menu.route + '*')"
-                                                 class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                 @click="showingMoreDropdown = false">
+                                        <DropdownLink v-for="menu in secondaryMenus"
+                                                      :key="menu.id"
+                                                      :href="route(menu.route)"
+                                                      class="w-full"
+                                                      @click="showingMoreDropdown = false">
                                             <span v-if="menu.icon" class="mr-2">{{ menu.icon }}</span>
                                             {{ menu.name }}
-                                        </NavLink>
+                                        </DropdownLink>
                                     </div>
                                 </div>
                             </div>
