@@ -26,6 +26,12 @@ return new class extends Migration
             $table->string('unit')->nullable();
             $table->text('details')->nullable();
             $table->string('image')->nullable();
+            $table->text('qr_code_data')->nullable();
+            $table->string('qr_code_type')->default('product_id');
+            $table->string('qr_code_image_path')->nullable();
+            $table->text('barcode_data')->nullable();
+            $table->string('barcode_type')->default('code128');
+            $table->string('barcode_image_path')->nullable();
             $table->boolean('status')->default(true);
             $table->timestamps();
         });

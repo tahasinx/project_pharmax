@@ -59,11 +59,19 @@
                             <div class="p-6">
                                 <h3 class="text-lg font-medium text-gray-900 mb-4">Add Products</h3>
                                 <div class="relative product-search-container">
-                                    <input v-model="productSearch"
-                                           @input="searchProducts"
-                                           type="text"
-                                           placeholder="Search medicines..."
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <div class="flex space-x-2">
+                                        <input v-model="productSearch"
+                                               @input="searchProducts"
+                                               ref="productSearchInput"
+                                               type="text"
+                                               placeholder="Search medicines... (scan barcode/QR to auto-fill)"
+                                               class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <button @click="openScanModal"
+                                                class="whitespace-nowrap px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md">
+                                            Scan
+                                        </button>
+                                    </div>
+
                                     <div v-if="productSearchResults.length > 0"
                                          class="absolute z-[99999] w-full bg-white border border-gray-300 rounded-md shadow-2xl max-h-60 overflow-y-auto mt-1">
                                         <div v-for="product in productSearchResults"
@@ -198,12 +206,44 @@
             </div>
         </div>
     </AuthenticatedLayout>
+
+    <!-- Scan Modal -->
+    <div v-if="showScan" class="fixed inset-0 z-50">
+        <div class="absolute inset-0 bg-black/60" @click="closeScanModal"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="w-full max-w-xl bg-white rounded-lg shadow-xl overflow-hidden">
+                <div class="p-4 border-b flex items-center justify-between">
+                    <h4 class="text-lg font-medium">Scan Barcode / QR Code</h4>
+                    <button @click="closeScanModal" class="text-gray-500 hover:text-gray-700">✖</button>
+                </div>
+                <div class="p-4">
+                    <div class="aspect-video bg-black rounded-md overflow-hidden flex items-center justify-center">
+                        <video ref="videoRef" class="w-full h-full object-contain"></video>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between text-sm text-gray-600">
+                        <div>
+                            <span v-if="scanMessage">{{ scanMessage }}</span>
+                            <span v-else>Point the camera at a code. It will auto-detect.</span>
+                        </div>
+                        <button @click="toggleTorch" :disabled="!canToggleTorch" class="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-50">
+                            {{ torchOn ? 'Torch Off' : 'Torch On' }}
+                        </button>
+                    </div>
+                </div>
+                <div class="p-4 border-t flex items-center justify-end space-x-2">
+                    <button @click="restartScan" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded">Restart</button>
+                    <button @click="closeScanModal" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { Link, router, Head } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import { BrowserMultiFormatReader } from '@zxing/browser'
 // Icons replaced with emojis
 
 const props = defineProps({
@@ -218,6 +258,7 @@ const customerSearchResults = ref([])
 const selectedCustomer = ref(null)
 const productSearch = ref('')
 const productSearchResults = ref([])
+const productSearchInput = ref(null)
 const cartItems = ref([])
 const discountAmount = ref(0)
 
@@ -389,5 +430,125 @@ onMounted(() => {
 
 onUnmounted(() => {
     document.removeEventListener('click', handleClickOutside)
+    stopScanner()
 })
+
+// Scanner state
+const showScan = ref(false)
+const videoRef = ref(null)
+const scanMessage = ref('')
+const canToggleTorch = ref(false)
+const torchOn = ref(false)
+let codeReader = null
+let currentStream = null
+
+const openScanModal = async () => {
+    showScan.value = true
+    await nextTick()
+    startScanner()
+}
+
+const closeScanModal = () => {
+    stopScanner()
+    showScan.value = false
+}
+
+const startScanner = async () => {
+    try {
+        scanMessage.value = 'Initializing camera...'
+        codeReader = new BrowserMultiFormatReader()
+        const devices = await BrowserMultiFormatReader.listVideoInputDevices()
+        const deviceId = devices?.[0]?.deviceId
+        if (!deviceId) {
+            scanMessage.value = 'No camera found'
+            return
+        }
+
+        const constraints = {
+            video: {
+                deviceId: { ideal: deviceId },
+                facingMode: 'environment',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints)
+        currentStream = stream
+        videoRef.value.srcObject = stream
+        await videoRef.value.play()
+        scanMessage.value = 'Scanning...'
+
+        // Torch capability
+        const track = stream.getVideoTracks()[0]
+        const capabilities = track.getCapabilities?.() || {}
+        canToggleTorch.value = !!capabilities.torch
+
+        // Decode continuously
+        codeReader.decodeFromVideoDevice(deviceId, videoRef.value, (result, err) => {
+            if (result) {
+                onCodeDetected(result.getText())
+            }
+        })
+    } catch (e) {
+        console.error(e)
+        scanMessage.value = 'Camera error. Please allow camera permission.'
+    }
+}
+
+const stopScanner = () => {
+    try {
+        if (codeReader) {
+            codeReader.reset()
+            codeReader = null
+        }
+        if (currentStream) {
+            currentStream.getTracks().forEach(t => t.stop())
+            currentStream = null
+        }
+    } catch {}
+}
+
+const restartScan = () => {
+    stopScanner()
+    startScanner()
+}
+
+const toggleTorch = () => {
+    if (!currentStream) return
+    const track = currentStream.getVideoTracks()[0]
+    const capabilities = track.getCapabilities?.() || {}
+    if (!capabilities.torch) return
+    torchOn.value = !torchOn.value
+    track.applyConstraints({ advanced: [{ torch: torchOn.value }] })
+}
+
+const onCodeDetected = async (text) => {
+    // Debounce by closing scanner immediately
+    scanMessage.value = 'Code detected'
+    closeScanModal()
+
+    // Fill search box and query
+    productSearch.value = text
+    await nextTick()
+    await searchProducts()
+
+    // If single match, add automatically
+    if (productSearchResults.value.length === 1) {
+        addProduct(productSearchResults.value[0])
+    } else if (productSearchResults.value.length > 1) {
+        // keep list open for user to choose
+    } else {
+        // Try fallback exact fetch endpoint if available (product_id / barcode)
+        try {
+            const res = await fetch(`/api/medicines/search?q=${encodeURIComponent(text)}`)
+            const data = await res.json()
+            if (Array.isArray(data) && data.length === 1) {
+                addProduct(data[0])
+            }
+        } catch {}
+    }
+    // Focus back to search for hardware scanners to continue typing
+    productSearchInput.value?.focus()
+}
 </script>

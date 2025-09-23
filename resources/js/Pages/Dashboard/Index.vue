@@ -104,7 +104,7 @@
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-8">
                     <div class="p-6">
                         <h3 class="text-lg font-medium text-gray-900 mb-4">Best Selling Products</h3>
-                        <div class="space-y-3">
+                        <div v-if="bestSellingProducts.length > 0" class="space-y-3">
                             <div v-for="(product, index) in bestSellingProducts.slice(0, 5)" :key="product.id"
                                  class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                 <div class="flex items-center">
@@ -118,9 +118,21 @@
                                 </div>
                                 <div class="text-right">
                                     <p class="text-sm font-medium text-gray-900">${{ product.price }}</p>
-                                    <p class="text-xs text-gray-500">{{ product.manufacturer?.name }}</p>
+                                    <p class="text-xs text-gray-500">{{ product.sales_count }} sold</p>
                                 </div>
                             </div>
+                        </div>
+                        <div v-else class="text-center py-8">
+                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span class="text-gray-400 text-2xl">📊</span>
+                            </div>
+                            <h4 class="text-lg font-medium text-gray-900 mb-2">No Sales Yet</h4>
+                            <p class="text-gray-500 mb-4">Start selling medicines to see your best-selling products here.</p>
+                            <Link :href="route('pos')"
+                                  class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors">
+                                <span class="mr-2">🛒</span>
+                                Start POS Sales
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -179,3 +191,4 @@ const props = defineProps({
     monthlyData: Array
 })
 </script>
+

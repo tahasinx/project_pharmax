@@ -80,6 +80,9 @@
                                         Stock
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Codes
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Status
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -114,6 +117,22 @@
                                             In Stock
                                         </span>
                                     </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <div class="flex space-x-1">
+                                            <span v-if="medicine.qr_code_data"
+                                                  class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                                                QR
+                                            </span>
+                                            <span v-if="medicine.barcode_data"
+                                                  class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                                                BC
+                                            </span>
+                                            <span v-if="!medicine.qr_code_data && !medicine.barcode_data"
+                                                  class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                                                None
+                                            </span>
+                                        </div>
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span :class="medicine.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
                                               class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
@@ -130,9 +149,9 @@
                                                   class="text-indigo-600 hover:text-indigo-900">
                                                 Edit
                                             </Link>
-                                            <Link :href="route('medicines.barcode', medicine.id)"
+                                            <Link :href="route('medicines.codes', medicine.id)"
                                                   class="text-green-600 hover:text-green-900">
-                                                Barcode
+                                                Codes
                                             </Link>
                                             <button @click="deleteMedicine(medicine.id)"
                                                     class="text-red-600 hover:text-red-900">

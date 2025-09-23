@@ -54,8 +54,8 @@ Route::middleware('auth')->group(function () {
     // Medicine Routes
     Route::resource('medicines', MedicineController::class);
     Route::post('medicines/import', [MedicineController::class, 'import'])->name('medicines.import');
-    Route::get('medicines/{medicine}/barcode', [MedicineController::class, 'generateBarcode'])->name('medicines.barcode');
-    Route::get('medicines/{medicine}/qrcode', [MedicineController::class, 'generateQrCode'])->name('medicines.qrcode');
+    Route::get('medicines/{medicine}/codes', [MedicineController::class, 'generateCodes'])->name('medicines.codes');
+    Route::post('medicines/{medicine}/codes/save', [MedicineController::class, 'saveCodes'])->name('medicines.codes.save');
 
     // Customer Routes
     Route::resource('customers', CustomerController::class);

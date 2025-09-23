@@ -10,13 +10,9 @@
                           class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                         Edit Medicine
                     </Link>
-                    <Link :href="route('medicines.barcode', medicine.id)"
+                    <Link :href="route('medicines.codes', medicine.id)"
                           class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                        Generate Barcode
-                    </Link>
-                    <Link :href="route('medicines.qrcode', medicine.id)"
-                          class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">
-                        Generate QR Code
+                        Generate Codes
                     </Link>
                     <Link :href="route('medicines.index')"
                           class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
@@ -185,13 +181,9 @@
                                               class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded block text-center">
                                             Edit Medicine
                                         </Link>
-                                        <Link :href="route('medicines.barcode', medicine.id)"
+                                        <Link :href="route('medicines.codes', medicine.id)"
                                               class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded block text-center">
-                                            Generate Barcode
-                                        </Link>
-                                        <Link :href="route('medicines.qrcode', medicine.id)"
-                                              class="w-full bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded block text-center">
-                                            Generate QR Code
+                                            Generate Codes
                                         </Link>
                                     </div>
                                 </div>

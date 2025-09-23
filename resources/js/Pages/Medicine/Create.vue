@@ -14,6 +14,9 @@
 
         <div class="py-12">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+                <!-- Global Validation Errors -->
+                <ValidationErrors :errors="errors" />
+
                 <form @submit.prevent="submitForm">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6">
@@ -137,15 +140,35 @@
                             </div>
 
                             <!-- Form Actions -->
-                            <div class="mt-8 flex justify-end space-x-4">
-                                <Link :href="route('medicines.index')"
-                                      class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                                    Cancel
-                                </Link>
-                                <button type="submit"
-                                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                    Create Medicine
-                                </button>
+                            <div class="mt-8">
+                                <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <h3 class="text-sm font-medium text-blue-800">
+                                                Automatic Code Generation
+                                            </h3>
+                                            <div class="mt-2 text-sm text-blue-700">
+                                                <p>QR codes and barcodes will be automatically generated for this medicine using the product ID.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-end space-x-4">
+                                    <Link :href="route('medicines.index')"
+                                          class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                                        Cancel
+                                    </Link>
+                                    <button type="submit"
+                                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                        Create Medicine
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -160,11 +183,16 @@ import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import SearchableSelect from '@/Components/SearchableSelect.vue'
+import ValidationErrors from '@/Components/ValidationErrors.vue'
+import { useErrorHandler } from '@/Composables/useErrorHandler'
 
 const props = defineProps({
     categories: Array,
-    manufacturers: Array
+    manufacturers: Array,
+    errors: Object
 })
+
+const { handleFormError } = useErrorHandler()
 
 // Formatted categories for SearchableSelect
 const categoryOptions = computed(() => {
@@ -204,7 +232,10 @@ const form = ref({
 const submitForm = () => {
     router.post(route('medicines.store'), form.value, {
         onSuccess: () => {
-            // Redirect to medicine list
+            // Success handled by global error handler
+        },
+        onError: (errors) => {
+            handleFormError(errors)
         }
     })
 }

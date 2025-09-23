@@ -63,6 +63,9 @@ class MedicineController extends Controller
             'status'            => $request->status ?? true,
         ]);
 
+        // Auto-generate QR code and barcode for new medicine
+        $this->generateDefaultCodes($medicine);
+
         return redirect()->route('medicines.index')
             ->with('success', 'Medicine created successfully.');
     }
@@ -101,6 +104,11 @@ class MedicineController extends Controller
 
         $medicine->update($request->all());
 
+        // Auto-generate codes if they don't exist
+        if (!$medicine->qr_code_data || !$medicine->barcode_data) {
+            $this->generateDefaultCodes($medicine);
+        }
+
         return redirect()->route('medicines.index')
             ->with('success', 'Medicine updated successfully.');
     }
@@ -130,18 +138,45 @@ class MedicineController extends Controller
         }
     }
 
-    public function generateBarcode(Medicine $medicine)
+
+    public function generateCodes(Medicine $medicine)
     {
-        return Inertia::render('Medicine/Barcode', [
+        $medicine->load(['category', 'manufacturer']);
+
+        return Inertia::render('Medicine/Codes', [
             'medicine' => $medicine,
         ]);
     }
 
-    public function generateQrCode(Medicine $medicine)
+
+    public function saveCodes(Request $request, Medicine $medicine)
     {
-        return Inertia::render('Medicine/QrCode', [
-            'medicine' => $medicine,
+        $request->validate([
+            'qr_code_data' => 'nullable|string',
+            'qr_code_type' => 'nullable|string|in:product_id,medicine_info,custom',
+            'qr_code_image_path' => 'nullable|string',
+            'barcode_data' => 'nullable|string',
+            'barcode_type' => 'nullable|string|in:code128,code39,ean13,upc',
+            'barcode_image_path' => 'nullable|string',
         ]);
+
+        $updateData = [];
+
+        if ($request->has('qr_code_data')) {
+            $updateData['qr_code_data'] = $request->qr_code_data;
+            $updateData['qr_code_type'] = $request->qr_code_type;
+            $updateData['qr_code_image_path'] = $request->qr_code_image_path;
+        }
+
+        if ($request->has('barcode_data')) {
+            $updateData['barcode_data'] = $request->barcode_data;
+            $updateData['barcode_type'] = $request->barcode_type;
+            $updateData['barcode_image_path'] = $request->barcode_image_path;
+        }
+
+        $medicine->update($updateData);
+
+        return redirect()->back()->with('success', 'Codes saved successfully.');
     }
 
     private function generateProductId()
@@ -151,5 +186,22 @@ class MedicineController extends Controller
         } while (Medicine::where('product_id', $productId)->exists());
 
         return $productId;
+    }
+
+    private function generateDefaultCodes(Medicine $medicine)
+    {
+        // Generate QR code data (using product ID)
+        $qrCodeData = $medicine->product_id;
+
+        // Generate barcode data (using product ID)
+        $barcodeData = $medicine->product_id;
+
+        // Update medicine with generated codes
+        $medicine->update([
+            'qr_code_data' => $qrCodeData,
+            'qr_code_type' => 'product_id',
+            'barcode_data' => $barcodeData,
+            'barcode_type' => 'code128',
+        ]);
     }
 }
