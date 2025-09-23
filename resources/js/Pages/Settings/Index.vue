@@ -112,11 +112,7 @@
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
                                         <select v-model="form.timezone"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                            <option value="UTC">UTC</option>
-                                            <option value="America/New_York">Eastern Time</option>
-                                            <option value="America/Chicago">Central Time</option>
-                                            <option value="America/Denver">Mountain Time</option>
-                                            <option value="America/Los_Angeles">Pacific Time</option>
+                                            <option v-for="tz in props.timezones" :key="tz" :value="tz">{{ tz }}</option>
                                         </select>
                                     </div>
                                     <div>
@@ -175,7 +171,8 @@ import { router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 
 const props = defineProps({
-    settings: Object
+    settings: Object,
+    timezones: Array
 })
 
 const form = ref({
