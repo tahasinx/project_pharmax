@@ -149,7 +149,7 @@
                                                     </button>
                                                 </div>
                                                 <div class="w-20 text-right">
-                                                    <p class="font-medium">${{ item.total.toFixed(2) }}</p>
+                                                    <p class="font-medium">${{ formatMoney(item.total) }}</p>
                                                 </div>
                                                 <button @click="removeItem(index)"
                                                         class="text-red-600 hover:text-red-800">
@@ -171,20 +171,20 @@
                                     <div class="space-y-3 mb-6">
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Subtotal:</span>
-                                            <span class="font-medium">${{ subtotal.toFixed(2) }}</span>
+                                            <span class="font-medium">${{ formatMoney(subtotal) }}</span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Tax (10%):</span>
-                                            <span class="font-medium">${{ tax.toFixed(2) }}</span>
+                                            <span class="font-medium">${{ formatMoney(tax) }}</span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Discount:</span>
-                                            <span class="font-medium">-${{ discount.toFixed(2) }}</span>
+                                            <span class="font-medium">-${{ formatMoney(discount) }}</span>
                                         </div>
                                         <hr class="my-2">
                                         <div class="flex justify-between text-lg font-bold">
                                             <span>Total:</span>
-                                            <span>${{ total.toFixed(2) }}</span>
+                                            <span>${{ formatMoney(total) }}</span>
                                         </div>
                                     </div>
 
@@ -270,7 +270,7 @@ const form = ref({
 })
 
 const subtotal = computed(() => {
-    return cartItems.value.reduce((sum, item) => sum + item.total, 0)
+    return cartItems.value.reduce((sum, item) => Number(sum) + Number(item.total || 0), 0)
 })
 
 const tax = computed(() => {
@@ -285,21 +285,32 @@ const total = computed(() => {
     return subtotal.value + tax.value - discount.value
 })
 
+// Safe money formatter for numbers or computeds
+const formatMoney = (val) => {
+    const n = typeof val === 'number' ? val : Number(val?.value ?? val)
+    return Number(n || 0).toFixed(2)
+}
+
 watch(() => form.value.paid_amount, (newValue) => {
     form.value.due_amount = total.value - newValue
 })
 
 onMounted(() => {
     // Load existing invoice items into cart
-    cartItems.value = props.invoice.items.map(item => ({
-        id: item.medicine_id,
-        medicine_id: item.medicine_id,
-        name: item.medicine?.name || 'Unknown',
-        generic_name: item.medicine?.generic_name || '',
-        price: item.rate,
-        quantity: item.quantity,
-        total: item.total_amount
-    }))
+    cartItems.value = props.invoice.items.map(item => {
+        const priceNum = Number(item.rate) || 0
+        const qtyNum = Number(item.quantity) || 1
+        const totalNum = Number(item.total_amount)
+        return {
+            id: item.medicine_id,
+            medicine_id: item.medicine_id,
+            name: item.medicine?.name || 'Unknown',
+            generic_name: item.medicine?.generic_name || '',
+            price: priceNum,
+            quantity: qtyNum,
+            total: Number.isFinite(totalNum) ? totalNum : priceNum * qtyNum
+        }
+    })
 
     // Load customer details
     selectedCustomer.value = props.customers.find(c => c.id == form.value.customer_id)
@@ -335,9 +346,9 @@ const addProduct = (product) => {
             medicine_id: product.id,
             name: product.name,
             generic_name: product.generic_name,
-            price: product.price,
+            price: Number(product.price) || 0,
             quantity: 1,
-            total: product.price
+            total: Number(product.price) || 0
         })
     }
 
@@ -359,7 +370,7 @@ const decreaseQuantity = (index) => {
 
 const updateItemTotal = (index) => {
     const item = cartItems.value[index]
-    item.total = item.price * item.quantity
+    item.total = (Number(item.price) || 0) * (Number(item.quantity) || 0)
 }
 
 const removeItem = (index) => {

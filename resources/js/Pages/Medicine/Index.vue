@@ -15,6 +15,10 @@
                             class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
                         Import CSV
                     </button>
+                    <button @click="openApiModal"
+                            class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
+                        Search Medicine [Medex]
+                    </button>
                 </div>
             </div>
         </template>
@@ -95,16 +99,23 @@
                                                 <img class="h-10 w-10 rounded-full" :src="medicine.image" :alt="medicine.name">
                                             </div>
                                             <div class="ml-4">
-                                                <div class="text-sm font-medium text-gray-900">{{ medicine.name }}</div>
+                                                <div>
+                                                    <button v-if="medicine.medex_id && medicine.medex_name"
+                                                            @click="openMedexDetailsForMedicine(medicine)"
+                                                            class="text-sm font-semibold text-blue-700 hover:underline">
+                                                        {{ medicine.name }}
+                                                    </button>
+                                                    <div v-else class="text-sm font-medium text-gray-900">{{ medicine.name }}</div>
+                                                </div>
                                                 <div class="text-sm text-gray-500">{{ medicine.generic_name }}</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {{ medicine.category?.name }}
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-[180px]">
+                                        <span class="block truncate" :title="medicine.category?.name">{{ medicine.category?.name }}</span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {{ medicine.manufacturer?.name }}
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-[200px]">
+                                        <span class="block truncate" :title="medicine.manufacturer?.name">{{ medicine.manufacturer?.name }}</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         ${{ medicine.price }}
@@ -130,9 +141,9 @@
                                                   class="text-indigo-600 hover:text-indigo-900">
                                                 Edit
                                             </Link>
-                                            <Link :href="route('medicines.barcode', medicine.id)"
+                                            <Link :href="route('medicines.codes', medicine.id)"
                                                   class="text-green-600 hover:text-green-900">
-                                                Barcode
+                                                Codes
                                             </Link>
                                             <button @click="deleteMedicine(medicine.id)"
                                                     class="text-red-600 hover:text-red-900">
@@ -185,29 +196,164 @@
             </div>
         </div>
 
-        <!-- Import Modal -->
-        <div v-if="showImportModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                <div class="mt-3">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Import Medicines</h3>
-                    <form @submit.prevent="importMedicines">
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">CSV File</label>
-                            <input ref="fileInput"
-                                   type="file"
-                                   accept=".csv,.xlsx,.xls"
+        <!-- API Modal -->
+        <div v-if="showApiModal" class="fixed inset-0 z-[9999]">
+            <div class="absolute inset-0 bg-black/70" @click="closeApiModal"></div>
+            <div class="absolute inset-0 flex items-stretch p-0 md:p-4">
+                <div class="w-full bg-white md:rounded-lg shadow-2xl flex flex-col">
+                    <div class="px-4 md:px-6 py-4 border-b flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-900">Search Medicine From API</h3>
+                        <button @click="closeApiModal" class="text-gray-500 hover:text-gray-700">✖</button>
+                    </div>
+                    <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-6 p-4 md:p-6">
+                        <div class="md:col-span-1 border-r md:border-r-0 md:border-b pb-4 md:pb-0">
+                            <input v-model="apiSearch" @input="debouncedApiSearch" type="text" placeholder="Type a medicine name..."
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <div v-if="apiSearchLoading" class="text-sm text-gray-500 mt-1">Searching...</div>
+                            <div v-if="apiResults.length" class="mt-2 max-h-[60vh] overflow-y-auto border rounded">
+                                <div v-for="res in apiResults" :key="res.link" @click="selectApiResult(res)"
+                                     class="px-3 py-2 cursor-pointer hover:bg-gray-100 flex items-center gap-3">
+                                    <img v-if="res.img" :src="res.img" alt="" class="w-8 h-8 object-contain"/>
+                                    <div>
+                                        <div class="font-medium">{{ res.name }}</div>
+                                        <div class="text-xs text-gray-500">{{ res.form }} • {{ res.strength }}</div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div v-else-if="apiSearch && !apiSearchLoading" class="mt-2 text-sm text-gray-500">No results</div>
                         </div>
-                        <div class="flex justify-end space-x-2">
-                            <button type="button"
-                                    @click="showImportModal = false"
-                                    class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                                Cancel
-                            </button>
-                            <button type="submit"
-                                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                Import
-                            </button>
+                        <div class="md:col-span-2">
+                            <div v-if="apiDetails" class="space-y-3 max-h-[85vh] overflow-y-auto pr-2">
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <div class="text-xl font-semibold">{{ apiDetails.name }}</div>
+                                        <div class="text-sm text-gray-600">{{ apiDetails.generic }} • {{ apiDetails.form }} • {{ apiDetails.strength }}</div>
+                                        <div class="text-sm text-gray-600">{{ apiDetails.manufacturer }}</div>
+                                    </div>
+                                    <template v-if="!apiDetails.exists">
+                                        <button @click="saveFromApi" :disabled="savingApi" class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded">
+                                            {{ savingApi ? 'Saving...' : 'Save to Database' }}
+                                        </button>
+                                    </template>
+                                    <template v-else>
+                                        <span class="inline-flex items-center px-3 py-2 rounded bg-green-100 text-green-800 text-sm font-medium">Already added</span>
+                                    </template>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <div class="text-gray-500">Therapeutic Class</div>
+                                        <div>{{ apiDetails.therapeutic_class || '—' }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-gray-500">Unit Price</div>
+                                        <div>{{ apiDetails.unit_price || '—' }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-gray-500">Pack Size</div>
+                                        <div>{{ apiDetails.pack_size || '—' }}</div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="text-gray-700 font-medium mb-1">Indications</div>
+                                    <div class="text-sm whitespace-pre-line">{{ apiDetails.indications || '—' }}</div>
+                                </div>
+                                <div>
+                                    <div class="text-gray-700 font-medium mb-1">Dosage</div>
+                                    <div class="prose max-w-none" v-html="apiDetails.dosage"></div>
+                                </div>
+                                <div>
+                                    <div class="text-gray-700 font-medium mb-1">Precautions</div>
+                                    <div class="text-sm whitespace-pre-line">{{ apiDetails.precautions || '—' }}</div>
+                                </div>
+                            </div>
+                            <div v-else>
+                                <div v-if="apiDetailsLoading" class="flex items-center gap-2 text-sm text-gray-500">
+                                    <svg class="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                    </svg>
+                                    <span>Loading...</span>
+                                </div>
+                                <div v-else class="text-sm text-gray-500">Select a result to view details.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Import Modal -->
+        <div v-if="showImportModal" class="fixed inset-0 z-[9999]">
+            <!-- Backdrop -->
+            <div class="absolute inset-0 bg-black/60" @click="closeImportModal"></div>
+            <!-- Dialog -->
+            <div class="absolute inset-0 flex items-center justify-center p-4 overflow-y-auto">
+                <div class="w-full max-w-2xl bg-white rounded-lg shadow-2xl">
+                    <div class="px-6 py-4 border-b flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-900">Import Medicines from CSV</h3>
+                        <button @click="closeImportModal" class="text-gray-500 hover:text-gray-700">✖</button>
+                    </div>
+
+                    <form @submit.prevent="importMedicines" enctype="multipart/form-data">
+                        <div class="px-6 py-5 space-y-4">
+                            <div class="text-sm text-gray-600">
+                                Required columns (order not important):
+                                <div class="mt-1 flex flex-wrap gap-2">
+                                    <span v-for="h in requiredHeaders" :key="h" class="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-gray-800">{{ h }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Dropzone -->
+                            <label class="block">
+                                <span class="block text-sm font-medium text-gray-700 mb-2">CSV File</span>
+                                <div class="border-2 border-dashed rounded-md px-4 py-8 text-center cursor-pointer hover:border-blue-400"
+                                     @dragover.prevent
+                                     @drop.prevent="onDrop">
+                                    <input ref="fileInput" name="file" type="file" accept=".csv,.xlsx,.xls" class="hidden" @change="onFileChange">
+                                    <div v-if="!selectedFile" class="text-gray-500">
+                                        <p>Drag and drop your .csv here, or
+                                            <span class="text-blue-600 hover:underline" @click.prevent="triggerFile">browse</span>
+                                        </p>
+                                        <p class="text-xs mt-1">Max 5MB. Only .csv supported.</p>
+                                    </div>
+                                    <div v-else class="text-left">
+                                        <p class="font-medium">Selected: {{ selectedFile.name }}</p>
+                                        <p class="text-xs text-gray-500">{{ (selectedFile.size/1024).toFixed(1) }} KB</p>
+                                    </div>
+                                </div>
+                            </label>
+
+                            <!-- Validation -->
+                            <div v-if="csvErrors.length" class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li v-for="(err, idx) in csvErrors" :key="idx">{{ err }}</li>
+                                </ul>
+                            </div>
+
+                            <div class="pt-2">
+                                <div class="mb-3">
+                                    <button type="button" @click="downloadSampleCsv" class="text-blue-600 hover:underline">
+                                        Download sample.csv
+                                    </button>
+                                </div>
+                                <div class="flex items-center justify-end gap-2">
+                                    <button type="button"
+                                            @click="closeImportModal"
+                                            :disabled="isImporting"
+                                            class="bg-gray-500 hover:bg-gray-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded">
+                                        Cancel
+                                    </button>
+                                    <button type="submit"
+                                            :disabled="isImporting || !selectedFile || csvErrors.length > 0"
+                                            class="bg-blue-500 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded inline-flex items-center">
+                                        <svg v-if="isImporting" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                        </svg>
+                                        <span>{{ isImporting ? 'Importing...' : 'Import' }}</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -234,6 +380,24 @@ const categoryFilter = ref('')
 const manufacturerFilter = ref('')
 const showImportModal = ref(false)
 const fileInput = ref(null)
+const selectedFile = ref(null)
+const csvErrors = ref([])
+const isImporting = ref(false)
+// API modal state
+const showApiModal = ref(false)
+const apiSearch = ref('')
+const apiResults = ref([])
+const apiSearchLoading = ref(false)
+const apiDetails = ref(null)
+const savingApi = ref(false)
+const apiDetailsLoading = ref(false)
+const requiredHeaders = [
+    'name',
+    'generic_name',
+    'category',
+    'manufacturer',
+    'price'
+]
 
 // Formatted categories for SearchableSelect
 const categoryOptions = computed(() => {
@@ -320,14 +484,218 @@ const deleteMedicine = (id) => {
     })
 }
 
-const importMedicines = () => {
-    const formData = new FormData()
-    formData.append('file', fileInput.value.files[0])
+const triggerFile = () => fileInput.value?.click()
 
+const closeImportModal = () => {
+    showImportModal.value = false
+    selectedFile.value = null
+    csvErrors.value = []
+    if (fileInput.value) fileInput.value.value = ''
+}
+
+const onDrop = async (e) => {
+    const file = e.dataTransfer.files?.[0]
+    if (file) await handleSelectedFile(file)
+}
+
+const onFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (file) await handleSelectedFile(file)
+}
+
+const handleSelectedFile = async (file) => {
+    selectedFile.value = file
+    csvErrors.value = []
+    const isCsv = /\.csv$/i.test(file.name)
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name)
+    if (!isCsv && !isExcel) {
+        csvErrors.value.push('Only .csv, .xlsx, .xls files are supported')
+        return
+    }
+    // For Excel files, skip client-side header validation (server will parse)
+    if (isExcel) return
+    // Read first line to validate headers for CSV only
+    try {
+        const text = await file.text()
+        const firstLine = text.split(/\r?\n/).find(l => l.trim().length)
+        if (!firstLine) {
+            csvErrors.value.push('CSV appears to be empty')
+            return
+        }
+        const headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, '')).map(h => h.toLowerCase())
+        for (const h of requiredHeaders) {
+            if (!headers.includes(h)) {
+                csvErrors.value.push(`Missing required column: ${h}`)
+            }
+        }
+    } catch (e) {
+        csvErrors.value.push('Unable to read the CSV file')
+    }
+}
+
+const downloadSampleCsv = () => {
+    const rows = [
+        requiredHeaders.join(','),
+        'Paracetamol,Acetaminophen,Pain Relief,ACME Pharma,3.50',
+        'Amoxicillin,Amoxicillin,Antibiotics,HealthCorp,5.75'
+    ]
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'sample_medicines.csv'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+}
+
+const importMedicines = () => {
+    if (!selectedFile.value) return
+    if (csvErrors.value.length > 0) return
+    const formData = new FormData()
+    // Include filename to preserve extension for Laravel's mimes validator
+    formData.append('file', selectedFile.value, selectedFile.value.name)
+
+    isImporting.value = true
     router.post(route('medicines.import'), formData, {
         onSuccess: () => {
-            showImportModal.value = false
-        }
+            closeImportModal()
+        },
+        onError: (errors) => {
+            // Surface backend validation errors inside the modal
+            csvErrors.value = []
+            if (errors && typeof errors === 'object') {
+                if (errors.file) csvErrors.value.push(errors.file)
+                for (const [key, val] of Object.entries(errors)) {
+                    if (key !== 'file' && val) csvErrors.value.push(String(val))
+                }
+            }
+        },
+        onFinish: () => {
+            isImporting.value = false
+        },
+        forceFormData: true
     })
+}
+
+// API modal methods
+const openApiModal = () => {
+    showApiModal.value = true
+    apiSearch.value = ''
+    apiResults.value = []
+    apiDetails.value = null
+}
+const closeApiModal = () => {
+    showApiModal.value = false
+}
+
+let apiSearchTimeout = null
+const debouncedApiSearch = () => {
+    clearTimeout(apiSearchTimeout)
+    apiDetails.value = null
+    if (!apiSearch.value || apiSearch.value.length < 2) {
+        apiResults.value = []
+        return
+    }
+    apiSearchTimeout = setTimeout(async () => {
+        apiSearchLoading.value = true
+        try {
+            const res = await fetch(`${route('api.medex.search')}?q=${encodeURIComponent(apiSearch.value)}`)
+            apiResults.value = await res.json()
+        } catch (e) {
+            apiResults.value = []
+        } finally {
+            apiSearchLoading.value = false
+        }
+    }, 350)
+}
+
+const selectApiResult = async (res) => {
+    apiDetails.value = null
+    apiDetailsLoading.value = true
+    try {
+        const url = `${route('api.medex.product')}?url=${encodeURIComponent(res.link)}`
+        const r = await fetch(url)
+        apiDetails.value = await r.json()
+        // keep reference to medex info
+        apiDetails.value._medex = { id: res.link, name: res.name }
+    } catch {}
+    finally {
+        apiDetailsLoading.value = false
+    }
+}
+
+const saveFromApi = async () => {
+    if (!apiDetails.value) return
+    savingApi.value = true
+    try {
+        const link = apiDetails.value._medex?.id || ''
+        // Extract medex_id and medex_name from URL like /brands/{id}/{slug}
+        let medexId = null
+        let medexName = null
+        try {
+            const u = new URL(link)
+            const parts = u.pathname.split('/').filter(Boolean)
+            const idx = parts.indexOf('brands')
+            if (idx !== -1 && parts[idx+1]) {
+                medexId = parts[idx+1]
+                medexName = parts[idx+2] || null
+            }
+        } catch {}
+
+        const parsePrice = (s) => {
+            if (!s) return null
+            const m = String(s).replace(/[^0-9.,]/g, '').replace(/,/g, '')
+            const n = parseFloat(m)
+            return isNaN(n) ? null : n
+        }
+        const numericPrice = apiDetails.value.numeric_unit_price ?? apiDetails.value.numeric_strip_price ?? parsePrice(apiDetails.value.unit_price) ?? parsePrice(apiDetails.value.strip_price)
+
+        const payload = {
+            name: apiDetails.value.name,
+            manufacturer: apiDetails.value.manufacturer,
+            category: apiDetails.value.therapeutic_class || null,
+            generic_name: apiDetails.value.generic,
+            strength: apiDetails.value.strength,
+            price: numericPrice,
+            medex_id: medexId,
+            medex_name: medexName,
+        }
+        const res = await fetch(route('api.medicines.storeExternal'), {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        const data = await res.json()
+        if (data.status === 'created' || data.status === 'duplicate') {
+            closeApiModal()
+            router.visit(route('medicines.index'))
+        }
+    } finally {
+        savingApi.value = false
+    }
+}
+
+// Open MedEx details from existing medicine row
+const openMedexDetailsForMedicine = async (medicine) => {
+    showApiModal.value = true
+    apiSearch.value = ''
+    apiResults.value = []
+    apiDetails.value = null
+    apiDetailsLoading.value = true
+    try {
+        const medexUrl = `https://medex.com.bd/brands/${medicine.medex_id}/${medicine.medex_name}`
+        const url = `${route('api.medex.product')}?url=${encodeURIComponent(medexUrl)}`
+        const r = await fetch(url)
+        apiDetails.value = await r.json()
+        apiDetails.value._medex = { id: medexUrl, name: medicine.name }
+    } finally {
+        apiDetailsLoading.value = false
+    }
 }
 </script>

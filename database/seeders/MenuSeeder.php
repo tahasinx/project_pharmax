@@ -79,7 +79,7 @@ class MenuSeeder extends Seeder
             [
                 'name' => 'Purchases',
                 'route' => 'purchases.index',
-                'icon' => '📦',
+                'icon' => '🧾',
                 'order' => 7,
                 'is_active' => true,
                 'permission' => 'manage-purchases',

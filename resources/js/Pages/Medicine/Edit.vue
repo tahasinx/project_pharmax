@@ -143,15 +143,42 @@
                             </div>
 
                             <!-- Form Actions -->
-                            <div class="mt-8 flex justify-end space-x-4">
-                                <Link :href="route('medicines.show', medicine.id)"
-                                      class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                                    Cancel
-                                </Link>
-                                <button type="submit"
-                                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                    Update Medicine
-                                </button>
+                            <div class="mt-8">
+                                <div class="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <h3 class="text-sm font-medium text-green-800">
+                                                Code Management
+                                            </h3>
+                                            <div class="mt-2 text-sm text-green-700">
+                                                <p>Codes will be auto-generated if missing. Use the "Generate Codes" button to customize or regenerate codes.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-between">
+                                    <Link :href="route('medicines.codes', medicine.id)"
+                                          class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                                        Generate Codes
+                                    </Link>
+
+                                    <div class="flex space-x-4">
+                                        <Link :href="route('medicines.show', medicine.id)"
+                                              class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                                            Cancel
+                                        </Link>
+                                        <button type="submit"
+                                                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                            Update Medicine
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

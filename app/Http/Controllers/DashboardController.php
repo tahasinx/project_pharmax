@@ -25,9 +25,11 @@ class DashboardController extends Controller
             'todays_purchases'   => Purchase::whereDate('purchase_date', $today)->sum('grand_total'),
         ];
 
-        // Get best selling products (simplified)
+        // Get best selling products based on actual sales data
         $bestSellingProducts = Medicine::with(['category', 'manufacturer'])
-            ->where('status', true)
+            ->whereHas('invoiceItems') // Only medicines that have been sold
+            ->withCount('invoiceItems as sales_count')
+            ->orderBy('sales_count', 'desc')
             ->take(12)
             ->get();
 

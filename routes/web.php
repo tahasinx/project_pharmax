@@ -54,8 +54,8 @@ Route::middleware('auth')->group(function () {
     // Medicine Routes
     Route::resource('medicines', MedicineController::class);
     Route::post('medicines/import', [MedicineController::class, 'import'])->name('medicines.import');
-    Route::get('medicines/{medicine}/barcode', [MedicineController::class, 'generateBarcode'])->name('medicines.barcode');
-    Route::get('medicines/{medicine}/qrcode', [MedicineController::class, 'generateQrCode'])->name('medicines.qrcode');
+    Route::get('medicines/{medicine}/codes', [MedicineController::class, 'generateCodes'])->name('medicines.codes');
+    Route::post('medicines/{medicine}/codes/save', [MedicineController::class, 'saveCodes'])->name('medicines.codes.save');
 
     // Customer Routes
     Route::resource('customers', CustomerController::class);
@@ -88,6 +88,11 @@ Route::middleware('auth')->group(function () {
 
     // User Management Routes
     Route::resource('users', UserController::class);
+
+    // External medicine save API and MedEx proxies
+    Route::post('api/medicines/store-external', [MedicineController::class, 'storeExternal'])->name('api.medicines.storeExternal');
+    Route::get('api/medex/search', [MedicineController::class, 'medexSearch'])->name('api.medex.search');
+    Route::get('api/medex/product', [MedicineController::class, 'medexProduct'])->name('api.medex.product');
 
     // Menu Management Routes
     Route::resource('menus', MenuController::class);
