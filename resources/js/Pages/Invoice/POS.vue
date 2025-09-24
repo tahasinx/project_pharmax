@@ -54,6 +54,11 @@
                             </div>
                         </div>
 
+                        <!-- Error Banner -->
+                        <div v-if="submitError" class="mb-4 p-3 rounded border border-red-200 bg-red-50 text-red-700">
+                            {{ submitError }}
+                        </div>
+
                         <!-- Product Search -->
                         <div class="bg-white shadow-sm sm:rounded-lg mb-6">
                             <div class="p-6">
@@ -261,6 +266,7 @@ const productSearchResults = ref([])
 const productSearchInput = ref(null)
 const cartItems = ref([])
 const discountAmount = ref(0)
+const submitError = ref('')
 
 const form = ref({
     customer_id: null,
@@ -375,6 +381,7 @@ const removeItem = (index) => {
 }
 
 const processSale = () => {
+    submitError.value = ''
     form.value.items = cartItems.value.map(item => ({
         medicine_id: item.medicine_id,
         quantity: item.quantity,
@@ -383,9 +390,11 @@ const processSale = () => {
         batch_id: 'BATCH001' // Default batch
     }))
 
-    form.value.total_amount = total.value
-    form.value.total_tax = tax.value
-    form.value.total_discount = discount.value
+    form.value.total_amount = Number(total.value)
+    form.value.total_tax = Number(tax.value)
+    form.value.total_discount = Number(discount.value)
+    // Ensure due amount is correct on submit
+    form.value.due_amount = Number((Number(total.value) - Number(form.value.paid_amount)).toFixed(2))
 
     router.post(route('invoices.store'), form.value, {
         onSuccess: () => {
@@ -396,6 +405,18 @@ const processSale = () => {
             discountAmount.value = 0
             form.value.paid_amount = 0
             form.value.due_amount = 0
+        }
+        ,
+        onError: (errors) => {
+            // Prefer specific items error; otherwise show first error message
+            if (errors && errors.items && Array.isArray(errors.items) && errors.items.length > 0) {
+                submitError.value = errors.items[0]
+            } else if (errors) {
+                const first = Object.values(errors)[0]
+                submitError.value = Array.isArray(first) ? first[0] : String(first)
+            } else {
+                submitError.value = 'An error occurred while processing the sale.'
+            }
         }
     })
 }

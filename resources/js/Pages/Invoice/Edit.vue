@@ -143,7 +143,7 @@
                                             </div>
                                             <div class="flex items-center space-x-4">
                                                 <div class="flex items-center space-x-2">
-                                                    <button @click="decreaseQuantity(index)"
+                                                    <button type="button" @click="decreaseQuantity(index)"
                                                             class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
                                                         -
                                                     </button>
@@ -152,7 +152,7 @@
                                                            type="number"
                                                            min="1"
                                                            class="w-16 px-2 py-1 border border-gray-300 rounded text-center">
-                                                    <button @click="increaseQuantity(index)"
+                                                    <button type="button" @click="increaseQuantity(index)"
                                                             class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
                                                         +
                                                     </button>

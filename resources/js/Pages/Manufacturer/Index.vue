@@ -23,6 +23,8 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
                                 <input v-model="search"
+                                       @keyup.enter="applyFilters"
+                                       @input="debounceSearch"
                                        type="text"
                                        placeholder="Search manufacturers..."
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -30,6 +32,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                                 <select v-model="statusFilter"
+                                        @change="applyFilters"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     <option value="">All Manufacturers</option>
                                     <option value="1">Active</option>
@@ -49,7 +52,7 @@
                 <!-- Manufacturer List -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <div v-if="manufacturers.length === 0" class="text-center py-8 text-gray-500">
+                        <div v-if="manufacturers.data.length === 0" class="text-center py-8 text-gray-500">
                             No manufacturers found
                         </div>
                         <div v-else class="overflow-x-auto">
@@ -75,7 +78,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr v-for="manufacturer in filteredManufacturers" :key="manufacturer.id">
+                                    <tr v-for="manufacturer in manufacturers.data" :key="manufacturer.id">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div>
                                                 <div class="text-sm font-medium text-gray-900">{{ manufacturer.name }}</div>
@@ -118,6 +121,32 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        <!-- Pagination -->
+                        <div v-if="manufacturers.data.length > 0" class="mt-6 flex items-center justify-between">
+                            <div class="text-sm text-gray-700">
+                                Showing {{ manufacturers.from }} to {{ manufacturers.to }} of {{ manufacturers.total }} results
+                            </div>
+                            <div class="flex space-x-2">
+                                <Link v-if="manufacturers.prev_page_url"
+                                      :href="manufacturers.prev_page_url"
+                                      class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                                    Previous
+                                </Link>
+                                <span v-else class="px-3 py-2 text-sm font-medium text-gray-400 bg-gray-100 border border-gray-300 rounded-md cursor-not-allowed">
+                                    Previous
+                                </span>
+
+                                <Link v-if="manufacturers.next_page_url"
+                                      :href="manufacturers.next_page_url"
+                                      class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                                    Next
+                                </Link>
+                                <span v-else class="px-3 py-2 text-sm font-medium text-gray-400 bg-gray-100 border border-gray-300 rounded-md cursor-not-allowed">
+                                    Next
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -131,34 +160,39 @@ import { Link, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 
 const props = defineProps({
-    manufacturers: Array
+    manufacturers: Object, // Paginated data
+    filters: Object
 })
 
-const search = ref('')
-const statusFilter = ref('')
+const search = ref(props.filters.search || '')
+const statusFilter = ref(props.filters.status || '')
 
-const filteredManufacturers = computed(() => {
-    let filtered = props.manufacturers
-
-    if (search.value) {
-        const searchLower = search.value.toLowerCase()
-        filtered = filtered.filter(manufacturer =>
-            manufacturer.name.toLowerCase().includes(searchLower) ||
-            (manufacturer.email && manufacturer.email.toLowerCase().includes(searchLower)) ||
-            (manufacturer.mobile && manufacturer.mobile.toLowerCase().includes(searchLower))
-        )
-    }
-
-    if (statusFilter.value !== '') {
-        filtered = filtered.filter(manufacturer => manufacturer.status == statusFilter.value)
-    }
-
-    return filtered
-})
+const applyFilters = () => {
+    router.get(route('manufacturers.index'), {
+        search: search.value,
+        status: statusFilter.value
+    }, {
+        preserveState: true,
+        replace: true
+    })
+}
 
 const clearFilters = () => {
     search.value = ''
     statusFilter.value = ''
+    router.get(route('manufacturers.index'), {}, {
+        preserveState: true,
+        replace: true
+    })
+}
+
+// Debounce search
+let searchTimeout = null
+const debounceSearch = () => {
+    clearTimeout(searchTimeout)
+    searchTimeout = setTimeout(() => {
+        applyFilters()
+    }, 500)
 }
 
 const deleteManufacturer = (id) => {

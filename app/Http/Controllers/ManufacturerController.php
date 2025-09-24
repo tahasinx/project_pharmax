@@ -3,17 +3,38 @@
 namespace App\Http\Controllers;
 
 use App\Models\Manufacturer;
+use App\Traits\HasSettingsPagination;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ManufacturerController extends Controller
 {
-    public function index()
+    use HasSettingsPagination;
+    public function index(Request $request)
     {
-        $manufacturers = Manufacturer::withCount('medicines')->get();
+        $query = Manufacturer::withCount('medicines');
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('mobile', 'like', "%{$search}%");
+            });
+        }
+
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $itemsPerPage = $this->getItemsPerPage();
+        $manufacturers = $query->orderBy('name')->paginate($itemsPerPage);
 
         return Inertia::render('Manufacturer/Index', [
             'manufacturers' => $manufacturers,
+            'filters' => $request->only(['search', 'status']),
         ]);
     }
 

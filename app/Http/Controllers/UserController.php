@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Traits\HasSettingsPagination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
@@ -11,6 +12,8 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
+    use HasSettingsPagination;
+
     public function __construct()
     {
         $this->middleware('permission:manage-users');
@@ -18,7 +21,8 @@ class UserController extends Controller
 
     public function index()
     {
-        $users = User::with('roles')->paginate(15);
+        $itemsPerPage = $this->getItemsPerPage();
+        $users = User::with('roles')->paginate($itemsPerPage);
 
         return Inertia::render('User/Index', [
             'users' => $users,

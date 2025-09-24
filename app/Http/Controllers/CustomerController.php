@@ -3,18 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Traits\HasSettingsPagination;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class CustomerController extends Controller
 {
+    use HasSettingsPagination;
+
     public function __construct()
     {
         $this->middleware('permission:manage-customers');
     }
     public function index()
     {
-        $customers = Customer::orderBy('created_at', 'desc')->paginate(15);
+        $itemsPerPage = $this->getItemsPerPage();
+        $customers = Customer::orderBy('created_at', 'desc')->paginate($itemsPerPage);
 
         return Inertia::render('Customer/Index', [
             'customers' => $customers,

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Manufacturer;
 use App\Models\Medicine;
+use App\Traits\HasSettingsPagination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -14,9 +15,12 @@ use App\Imports\MedicineImport;
 
 class MedicineController extends Controller
 {
+    use HasSettingsPagination;
+
     public function index()
     {
-        $medicines     = Medicine::with(['category', 'manufacturer'])->paginate(15);
+        $itemsPerPage = $this->getItemsPerPage();
+        $medicines     = Medicine::with(['category', 'manufacturer'])->paginate($itemsPerPage);
         $categories    = Category::where('status', true)->get();
         $manufacturers = Manufacturer::where('status', true)->get();
 

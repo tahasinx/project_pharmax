@@ -23,13 +23,12 @@
             <div class="p-8 border-b">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-800 mb-2">PharmaCare</h1>
+                        <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ $page.props.ui.company_name }}</h1>
                         <p class="text-gray-600">Modern Pharmacy Management System</p>
                         <div class="mt-4 text-sm text-gray-600">
-                            <p>123 Pharmacy Street</p>
-                            <p>Medical City, MC 12345</p>
-                            <p>Phone: (555) 123-4567</p>
-                            <p>Email: info@pharmacare.com</p>
+                            <p>{{ $page.props.ui.company_address }}</p>
+                            <p>Phone: {{ $page.props.ui.company_phone }}</p>
+                            <p>Email: {{ $page.props.ui.company_email }}</p>
                         </div>
                     </div>
                     <div class="text-right">
@@ -167,18 +166,13 @@
 
 <script setup>
 import { Link } from '@inertiajs/vue3'
+import { useDateFormat } from '@/Composables/useDateFormat'
 
 const props = defineProps({
     invoice: Object
 })
 
-const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    })
-}
+const { formatDate } = useDateFormat()
 
 const printInvoice = () => {
     window.print()

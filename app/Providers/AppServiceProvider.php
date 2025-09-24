@@ -21,11 +21,30 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Share UI settings (including currency) with Inertia
+        // Share UI settings (including currency, tax, company info, and date format) with Inertia
         $uiSettings = [
             'currency_symbol'   => '$',
             'currency_position' => 'before',
+            'default_tax_rate'  => 10,
+            'date_format'       => 'Y-m-d',
+            'company_name'      => config('app.name', 'PharmaCare'),
+            'company_email'     => 'info@pharmacare.com',
+            'company_phone'     => '+1 (555) 123-4567',
+            'company_address'   => '123 Pharmacy Street, Medical City',
         ];
+
+        // Load company info from database
+        try {
+            $setting = \App\Models\Setting::first();
+            if ($setting) {
+                $uiSettings['company_name'] = $setting->title ?? $uiSettings['company_name'];
+                $uiSettings['company_email'] = $setting->email ?? $uiSettings['company_email'];
+                $uiSettings['company_phone'] = $setting->phone ?? $uiSettings['company_phone'];
+                $uiSettings['company_address'] = $setting->address ?? $uiSettings['company_address'];
+            }
+        } catch (\Throwable $e) {
+            // noop: fallback defaults
+        }
 
         try {
             if (Storage::exists('settings.json')) {
@@ -34,6 +53,8 @@ class AppServiceProvider extends ServiceProvider
                     $uiSettings = array_replace($uiSettings, [
                         'currency_symbol'   => $json['currency_symbol']   ?? $uiSettings['currency_symbol'],
                         'currency_position' => $json['currency_position'] ?? $uiSettings['currency_position'],
+                        'default_tax_rate'  => $json['default_tax_rate']  ?? $uiSettings['default_tax_rate'],
+                        'date_format'       => $json['date_format']       ?? $uiSettings['date_format'],
                     ]);
                 }
             }
@@ -44,6 +65,12 @@ class AppServiceProvider extends ServiceProvider
         Inertia::share('ui', [
             'currency_symbol'   => $uiSettings['currency_symbol'],
             'currency_position' => $uiSettings['currency_position'],
+            'default_tax_rate'  => $uiSettings['default_tax_rate'],
+            'date_format'       => $uiSettings['date_format'],
+            'company_name'      => $uiSettings['company_name'],
+            'company_email'     => $uiSettings['company_email'],
+            'company_phone'     => $uiSettings['company_phone'],
+            'company_address'   => $uiSettings['company_address'],
         ]);
     }
 }

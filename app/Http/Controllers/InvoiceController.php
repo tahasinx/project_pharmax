@@ -8,18 +8,23 @@ use App\Models\InvoiceItem;
 use App\Models\Medicine;
 use App\Models\Stock;
 use App\Models\StockTransaction;
+use App\Traits\HasSettingsPagination;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class InvoiceController extends Controller
 {
+    use HasSettingsPagination;
+
     public function index()
     {
+        $itemsPerPage = $this->getItemsPerPage();
         $invoices = Invoice::with(['customer', 'user'])
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->paginate($itemsPerPage);
 
         return Inertia::render('Invoice/Index', [
             'invoices' => $invoices,
@@ -33,11 +38,13 @@ class InvoiceController extends Controller
             ->where('status', true)
             ->get();
         $invoiceNo = $this->generateInvoiceNumber();
+        $invoicePrefix = $this->getInvoicePrefix();
 
         return Inertia::render('Invoice/Create', [
             'customers' => $customers,
             'medicines' => $medicines,
             'invoiceNo' => $invoiceNo,
+            'invoicePrefix' => $invoicePrefix,
         ]);
     }
 
@@ -58,16 +65,21 @@ class InvoiceController extends Controller
             'items.*.rate'          => 'required|numeric|min:0',
         ]);
 
+        // Recalculate due on server for accuracy and safety
+        $totalAmount = (float) ($request->total_amount ?? 0);
+        $paidAmount  = (float) ($request->paid_amount ?? 0);
+        $dueAmount   = max(round($totalAmount - $paidAmount, 2), 0);
+
         $invoice = Invoice::create([
             'invoice_id'         => $this->generateInvoiceId(),
             'customer_id'        => $request->customer_id,
             'date'               => $request->date,
             'invoice_no'         => $request->invoice_no,
-            'total_amount'       => $request->total_amount,
+            'total_amount'       => $totalAmount,
             'total_tax'          => $request->total_tax ?? 0,
             'previous_due'       => $request->previous_due ?? 0,
-            'paid_amount'        => $request->paid_amount ?? 0,
-            'due_amount'         => $request->due_amount ?? 0,
+            'paid_amount'        => $paidAmount,
+            'due_amount'         => $dueAmount,
             'total_discount'     => $request->total_discount ?? 0,
             'invoice_discount'   => $request->invoice_discount ?? 0,
             'user_id'            => auth()->id(),
@@ -129,9 +141,17 @@ class InvoiceController extends Controller
                     }
                 }
 
-                // If not enough stock available, throw exception
+                // If not enough stock available, return a validation error
                 if ($remainingQuantity > 0) {
-                    throw new \Exception("Insufficient stock for medicine ID: {$item['medicine_id']}. Required: {$item['quantity']}, Available: " . ($item['quantity'] - $remainingQuantity));
+                    $medicine = Medicine::find($item['medicine_id']);
+                    $available = $item['quantity'] - $remainingQuantity;
+                    $message = 'Insufficient stock';
+                    if ($medicine) {
+                        $message = "Insufficient stock for {$medicine->name}. Required: {$item['quantity']}, Available: {$available}";
+                    }
+                    throw ValidationException::withMessages([
+                        'items' => [$message],
+                    ]);
                 }
             }
         });
@@ -279,7 +299,38 @@ class InvoiceController extends Controller
 
     private function generateInvoiceNumber()
     {
+        try {
+            $settings = \Illuminate\Support\Facades\Storage::get('settings.json');
+            if ($settings) {
+                $decoded = json_decode($settings, true);
+                $nextNumber = $decoded['next_invoice_number'] ?? 1000;
+
+                // Update the next invoice number for next time
+                $decoded['next_invoice_number'] = $nextNumber + 1;
+                \Illuminate\Support\Facades\Storage::put('settings.json', json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+                return $nextNumber;
+            }
+        } catch (\Exception $e) {
+            // Fallback to default behavior
+        }
+
         $lastInvoice = Invoice::orderBy('id', 'desc')->first();
         return $lastInvoice ? $lastInvoice->invoice_no + 1 : 1000;
+    }
+
+    private function getInvoicePrefix()
+    {
+        try {
+            $settings = \Illuminate\Support\Facades\Storage::get('settings.json');
+            if ($settings) {
+                $decoded = json_decode($settings, true);
+                return $decoded['invoice_prefix'] ?? 'INV';
+            }
+        } catch (\Exception $e) {
+            // Fallback to default
+        }
+
+        return 'INV'; // Default prefix
     }
 }

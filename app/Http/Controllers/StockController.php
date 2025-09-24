@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Stock;
 use App\Models\Medicine;
+use App\Traits\HasSettingsPagination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class StockController extends Controller
 {
+    use HasSettingsPagination;
+
     public function __construct()
     {
         // $this->middleware('permission:manage-medicines');
@@ -17,10 +20,11 @@ class StockController extends Controller
 
     public function index()
     {
+        $itemsPerPage = $this->getItemsPerPage();
         $stocks = Stock::with('medicine.category', 'medicine.manufacturer')
             ->active()
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->paginate($itemsPerPage);
 
         $alerts = $this->getStockAlerts();
 

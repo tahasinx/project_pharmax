@@ -8,6 +8,7 @@ use App\Models\Purchase;
 use App\Models\PurchaseItem;
 use App\Models\Stock;
 use App\Models\StockTransaction;
+use App\Traits\HasSettingsPagination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -15,11 +16,14 @@ use Inertia\Inertia;
 
 class PurchaseController extends Controller
 {
+    use HasSettingsPagination;
+
     public function index()
     {
+        $itemsPerPage = $this->getItemsPerPage();
         $purchases = Purchase::with(['manufacturer', 'items.medicine'])
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->paginate($itemsPerPage);
 
         return Inertia::render('Purchase/Index', [
             'purchases' => $purchases,
