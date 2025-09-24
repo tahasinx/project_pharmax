@@ -71,7 +71,7 @@ const closeDropdowns = () => {
                                     </button>
 
                                     <div v-show="showingMoreDropdown"
-                                         class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                                         class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-[99999] border border-gray-200">
                                         <DropdownLink v-for="menu in secondaryMenus"
                                                       :key="menu.id"
                                                       :href="route(menu.route)"
