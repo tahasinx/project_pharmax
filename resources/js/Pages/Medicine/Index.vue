@@ -17,7 +17,7 @@
                     </button>
                     <button @click="openApiModal"
                             class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
-                        Search Medicine [Medex]
+                        Search Medicine [API]
                     </button>
                 </div>
             </div>
@@ -118,7 +118,7 @@
                                         <span class="block truncate" :title="medicine.manufacturer?.name">{{ medicine.manufacturer?.name }}</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        ${{ medicine.price }}
+                                        {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ medicine.price }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">

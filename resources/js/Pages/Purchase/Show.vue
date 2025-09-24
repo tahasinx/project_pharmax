@@ -97,13 +97,13 @@
                                                     {{ item.quantity }}
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    ${{ parseFloat(item.rate).toFixed(2) }}
+                                                    {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(item.rate).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    ${{ parseFloat(item.discount || 0).toFixed(2) }}
+                                                    {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(item.discount || 0).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    ${{ parseFloat(item.total_amount).toFixed(2) }}
+                                                    {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(item.total_amount).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -147,20 +147,20 @@
                                     <div class="space-y-2">
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Subtotal:</span>
-                                            <span class="font-medium">${{ (parseFloat(purchase.grand_total) - parseFloat(purchase.total_tax || 0)).toFixed(2) }}</span>
+                                            <span class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ (parseFloat(purchase.grand_total) - parseFloat(purchase.total_tax || 0)).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Tax:</span>
-                                            <span class="font-medium">${{ parseFloat(purchase.total_tax || 0).toFixed(2) }}</span>
+                                            <span class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(purchase.total_tax || 0).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Discount:</span>
-                                            <span class="font-medium">${{ parseFloat(purchase.total_discount || 0).toFixed(2) }}</span>
+                                            <span class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(purchase.total_discount || 0).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
                                         </div>
                                         <hr class="my-2">
                                         <div class="flex justify-between text-lg font-semibold">
                                             <span>Total:</span>
-                                            <span>${{ parseFloat(purchase.grand_total).toFixed(2) }}</span>
+                                            <span>{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(purchase.grand_total).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
                                         </div>
                                     </div>
                                 </div>

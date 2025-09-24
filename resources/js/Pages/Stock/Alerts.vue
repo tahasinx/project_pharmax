@@ -143,9 +143,9 @@
                                             {{ formatDate(stock.expiry_date) }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <span :class="getDaysLeftColor(stock.daysUntilExpiry())"
+                                            <span :class="getDaysLeftColor(daysUntilExpiry(stock.expiry_date))"
                                                   class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                                                {{ stock.daysUntilExpiry() }} days
+                                                {{ daysUntilExpiry(stock.expiry_date) }} days
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -220,7 +220,7 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                                {{ Math.abs(stock.daysUntilExpiry()) }} days
+                                                {{ Math.abs(daysUntilExpiry(stock.expiry_date)) }} days
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -262,5 +262,14 @@ const getDaysLeftColor = (days) => {
     if (days <= 7) return 'bg-red-100 text-red-800'
     if (days <= 15) return 'bg-orange-100 text-orange-800'
     return 'bg-yellow-100 text-yellow-800'
+}
+
+const daysUntilExpiry = (expiryDate) => {
+    if (!expiryDate) return 0
+    const today = new Date()
+    const expiry = new Date(expiryDate)
+    const diffTime = expiry - today
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays
 }
 </script>

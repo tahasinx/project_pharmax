@@ -104,17 +104,17 @@
                                             {{ formatDate(invoice.date) }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            ${{ parseFloat(invoice.total_amount).toFixed(2) }}
+                                            {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(invoice.total_amount).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            ${{ parseFloat(invoice.invoice_discount || 0).toFixed(2) }}
+                                            {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(invoice.invoice_discount || 0).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             ${{ parseFloat(invoice.paid_amount).toFixed(2) }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             <span :class="invoice.due_amount > 0 ? 'text-red-600' : 'text-green-600'">
-                                                ${{ parseFloat(invoice.due_amount).toFixed(2) }}
+                                                {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(invoice.due_amount).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">

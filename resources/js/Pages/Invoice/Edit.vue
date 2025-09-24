@@ -180,20 +180,20 @@
                                     <div class="space-y-3 mb-6">
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Subtotal:</span>
-                                            <span class="font-medium">${{ formatMoney(subtotal) }}</span>
+                                            <span class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ formatMoney(subtotal) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Tax (10%):</span>
-                                            <span class="font-medium">${{ formatMoney(tax) }}</span>
+                                            <span class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ formatMoney(tax) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Discount:</span>
-                                            <span class="font-medium">-${{ formatMoney(discount) }}</span>
+                                            <span class="font-medium">-{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ formatMoney(discount) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
                                         </div>
                                         <hr class="my-2">
                                         <div class="flex justify-between text-lg font-bold">
                                             <span>Total:</span>
-                                            <span>${{ formatMoney(total) }}</span>
+                                            <span>{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ formatMoney(total) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
                                         </div>
                                     </div>
 
@@ -316,9 +316,14 @@ const formatMoney = (val) => {
     return Number(n || 0).toFixed(2)
 }
 
-watch(() => form.value.paid_amount, (newValue) => {
-    const dueAmount = total.value - (Number(newValue) || 0)
-    form.value.due_amount = Math.round(dueAmount * 100) / 100 // Round to 2 decimal places
+const recomputeDue = () => {
+    const paid = Number(form.value.paid_amount) || 0
+    const dueAmount = total.value - paid
+    form.value.due_amount = Math.round(dueAmount * 100) / 100
+}
+
+watch([() => form.value.paid_amount, () => discountAmount.value, total], () => {
+    recomputeDue()
 })
 
 onMounted(() => {
@@ -377,6 +382,7 @@ const updateDiscount = () => {
     if (discountAmount.value < 0) {
         discountAmount.value = 0
     }
+    recomputeDue()
 }
 
 const searchProducts = async () => {

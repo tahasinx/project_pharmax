@@ -26,29 +26,20 @@ class ManufacturerController extends Controller
     {
         $request->validate([
             'name'    => 'required|string|max:255',
+            'address' => 'nullable|string',
             'mobile'  => 'nullable|string|max:20',
             'email'   => 'nullable|email|max:255',
-            'phone'   => 'nullable|string|max:20',
-            'fax'     => 'nullable|string|max:20',
-            'address' => 'nullable|string',
-            'city'    => 'nullable|string|max:100',
-            'state'   => 'nullable|string|max:100',
-            'zip'     => 'nullable|string|max:20',
-            'country' => 'nullable|string|max:100',
+            'details' => 'nullable|string',
+            'status'  => 'nullable|boolean',
         ]);
 
         Manufacturer::create([
-            'name'        => $request->name,
-            'mobile'      => $request->mobile,
-            'email'       => $request->email,
-            'phone'       => $request->phone,
-            'fax'         => $request->fax,
-            'address'     => $request->address,
-            'city'        => $request->city,
-            'state'       => $request->state,
-            'zip'         => $request->zip,
-            'country'     => $request->country,
-            'status'      => $request->status ?? true,
+            'name'    => $request->name,
+            'address' => $request->address,
+            'mobile'  => $request->mobile,
+            'email'   => $request->email,
+            'details' => $request->details,
+            'status'  => $request->status ?? true,
         ]);
 
         return redirect()->route('manufacturers.index')
@@ -75,29 +66,20 @@ class ManufacturerController extends Controller
     {
         $request->validate([
             'name'    => 'required|string|max:255',
+            'address' => 'nullable|string',
             'mobile'  => 'nullable|string|max:20',
             'email'   => 'nullable|email|max:255',
-            'phone'   => 'nullable|string|max:20',
-            'fax'     => 'nullable|string|max:20',
-            'address' => 'nullable|string',
-            'city'    => 'nullable|string|max:100',
-            'state'   => 'nullable|string|max:100',
-            'zip'     => 'nullable|string|max:20',
-            'country' => 'nullable|string|max:100',
+            'details' => 'nullable|string',
+            'status'  => 'nullable|boolean',
         ]);
 
         $manufacturer->update([
-            'name'        => $request->name,
-            'mobile'      => $request->mobile,
-            'email'       => $request->email,
-            'phone'       => $request->phone,
-            'fax'         => $request->fax,
-            'address'     => $request->address,
-            'city'        => $request->city,
-            'state'       => $request->state,
-            'zip'         => $request->zip,
-            'country'     => $request->country,
-            'status'      => $request->status ?? $manufacturer->status,
+            'name'    => $request->name,
+            'address' => $request->address,
+            'mobile'  => $request->mobile,
+            'email'   => $request->email,
+            'details' => $request->details,
+            'status'  => $request->status ?? $manufacturer->status,
         ]);
 
         return redirect()->route('manufacturers.index')

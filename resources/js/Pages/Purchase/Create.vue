@@ -82,7 +82,7 @@
                                                         <div class="text-sm text-gray-500">{{ product.generic_name }}</div>
                                                     </div>
                                                     <div class="text-right">
-                                                        <div class="font-medium">${{ parseFloat(product.price).toFixed(2) }}</div>
+                                                        <div class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(product.price).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</div>
                                                         <div class="text-sm text-gray-500">{{ product.category?.name }}</div>
                                                     </div>
                                                 </div>
@@ -127,7 +127,7 @@
                                                                    @input="updateItemTotal(index)">
                                                         </td>
                                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                            ${{ item.total.toFixed(2) }}
+                                                            {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ item.total.toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
                                                         </td>
                                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                             <button type="button"
@@ -151,20 +151,20 @@
                                         <div class="space-y-2">
                                             <div class="flex justify-between">
                                                 <span class="text-gray-600">Subtotal:</span>
-                                                <span class="font-medium">${{ subtotal.toFixed(2) }}</span>
+                                                <span class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ subtotal.toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
                                             </div>
                                             <div class="flex justify-between">
                                                 <span class="text-gray-600">Tax (10%):</span>
-                                                <span class="font-medium">${{ tax.toFixed(2) }}</span>
+                                                <span class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ tax.toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
                                             </div>
                                             <div class="flex justify-between">
                                                 <span class="text-gray-600">Discount:</span>
-                                                <span class="font-medium">${{ discount.toFixed(2) }}</span>
+                                                <span class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ discount.toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
                                             </div>
                                             <hr class="my-2">
                                             <div class="flex justify-between text-lg font-semibold">
                                                 <span>Total:</span>
-                                                <span>${{ total.toFixed(2) }}</span>
+                                                <span>{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ total.toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
                                             </div>
                                         </div>
 

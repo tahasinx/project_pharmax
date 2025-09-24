@@ -161,7 +161,7 @@
                                         <span v-else class="text-gray-400">N/A</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        ${{ parseFloat(stock.purchase_price || 0).toFixed(2) }}
+                                        {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(stock.purchase_price || 0).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span :class="getStatusColor(stock)"

@@ -46,41 +46,23 @@
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                                         <p class="text-sm text-gray-900">{{ manufacturer.email || 'Not provided' }}</p>
                                     </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                                        <p class="text-sm text-gray-900">{{ manufacturer.phone || 'Not provided' }}</p>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Fax</label>
-                                        <p class="text-sm text-gray-900">{{ manufacturer.fax || 'Not provided' }}</p>
-                                    </div>
+
+
                                 </div>
                             </div>
                         </div>
 
                         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                             <div class="p-6">
-                                <h3 class="text-lg font-medium text-gray-900 mb-4">Address Information</h3>
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">Address & Details</h3>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div class="md:col-span-2">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
                                         <p class="text-sm text-gray-900">{{ manufacturer.address || 'Not provided' }}</p>
                                     </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
-                                        <p class="text-sm text-gray-900">{{ manufacturer.city || 'Not provided' }}</p>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">State</label>
-                                        <p class="text-sm text-gray-900">{{ manufacturer.state || 'Not provided' }}</p>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">ZIP Code</label>
-                                        <p class="text-sm text-gray-900">{{ manufacturer.zip || 'Not provided' }}</p>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                                        <p class="text-sm text-gray-900">{{ manufacturer.country || 'Not provided' }}</p>
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Details</label>
+                                        <p class="text-sm text-gray-900">{{ manufacturer.details || 'Not provided' }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -165,7 +147,7 @@
                                                 {{ medicine.category?.name || 'N/A' }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                ${{ medicine.price }}
+                                                {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ medicine.price }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <span :class="medicine.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"

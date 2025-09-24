@@ -6,7 +6,10 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Medicine;
+use App\Models\Stock;
+use App\Models\StockTransaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -72,18 +75,66 @@ class InvoiceController extends Controller
             'payment_type'       => $request->payment_type,
         ]);
 
-        // Create invoice items
-        foreach ($request->items as $item) {
-            InvoiceItem::create([
-                'invoice_id'   => $invoice->id,
-                'medicine_id'  => $item['medicine_id'],
-                'batch_id'     => $item['batch_id'] ?? 'BATCH001',
-                'quantity'     => $item['quantity'],
-                'rate'         => $item['rate'],
-                'discount'     => $item['discount'] ?? 0,
-                'total_amount' => $item['quantity'] * $item['rate'] - ($item['discount'] ?? 0),
-            ]);
-        }
+        // Create invoice items and update stock
+        DB::transaction(function () use ($request, $invoice) {
+            foreach ($request->items as $item) {
+                $invoiceItem = InvoiceItem::create([
+                    'invoice_id'   => $invoice->id,
+                    'medicine_id'  => $item['medicine_id'],
+                    'batch_id'     => $item['batch_id'] ?? 'BATCH001',
+                    'quantity'     => $item['quantity'],
+                    'rate'         => $item['rate'],
+                    'discount'     => $item['discount'] ?? 0,
+                    'total_amount' => $item['quantity'] * $item['rate'] - ($item['discount'] ?? 0),
+                ]);
+
+                // Find and update stock (FIFO - First In, First Out)
+                $stocks = Stock::where('medicine_id', $item['medicine_id'])
+                    ->where('is_active', true)
+                    ->where('quantity', '>', 0)
+                    ->orderBy('expiry_date', 'asc') // FIFO by expiry date
+                    ->get();
+
+                $remainingQuantity = $item['quantity'];
+                $totalCost = 0;
+
+                foreach ($stocks as $stock) {
+                    if ($remainingQuantity <= 0) break;
+
+                    $deductQuantity = min($remainingQuantity, $stock->quantity);
+
+                    // Update stock quantity
+                    $stock->decrement('quantity', $deductQuantity);
+                    $remainingQuantity -= $deductQuantity;
+                    $totalCost += $deductQuantity * $stock->purchase_price;
+
+                    // Create stock transaction for sale
+                    StockTransaction::create([
+                        'stock_id' => $stock->id,
+                        'medicine_id' => $item['medicine_id'],
+                        'type' => 'sale',
+                        'quantity' => -$deductQuantity, // Negative for sale
+                        'unit_price' => $item['rate'],
+                        'total_amount' => $deductQuantity * $item['rate'],
+                        'invoice_id' => $invoice->id,
+                        'batch_number' => $stock->batch_number,
+                        'expiry_date' => $stock->expiry_date,
+                        'notes' => 'Stock sold via invoice',
+                        'user_id' => auth()->id(),
+                    ]);
+
+                    // If stock is depleted, mark as inactive
+                    if ($stock->quantity <= 0) {
+                        $stock->update(['is_active' => false]);
+                    }
+                }
+
+                // If not enough stock available, throw exception
+                if ($remainingQuantity > 0) {
+                    throw new \Exception("Insufficient stock for medicine ID: {$item['medicine_id']}. Required: {$item['quantity']}, Available: " . ($item['quantity'] - $remainingQuantity));
+                }
+            }
+        });
 
         return redirect()->route('invoices.show', $invoice)
             ->with('success', 'Invoice created successfully.');

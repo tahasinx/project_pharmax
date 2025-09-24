@@ -91,7 +91,7 @@
                                 </div>
                                 <div class="ml-4">
                                     <p class="text-sm font-medium text-gray-500">Stock Value</p>
-                                    <p class="text-2xl font-semibold text-gray-900">${{ formatCurrency(stats.total_stock_value) }}</p>
+                                    <p class="text-2xl font-semibold text-gray-900">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ formatCurrency(stats.total_stock_value) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</p>
                                 </div>
                             </div>
                         </div>
@@ -166,9 +166,9 @@
                                             {{ formatDate(stock.expiry_date) }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <span :class="getDaysLeftColor(stock.daysUntilExpiry())"
+                                            <span :class="getDaysLeftColor(daysUntilExpiry(stock.expiry_date))"
                                                   class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                                                {{ stock.daysUntilExpiry() }} days
+                                                {{ daysUntilExpiry(stock.expiry_date) }} days
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -219,5 +219,14 @@ const getDaysLeftColor = (days) => {
     if (days <= 7) return 'bg-red-100 text-red-800'
     if (days <= 15) return 'bg-orange-100 text-orange-800'
     return 'bg-yellow-100 text-yellow-800'
+}
+
+const daysUntilExpiry = (expiryDate) => {
+    if (!expiryDate) return 0
+    const today = new Date()
+    const expiry = new Date(expiryDate)
+    const diffTime = expiry - today
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays
 }
 </script>

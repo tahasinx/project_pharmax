@@ -6,7 +6,10 @@ use App\Models\Manufacturer;
 use App\Models\Medicine;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
+use App\Models\Stock;
+use App\Models\StockTransaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -60,18 +63,66 @@ class PurchaseController extends Controller
             'status'          => $request->status ?? true,
         ]);
 
-        // Create purchase items
-        foreach ($request->items as $item) {
-            PurchaseItem::create([
-                'purchase_id' => $purchase->id,
-                'medicine_id' => $item['medicine_id'],
-                'batch_id' => $item['batch_id'] ?? 'BATCH001',
-                'quantity' => $item['quantity'],
-                'rate' => $item['rate'],
-                'discount' => $item['discount'] ?? 0,
-                'total_amount' => $item['quantity'] * $item['rate'] - ($item['discount'] ?? 0),
-            ]);
-        }
+        // Create purchase items and update stock
+        DB::transaction(function () use ($request, $purchase) {
+            foreach ($request->items as $item) {
+                $purchaseItem = PurchaseItem::create([
+                    'purchase_id' => $purchase->id,
+                    'medicine_id' => $item['medicine_id'],
+                    'batch_id' => $item['batch_id'] ?? 'BATCH001',
+                    'quantity' => $item['quantity'],
+                    'rate' => $item['rate'],
+                    'discount' => $item['discount'] ?? 0,
+                    'total_amount' => $item['quantity'] * $item['rate'] - ($item['discount'] ?? 0),
+                ]);
+
+                // Update or create stock
+                $stock = Stock::where('medicine_id', $item['medicine_id'])
+                    ->where('batch_number', $item['batch_id'] ?? 'BATCH001')
+                    ->where('is_active', true)
+                    ->first();
+
+                if ($stock) {
+                    // Update existing stock
+                    $stock->increment('quantity', $item['quantity']);
+                    $stock->update([
+                        'purchase_price' => $item['rate'],
+                        'supplier' => $purchase->manufacturer->name ?? 'Unknown',
+                    ]);
+                } else {
+                    // Create new stock entry
+                    $stock = Stock::create([
+                        'medicine_id' => $item['medicine_id'],
+                        'purchase_id' => $purchase->id,
+                        'batch_number' => $item['batch_id'] ?? 'BATCH001',
+                        'expiry_date' => $item['expiry_date'] ?? null,
+                        'quantity' => $item['quantity'],
+                        'min_stock_level' => 10, // Default minimum
+                        'max_stock_level' => 100, // Default maximum
+                        'purchase_price' => $item['rate'],
+                        'selling_price' => $item['rate'] * 1.2, // 20% markup by default
+                        'supplier' => $purchase->manufacturer->name ?? 'Unknown',
+                        'notes' => 'Created from purchase',
+                        'is_active' => true,
+                    ]);
+                }
+
+                // Create stock transaction
+                StockTransaction::create([
+                    'stock_id' => $stock->id,
+                    'medicine_id' => $item['medicine_id'],
+                    'type' => 'purchase',
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['rate'],
+                    'total_amount' => $item['quantity'] * $item['rate'],
+                    'purchase_id' => $purchase->id,
+                    'batch_number' => $item['batch_id'] ?? 'BATCH001',
+                    'expiry_date' => $item['expiry_date'] ?? null,
+                    'notes' => 'Stock added from purchase',
+                    'user_id' => auth()->id(),
+                ]);
+            }
+        });
 
         return redirect()->route('purchases.show', $purchase)
             ->with('success', 'Purchase created successfully.');

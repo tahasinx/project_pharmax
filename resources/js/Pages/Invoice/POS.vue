@@ -84,7 +84,7 @@
                                                     <p class="text-sm text-gray-500">{{ product.generic_name }}</p>
                                                 </div>
                                                 <div class="text-right">
-                                                    <p class="font-medium">${{ product.price }}</p>
+                                                <p class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ product.price }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</p>
                                                     <p class="text-sm text-gray-500">{{ product.category?.name }}</p>
                                                 </div>
                                             </div>
@@ -125,7 +125,7 @@
                                                 </button>
                                             </div>
                                             <div class="w-20 text-right">
-                                                <p class="font-medium">${{ Number(item.total).toFixed(2) }}</p>
+                                                <p class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ Number(item.total).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</p>
                                             </div>
                                             <button @click="removeItem(index)"
                                                     class="text-red-600 hover:text-red-800">
@@ -147,20 +147,20 @@
                                 <div class="space-y-3 mb-6">
                                     <div class="flex justify-between">
                                         <span class="text-gray-600">Subtotal:</span>
-                                        <span class="font-medium">${{ Number(subtotal).toFixed(2) }}</span>
+                                        <span class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ Number(subtotal).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
                                     </div>
                                     <div class="flex justify-between">
                                         <span class="text-gray-600">Tax:</span>
-                                        <span class="font-medium">${{ Number(tax).toFixed(2) }}</span>
+                                        <span class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ Number(tax).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
                                     </div>
                                     <div class="flex justify-between">
                                         <span class="text-gray-600">Discount:</span>
-                                        <span class="font-medium">-${{ Number(discount).toFixed(2) }}</span>
+                                        <span class="font-medium">-{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ Number(discount).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
                                     </div>
                                     <hr class="my-2">
                                     <div class="flex justify-between text-lg font-bold">
                                         <span>Total:</span>
-                                        <span>${{ Number(total).toFixed(2) }}</span>
+                                        <span>{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ Number(total).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
                                     </div>
                                 </div>
 

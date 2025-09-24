@@ -25,14 +25,29 @@
 
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Medicine *</label>
-                                        <select v-model="form.medicine_id"
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                required>
-                                            <option value="">Select Medicine</option>
-                                            <option v-for="medicine in medicines" :key="medicine.id" :value="medicine.id">
-                                                {{ medicine.name }} - {{ medicine.generic_name }}
-                                            </option>
-                                        </select>
+                                        <div class="relative">
+                                            <input v-model="medicineSearch"
+                                                   @input="searchMedicines"
+                                                   @focus="medicineSearchFocused = true"
+                                                   @blur="handleBlur"
+                                                   type="text"
+                                                   placeholder="Search medicine..."
+                                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                   required>
+
+                                            <!-- Search Results Dropdown -->
+                                            <div v-if="medicineSearchFocused && medicineSearchResults.length > 0"
+                                                 class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                                <div v-for="medicine in medicineSearchResults"
+                                                     :key="medicine.id"
+                                                     @mousedown="selectMedicine(medicine)"
+                                                     class="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0">
+                                                    <div class="font-medium text-gray-900">{{ medicine.name }}</div>
+                                                    <div class="text-sm text-gray-500">{{ medicine.generic_name }}</div>
+                                                    <div class="text-xs text-gray-400">{{ medicine.category?.name || 'No Category' }}</div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div>
@@ -44,9 +59,10 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Expiry Date *</label>
                                         <input v-model="form.expiry_date"
                                                type="date"
+                                               required
                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     </div>
 
@@ -155,7 +171,7 @@ const props = defineProps({
 const form = ref({
     medicine_id: '',
     batch_number: '',
-    expiry_date: '',
+    expiry_date: '', // Required field - no default value
     quantity: 0,
     min_stock_level: 10,
     max_stock_level: '',
@@ -165,6 +181,38 @@ const form = ref({
     notes: '',
     is_active: true
 })
+
+// Medicine search functionality
+const medicineSearch = ref('')
+const medicineSearchFocused = ref(false)
+const medicineSearchResults = ref([])
+
+const searchMedicines = () => {
+    if (medicineSearch.value.length < 2) {
+        medicineSearchResults.value = []
+        return
+    }
+
+    const searchTerm = medicineSearch.value.toLowerCase()
+    medicineSearchResults.value = props.medicines.filter(medicine =>
+        medicine.name.toLowerCase().includes(searchTerm) ||
+        medicine.generic_name.toLowerCase().includes(searchTerm)
+    )
+}
+
+const selectMedicine = (medicine) => {
+    form.value.medicine_id = medicine.id
+    medicineSearch.value = `${medicine.name} - ${medicine.generic_name}`
+    medicineSearchFocused.value = false
+    medicineSearchResults.value = []
+}
+
+const handleBlur = () => {
+    // Delay hiding the dropdown to allow click events to fire
+    setTimeout(() => {
+        medicineSearchFocused.value = false
+    }, 200)
+}
 
 const submitForm = () => {
     router.post(route('stocks.store'), form.value, {

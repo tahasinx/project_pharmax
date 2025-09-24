@@ -44,24 +44,14 @@
                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     </div>
 
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                                        <input v-model="form.phone"
-                                               type="text"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
 
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Fax</label>
-                                        <input v-model="form.fax"
-                                               type="text"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
+
+
                                 </div>
 
                                 <!-- Address Information -->
                                 <div class="space-y-4">
-                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Address Information</h3>
+                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Address & Details</h3>
 
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
@@ -71,31 +61,10 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
-                                        <input v-model="form.city"
-                                               type="text"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">State</label>
-                                        <input v-model="form.state"
-                                               type="text"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">ZIP Code</label>
-                                        <input v-model="form.zip"
-                                               type="text"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                                        <input v-model="form.country"
-                                               type="text"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Details</label>
+                                        <textarea v-model="form.details"
+                                                  rows="3"
+                                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                                     </div>
 
                                     <div>
@@ -139,15 +108,10 @@ const props = defineProps({
 
 const form = ref({
     name: props.manufacturer.name,
+    address: props.manufacturer.address || '',
     mobile: props.manufacturer.mobile || '',
     email: props.manufacturer.email || '',
-    phone: props.manufacturer.phone || '',
-    fax: props.manufacturer.fax || '',
-    address: props.manufacturer.address || '',
-    city: props.manufacturer.city || '',
-    state: props.manufacturer.state || '',
-    zip: props.manufacturer.zip || '',
-    country: props.manufacturer.country || '',
+    details: props.manufacturer.details || '',
     status: props.manufacturer.status
 })
 

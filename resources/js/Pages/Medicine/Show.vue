@@ -83,11 +83,11 @@
                                     <div class="space-y-4">
                                         <div>
                                             <label class="block text-sm font-medium text-gray-500">Selling Price</label>
-                                            <p class="mt-1 text-lg font-semibold text-gray-900">${{ parseFloat(medicine.price).toFixed(2) }}</p>
+                                            <p class="mt-1 text-lg font-semibold text-gray-900">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(medicine.price).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</p>
                                         </div>
                                         <div>
                                             <label class="block text-sm font-medium text-gray-500">Manufacturer Price</label>
-                                            <p class="mt-1 text-lg font-semibold text-gray-900">${{ parseFloat(medicine.manufacturer_price).toFixed(2) }}</p>
+                                            <p class="mt-1 text-lg font-semibold text-gray-900">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(medicine.manufacturer_price).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</p>
                                         </div>
                                     </div>
                                     <div class="space-y-4">
@@ -98,7 +98,7 @@
                                         <div>
                                             <label class="block text-sm font-medium text-gray-500">Profit Margin</label>
                                             <p class="mt-1 text-lg font-semibold text-green-600">
-                                                ${{ profitAmount }}
+                                                {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ profitAmount }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
                                                 ({{ profitPercentage }}%)
                                             </p>
                                         </div>

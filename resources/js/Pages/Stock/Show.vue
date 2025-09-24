@@ -68,11 +68,11 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Purchase Price</label>
-                                        <p class="text-sm text-gray-900">${{ parseFloat(stock.purchase_price || 0).toFixed(2) }} per unit</p>
+                                        <p class="text-sm text-gray-900">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(stock.purchase_price || 0).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }} per unit</p>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Selling Price</label>
-                                        <p class="text-sm text-gray-900">${{ parseFloat(stock.selling_price || 0).toFixed(2) }} per unit</p>
+                                        <p class="text-sm text-gray-900">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(stock.selling_price || 0).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }} per unit</p>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
