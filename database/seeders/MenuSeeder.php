@@ -86,6 +86,15 @@ class MenuSeeder extends Seeder
                 'roles' => ['admin', 'manager']
             ],
             [
+                'name' => 'Reports',
+                'route' => 'reports.index',
+                'icon' => '📊',
+                'order' => 8,
+                'is_active' => true,
+                'permission' => 'view-reports',
+                'roles' => ['admin']
+            ],
+            [
                 'name' => 'Accounts',
                 'route' => 'accounts.index',
                 'icon' => '💰',
@@ -116,7 +125,7 @@ class MenuSeeder extends Seeder
                 'name' => 'Stock',
                 'route' => 'stocks.index',
                 'icon' => '📦',
-                'order' => 8,
+                'order' => 13,
                 'is_active' => true,
                 'permission' => 'manage-medicines',
                 'roles' => ['admin', 'manager', 'pharmacist']
@@ -125,7 +134,7 @@ class MenuSeeder extends Seeder
                 'name' => 'Settings',
                 'route' => 'settings.index',
                 'icon' => '⚙️',
-                'order' => 12,
+                'order' => 14,
                 'is_active' => true,
                 'permission' => 'manage-settings',
                 'roles' => ['admin']
@@ -136,7 +145,17 @@ class MenuSeeder extends Seeder
             $roles = $menuData['roles'];
             unset($menuData['roles']);
 
-            $menu = Menu::create($menuData);
+            // Avoid duplicates: key by route
+            $menu = Menu::updateOrCreate(
+                ['route' => $menuData['route']],
+                [
+                    'name'       => $menuData['name'],
+                    'icon'       => $menuData['icon'],
+                    'order'      => $menuData['order'],
+                    'is_active'  => $menuData['is_active'],
+                    'permission' => $menuData['permission'],
+                ]
+            );
 
             // Assign roles
             $roleIds = [];

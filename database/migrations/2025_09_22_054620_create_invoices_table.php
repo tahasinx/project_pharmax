@@ -24,7 +24,7 @@ return new class extends Migration
             $table->decimal('due_amount', 10, 2)->default(0);
             $table->decimal('total_discount', 10, 2)->default(0);
             $table->decimal('invoice_discount', 10, 2)->default(0);
-            $table->foreignId('bank_id')->nullable()->constrained()->onDelete('set null');
+            $table->unsignedBigInteger('bank_id')->nullable();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->text('details')->nullable();
             $table->enum('payment_type', ['cash', 'bank', 'credit']);

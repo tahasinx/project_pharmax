@@ -117,8 +117,8 @@
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-sm font-medium text-gray-900">${{ product.price }}</p>
-                                    <p class="text-xs text-gray-500">{{ product.sales_count }} sold</p>
+                                    <p class="text-sm font-medium text-gray-900">${{ Number(product.display_price).toFixed(2) }}</p>
+                                    <p class="text-xs text-gray-500">{{ product.sold_quantity }} sold</p>
                                 </div>
                             </div>
                         </div>

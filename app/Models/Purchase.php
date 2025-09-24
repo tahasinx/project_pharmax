@@ -37,10 +37,7 @@ class Purchase extends Model
         return $this->belongsTo(Manufacturer::class);
     }
 
-    public function bank(): BelongsTo
-    {
-        return $this->belongsTo(Bank::class);
-    }
+    // bank() relation removed (no banks table)
 
     public function user(): BelongsTo
     {

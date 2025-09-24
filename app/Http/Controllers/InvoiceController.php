@@ -288,6 +288,17 @@ class InvoiceController extends Controller
         return response()->json($customers);
     }
 
+    public function availableStocks(Medicine $medicine)
+    {
+        $stocks = Stock::where('medicine_id', $medicine->id)
+            ->where('is_active', true)
+            ->where('quantity', '>', 0)
+            ->orderBy('expiry_date', 'asc')
+            ->get(['id', 'batch_number', 'expiry_date', 'quantity', 'selling_price']);
+
+        return response()->json($stocks);
+    }
+
     private function generateInvoiceId()
     {
         do {

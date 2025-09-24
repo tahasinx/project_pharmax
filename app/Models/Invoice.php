@@ -47,10 +47,7 @@ class Invoice extends Model
         return $this->belongsTo(Customer::class);
     }
 
-    public function bank(): BelongsTo
-    {
-        return $this->belongsTo(Bank::class);
-    }
+    // bank() relation removed (no banks table)
 
     public function user(): BelongsTo
     {

@@ -334,11 +334,21 @@ const searchProducts = async () => {
     }
 }
 
-const addProduct = (product) => {
+const addProduct = async (product) => {
     const existingItem = cartItems.value.find(item => item.id === product.id)
 
-    // Ensure price is a number
-    const price = Number(product.price) || 0
+    // Fetch available batches to determine selling price
+    let price = Number(product.price) || 0
+    let batch_id = null
+    try {
+        const res = await fetch(route('api.medicines.stocks', product.id))
+        const stocks = await res.json()
+        if (Array.isArray(stocks) && stocks.length > 0) {
+            const first = stocks[0]
+            price = Number(first.selling_price ?? price) || price
+            batch_id = first.id
+        }
+    } catch {}
 
     if (existingItem) {
         existingItem.quantity += 1
@@ -351,7 +361,8 @@ const addProduct = (product) => {
             generic_name: product.generic_name,
             price: price,
             quantity: 1,
-            total: price
+            total: price,
+            batch_id: batch_id,
         })
     }
 
@@ -387,7 +398,7 @@ const processSale = () => {
         quantity: item.quantity,
         rate: item.price,
         discount: 0,
-        batch_id: 'BATCH001' // Default batch
+        batch_id: item.batch_id || 'BATCH001'
     }))
 
     form.value.total_amount = Number(total.value)

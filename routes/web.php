@@ -12,6 +12,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -65,6 +66,7 @@ Route::middleware('auth')->group(function () {
     Route::get('invoices/{invoice}/print', [InvoiceController::class, 'print'])->name('invoices.print');
     Route::get('api/medicines/search', [InvoiceController::class, 'searchMedicines'])->name('api.medicines.search');
     Route::get('api/customers/search', [InvoiceController::class, 'searchCustomers'])->name('api.customers.search');
+    Route::get('api/medicines/{medicine}/stocks', [InvoiceController::class, 'availableStocks'])->name('api.medicines.stocks');
 
     // Purchase Routes
     Route::resource('purchases', PurchaseController::class);
@@ -99,6 +101,13 @@ Route::middleware('auth')->group(function () {
     Route::get('stocks/reports', [StockController::class, 'reports'])->name('stocks.reports');
     Route::get('stocks/alerts', [StockController::class, 'alerts'])->name('stocks.alerts');
     Route::resource('stocks', StockController::class);
+
+    // Reports Routes
+    Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/sales', [ReportController::class, 'sales'])->name('reports.sales');
+    Route::get('reports/purchases', [ReportController::class, 'purchases'])->name('reports.purchases');
+    Route::get('reports/profit-loss', [ReportController::class, 'profitLoss'])->name('reports.profit-loss');
+    Route::get('reports/customer-dues', [ReportController::class, 'customerDues'])->name('reports.customer-dues');
 
     // Terminal Routes
     Route::get('/terminal', [App\Http\Controllers\TerminalController::class, 'index'])->name('terminal');

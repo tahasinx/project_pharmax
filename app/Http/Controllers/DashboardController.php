@@ -25,13 +25,30 @@ class DashboardController extends Controller
             'todays_purchases'   => Purchase::whereDate('purchase_date', $today)->sum('grand_total'),
         ];
 
-        // Get best selling products based on actual sales data
-        $bestSellingProducts = Medicine::with(['category', 'manufacturer'])
-            ->whereHas('invoiceItems') // Only medicines that have been sold
-            ->withCount('invoiceItems as sales_count')
-            ->orderBy('sales_count', 'desc')
+        // Best selling products by total quantity sold (not count of rows)
+        $bestSellingProducts = Medicine::with(['category'])
+            ->whereHas('invoiceItems')
+            ->withSum('invoiceItems as sold_quantity', 'quantity')
+            ->with(['stocks' => function ($q) {
+                $q->active()->where('quantity', '>', 0)->orderBy('expiry_date', 'asc');
+            }])
+            ->orderByDesc('sold_quantity')
             ->take(12)
-            ->get();
+            ->get()
+            ->map(function ($medicine) {
+                $batch = $medicine->stocks->first();
+                $medicine->display_price = $batch && $batch->selling_price !== null
+                    ? (float) $batch->selling_price
+                    : (float) $medicine->price;
+                return $medicine->only([
+                    'id',
+                    'name',
+                    'display_price',
+                    'sold_quantity'
+                ]) + [
+                    'category' => $medicine->category ? $medicine->category->only(['id', 'name']) : null,
+                ];
+            });
 
         // Get monthly sales data for chart
         $monthlyData = [];
