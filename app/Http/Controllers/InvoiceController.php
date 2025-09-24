@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Bank;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
@@ -30,13 +29,11 @@ class InvoiceController extends Controller
         $medicines = Medicine::with(['category', 'manufacturer'])
             ->where('status', true)
             ->get();
-        $banks = Bank::where('status', true)->get();
         $invoiceNo = $this->generateInvoiceNumber();
 
         return Inertia::render('Invoice/Create', [
             'customers' => $customers,
             'medicines' => $medicines,
-            'banks' => $banks,
             'invoiceNo' => $invoiceNo,
         ]);
     }
@@ -44,42 +41,46 @@ class InvoiceController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'customer_id' => 'required|exists:customers,id',
-            'date' => 'required|date',
-            'payment_type' => 'required|in:cash,bank,credit',
-            'items' => 'required|array|min:1',
-            'items.*.medicine_id' => 'required|exists:medicines,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.rate' => 'required|numeric|min:0',
+            'customer_id'           => 'required|exists:customers,id',
+            'date'                  => 'required|date',
+            'payment_type'          => 'required|in:cash,bank,credit',
+            'paid_amount'           => 'nullable|numeric|min:0',
+            'due_amount'            => 'nullable|numeric|min:0',
+            'total_amount'          => 'required|numeric|min:0',
+            'total_tax'             => 'nullable|numeric|min:0',
+            'total_discount'        => 'nullable|numeric|min:0',
+            'items'                 => 'required|array|min:1',
+            'items.*.medicine_id'   => 'required|exists:medicines,id',
+            'items.*.quantity'      => 'required|integer|min:1',
+            'items.*.rate'          => 'required|numeric|min:0',
         ]);
 
         $invoice = Invoice::create([
-            'invoice_id'       => $this->generateInvoiceId(),
-            'customer_id'      => $request->customer_id,
-            'date'             => $request->date,
-            'invoice_no'       => $request->invoice_no,
-            'total_amount'     => $request->total_amount,
-            'total_tax'        => $request->total_tax ?? 0,
-            'previous_due'     => $request->previous_due ?? 0,
-            'paid_amount'      => $request->paid_amount ?? 0,
-            'due_amount'       => $request->due_amount ?? 0,
-            'total_discount'   => $request->total_discount ?? 0,
-            'invoice_discount' => $request->invoice_discount ?? 0,
-            'bank_id'          => $request->bank_id,
-            'user_id'          => auth()->id(),
-            'details'          => $request->details,
-            'payment_type'     => $request->payment_type,
+            'invoice_id'         => $this->generateInvoiceId(),
+            'customer_id'        => $request->customer_id,
+            'date'               => $request->date,
+            'invoice_no'         => $request->invoice_no,
+            'total_amount'       => $request->total_amount,
+            'total_tax'          => $request->total_tax ?? 0,
+            'previous_due'       => $request->previous_due ?? 0,
+            'paid_amount'        => $request->paid_amount ?? 0,
+            'due_amount'         => $request->due_amount ?? 0,
+            'total_discount'     => $request->total_discount ?? 0,
+            'invoice_discount'   => $request->invoice_discount ?? 0,
+            'user_id'            => auth()->id(),
+            'details'            => $request->details,
+            'payment_type'       => $request->payment_type,
         ]);
 
         // Create invoice items
         foreach ($request->items as $item) {
             InvoiceItem::create([
-                'invoice_id' => $invoice->id,
-                'medicine_id' => $item['medicine_id'],
-                'batch_id' => $item['batch_id'] ?? 'BATCH001',
-                'quantity' => $item['quantity'],
-                'rate' => $item['rate'],
-                'discount' => $item['discount'] ?? 0,
+                'invoice_id'   => $invoice->id,
+                'medicine_id'  => $item['medicine_id'],
+                'batch_id'     => $item['batch_id'] ?? 'BATCH001',
+                'quantity'     => $item['quantity'],
+                'rate'         => $item['rate'],
+                'discount'     => $item['discount'] ?? 0,
                 'total_amount' => $item['quantity'] * $item['rate'] - ($item['discount'] ?? 0),
             ]);
         }
@@ -90,7 +91,7 @@ class InvoiceController extends Controller
 
     public function show(Invoice $invoice)
     {
-        $invoice->load(['customer', 'items.medicine', 'bank', 'user']);
+        $invoice->load(['customer', 'items.medicine', 'user']);
 
         return Inertia::render('Invoice/Show', [
             'invoice' => $invoice,
@@ -103,54 +104,51 @@ class InvoiceController extends Controller
         $medicines = Medicine::with(['category', 'manufacturer'])
             ->where('status', true)
             ->get();
-        $banks = Bank::where('status', true)->get();
         $invoice->load(['items.medicine']);
 
         return Inertia::render('Invoice/Edit', [
-            'invoice' => $invoice,
+            'invoice'   => $invoice,
             'customers' => $customers,
             'medicines' => $medicines,
-            'banks' => $banks,
         ]);
     }
 
     public function update(Request $request, Invoice $invoice)
     {
         $request->validate([
-            'customer_id' => 'required|exists:customers,id',
-            'date' => 'required|date',
-            'payment_type' => 'required|in:cash,bank,credit',
-            'items' => 'required|array|min:1',
+            'customer_id'         => 'required|exists:customers,id',
+            'date'                => 'required|date',
+            'payment_type'        => 'required|in:cash,bank,credit',
+            'items'               => 'required|array|min:1',
             'items.*.medicine_id' => 'required|exists:medicines,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.rate' => 'required|numeric|min:0',
+            'items.*.quantity'    => 'required|integer|min:1',
+            'items.*.rate'        => 'required|numeric|min:0',
         ]);
 
         $invoice->update([
-            'customer_id' => $request->customer_id,
-            'date' => $request->date,
-            'total_amount' => $request->total_amount,
-            'total_tax' => $request->total_tax ?? 0,
-            'previous_due' => $request->previous_due ?? 0,
-            'paid_amount' => $request->paid_amount ?? 0,
-            'due_amount' => $request->due_amount ?? 0,
-            'total_discount' => $request->total_discount ?? 0,
+            'customer_id'      => $request->customer_id,
+            'date'             => $request->date,
+            'total_amount'     => $request->total_amount,
+            'total_tax'        => $request->total_tax ?? 0,
+            'previous_due'     => $request->previous_due ?? 0,
+            'paid_amount'      => $request->paid_amount ?? 0,
+            'due_amount'       => $request->due_amount ?? 0,
+            'total_discount'   => $request->total_discount ?? 0,
             'invoice_discount' => $request->invoice_discount ?? 0,
-            'bank_id' => $request->bank_id,
-            'details' => $request->details,
-            'payment_type' => $request->payment_type,
+            'details'          => $request->details,
+            'payment_type'     => $request->payment_type,
         ]);
 
         // Delete existing items and create new ones
         $invoice->items()->delete();
         foreach ($request->items as $item) {
             InvoiceItem::create([
-                'invoice_id' => $invoice->id,
-                'medicine_id' => $item['medicine_id'],
-                'batch_id' => $item['batch_id'] ?? 'BATCH001',
-                'quantity' => $item['quantity'],
-                'rate' => $item['rate'],
-                'discount' => $item['discount'] ?? 0,
+                'invoice_id'   => $invoice->id,
+                'medicine_id'  => $item['medicine_id'],
+                'batch_id'     => $item['batch_id'] ?? 'BATCH001',
+                'quantity'     => $item['quantity'],
+                'rate'         => $item['rate'],
+                'discount'     => $item['discount'] ?? 0,
                 'total_amount' => $item['quantity'] * $item['rate'] - ($item['discount'] ?? 0),
             ]);
         }
@@ -174,20 +172,18 @@ class InvoiceController extends Controller
         $medicines = Medicine::with(['category', 'manufacturer'])
             ->where('status', true)
             ->get();
-        $banks = Bank::where('status', true)->get();
         $invoiceNo = $this->generateInvoiceNumber();
 
         return Inertia::render('Invoice/POS', [
             'customers' => $customers,
             'medicines' => $medicines,
-            'banks' => $banks,
             'invoiceNo' => $invoiceNo,
         ]);
     }
 
     public function print(Invoice $invoice)
     {
-        $invoice->load(['customer', 'items.medicine', 'bank', 'user']);
+        $invoice->load(['customer', 'items.medicine', 'user']);
 
         return Inertia::render('Invoice/Print', [
             'invoice' => $invoice,

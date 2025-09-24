@@ -31,15 +31,24 @@
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Customer *</label>
-                                            <select v-model="form.customer_id"
-                                                    @change="loadCustomerDetails"
-                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    required>
-                                                <option value="">Select Customer</option>
-                                                <option v-for="customer in customers" :key="customer.id" :value="customer.id">
-                                                    {{ customer.name }} - {{ customer.mobile }}
-                                                </option>
-                                            </select>
+                                            <div class="relative customer-search-container">
+                                                <input v-model="customerSearch"
+                                                       @input="searchCustomers"
+                                                       @focus="customerSearchFocused = true"
+                                                       type="text"
+                                                       placeholder="Search customer..."
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                       required>
+                                                <div v-if="customerSearchFocused && customerSearchResults.length > 0"
+                                                     class="absolute z-50 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto mt-1">
+                                                    <div v-for="customer in customerSearchResults"
+                                                         :key="customer.id"
+                                                         @click="selectCustomer(customer)"
+                                                         class="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0">
+                                                        {{ customer.name }} - {{ customer.mobile }}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Payment Type *</label>
@@ -190,6 +199,17 @@
 
                                     <div class="space-y-4">
                                         <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Discount Amount</label>
+                                            <input v-model.number="discountAmount"
+                                                   @input="updateDiscount"
+                                                   type="number"
+                                                   step="0.01"
+                                                   min="0"
+                                                   :max="subtotal"
+                                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        </div>
+
+                                        <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Paid Amount</label>
                                             <input v-model.number="form.paid_amount"
                                                    type="number"
@@ -206,16 +226,7 @@
                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100">
                                         </div>
 
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Bank (if applicable)</label>
-                                            <select v-model="form.bank_id"
-                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                                <option value="">Select Bank</option>
-                                                <option v-for="bank in banks" :key="bank.id" :value="bank.id">
-                                                    {{ bank.name }}
-                                                </option>
-                                            </select>
-                                        </div>
+
 
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
@@ -249,13 +260,25 @@ const props = defineProps({
     invoice: Object,
     customers: Array,
     medicines: Array,
-    banks: Array
 })
+
+// Ensure dates are in YYYY-MM-DD format for <input type="date">
+const formatDateForInput = (value) => {
+    if (!value) return ''
+    const dt = new Date(value)
+    if (Number.isNaN(dt.getTime())) return ''
+    const pad = (n) => String(n).padStart(2, '0')
+    return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`
+}
 
 const productSearch = ref('')
 const productSearchResults = ref([])
 const cartItems = ref([])
 const selectedCustomer = ref(null)
+const customerSearch = ref('')
+const customerSearchResults = ref([])
+const customerSearchFocused = ref(false)
+const discountAmount = ref(0)
 
 const form = ref({
     customer_id: props.invoice.customer_id,
@@ -263,26 +286,28 @@ const form = ref({
     paid_amount: props.invoice.paid_amount,
     due_amount: props.invoice.due_amount,
     invoice_no: props.invoice.invoice_no,
-    date: props.invoice.date,
-    bank_id: props.invoice.bank_id,
+    date: formatDateForInput(props.invoice.date),
     details: props.invoice.details,
     items: []
 })
 
 const subtotal = computed(() => {
-    return cartItems.value.reduce((sum, item) => Number(sum) + Number(item.total || 0), 0)
+    const sum = cartItems.value.reduce((sum, item) => Number(sum) + Number(item.total || 0), 0)
+    return Math.round(sum * 100) / 100 // Round to 2 decimal places
 })
 
 const tax = computed(() => {
-    return subtotal.value * 0.1 // 10% tax
+    const taxAmount = subtotal.value * 0.1 // 10% tax
+    return Math.round(taxAmount * 100) / 100 // Round to 2 decimal places
 })
 
 const discount = computed(() => {
-    return 0 // Can be implemented later
+    return Number(discountAmount.value) || 0
 })
 
 const total = computed(() => {
-    return subtotal.value + tax.value - discount.value
+    const totalAmount = subtotal.value + tax.value - discount.value
+    return Math.round(totalAmount * 100) / 100 // Round to 2 decimal places
 })
 
 // Safe money formatter for numbers or computeds
@@ -292,7 +317,8 @@ const formatMoney = (val) => {
 }
 
 watch(() => form.value.paid_amount, (newValue) => {
-    form.value.due_amount = total.value - newValue
+    const dueAmount = total.value - (Number(newValue) || 0)
+    form.value.due_amount = Math.round(dueAmount * 100) / 100 // Round to 2 decimal places
 })
 
 onMounted(() => {
@@ -314,10 +340,43 @@ onMounted(() => {
 
     // Load customer details
     selectedCustomer.value = props.customers.find(c => c.id == form.value.customer_id)
+    if (selectedCustomer.value) {
+        customerSearch.value = selectedCustomer.value.name
+    }
+
+    // Load discount amount
+    discountAmount.value = Number(props.invoice.invoice_discount) || 0
 })
 
-const loadCustomerDetails = () => {
-    selectedCustomer.value = props.customers.find(c => c.id == form.value.customer_id)
+const searchCustomers = async () => {
+    if (customerSearch.value.length < 2) {
+        customerSearchResults.value = []
+        return
+    }
+
+    try {
+        const response = await fetch(`/api/customers/search?q=${customerSearch.value}`)
+        customerSearchResults.value = await response.json()
+    } catch (error) {
+        console.error('Error searching customers:', error)
+    }
+}
+
+const selectCustomer = (customer) => {
+    selectedCustomer.value = customer
+    form.value.customer_id = customer.id
+    customerSearch.value = `${customer.name}`
+    customerSearchResults.value = []
+    customerSearchFocused.value = false
+}
+
+const updateDiscount = () => {
+    if (discountAmount.value > subtotal.value) {
+        discountAmount.value = subtotal.value
+    }
+    if (discountAmount.value < 0) {
+        discountAmount.value = 0
+    }
 }
 
 const searchProducts = async () => {
@@ -389,6 +448,7 @@ const submitForm = () => {
     form.value.total_amount = total.value
     form.value.total_tax = tax.value
     form.value.total_discount = discount.value
+    form.value.invoice_discount = discount.value
 
     router.put(route('invoices.update', props.invoice.id), form.value, {
         onSuccess: () => {

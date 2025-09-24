@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\AccountController;
-use App\Http\Controllers\BankController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
@@ -76,8 +75,6 @@ Route::middleware('auth')->group(function () {
     // Manufacturer Routes
     Route::resource('manufacturers', ManufacturerController::class);
 
-    // Bank Routes
-    Route::resource('banks', BankController::class);
 
     // Account Routes
     Route::resource('accounts', AccountController::class);
