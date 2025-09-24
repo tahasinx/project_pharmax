@@ -102,6 +102,13 @@ Route::middleware('auth')->group(function () {
     Route::get('stocks/reports', [StockController::class, 'reports'])->name('stocks.reports');
     Route::get('stocks/alerts', [StockController::class, 'alerts'])->name('stocks.alerts');
     Route::resource('stocks', StockController::class);
+
+    // Terminal Routes
+    Route::get('/terminal', [App\Http\Controllers\TerminalController::class, 'index'])->name('terminal');
+    Route::post('/terminal/execute', [App\Http\Controllers\TerminalController::class, 'execute'])->name('terminal.execute');
+    Route::get('/terminal/commands', [App\Http\Controllers\TerminalController::class, 'getAvailableCommands'])->name('terminal.commands');
+    Route::get('/terminal/system-info', [App\Http\Controllers\TerminalController::class, 'getSystemInfo'])->name('terminal.system-info');
+    Route::post('/terminal/refresh-paths', [App\Http\Controllers\TerminalController::class, 'refreshCommandPaths'])->name('terminal.refresh-paths');
 });
 
 require __DIR__ . '/auth.php';
