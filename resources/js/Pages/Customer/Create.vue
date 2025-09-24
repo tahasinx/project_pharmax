@@ -14,6 +14,9 @@
 
         <div class="py-12">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+                <!-- Global Validation Errors -->
+                <ValidationErrors :errors="$page.props.errors" />
+
                 <form @submit.prevent="submitForm">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6">
@@ -26,8 +29,12 @@
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name *</label>
                                         <input v-model="form.name"
                                                type="text"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                               :class="$page.props.errors?.name ? 'border-red-500 bg-red-50' : 'border-gray-300'"
+                                               class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                required>
+                                        <p v-if="$page.props.errors?.name" class="mt-1 text-sm text-red-600">
+                                            {{ $page.props.errors.name }}
+                                        </p>
                                     </div>
 
                                     <div>

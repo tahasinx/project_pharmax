@@ -15,7 +15,7 @@
         <div class="py-12">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
                 <!-- Global Validation Errors -->
-                <ValidationErrors :errors="errors" />
+                <ValidationErrors :errors="$page.props.errors" />
 
                 <form @submit.prevent="submitForm">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -184,15 +184,12 @@ import { Link, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import SearchableSelect from '@/Components/SearchableSelect.vue'
 import ValidationErrors from '@/Components/ValidationErrors.vue'
-import { useErrorHandler } from '@/Composables/useErrorHandler'
 
 const props = defineProps({
     categories: Array,
     manufacturers: Array,
     errors: Object
 })
-
-const { handleFormError } = useErrorHandler()
 
 // Formatted categories for SearchableSelect
 const categoryOptions = computed(() => {
@@ -230,13 +227,6 @@ const form = ref({
 })
 
 const submitForm = () => {
-    router.post(route('medicines.store'), form.value, {
-        onSuccess: () => {
-            // Success handled by global error handler
-        },
-        onError: (errors) => {
-            handleFormError(errors)
-        }
-    })
+    router.post(route('medicines.store'), form.value)
 }
 </script>

@@ -80,12 +80,10 @@ export function useToastNotifications() {
 
                 if (Array.isArray(fieldError)) {
                     fieldError.forEach(message => {
-                        // Ensure message is a string, not an array of characters
                         const messageStr = Array.isArray(message) ? message.join('') : String(message)
                         errorMessages.push(`${field}: ${messageStr}`)
                     })
                 } else {
-                    // Ensure the error value is a string, not an array of characters
                     const errorStr = Array.isArray(fieldError) ? fieldError.join('') : String(fieldError)
                     errorMessages.push(`${field}: ${errorStr}`)
                 }

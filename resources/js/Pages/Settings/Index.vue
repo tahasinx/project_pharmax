@@ -8,6 +8,16 @@
 
         <div class="py-12">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+                <!-- Simple error display -->
+                <div v-if="Object.keys(props.errors).length > 0" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                    <h3 class="text-sm font-medium text-red-800 mb-2">Please fix the following errors:</h3>
+                    <ul class="text-sm text-red-700 space-y-1">
+                        <li v-for="(error, field) in props.errors" :key="field">
+                            • {{ field.replace('_', ' ') }}: {{ error }}
+                        </li>
+                    </ul>
+                </div>
+
                 <form @submit.prevent="submitForm">
                     <div class="space-y-6">
                         <!-- General Settings -->
@@ -16,10 +26,14 @@
                                 <h3 class="text-lg font-medium text-gray-900 mb-4">General Settings</h3>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Company Name *</label>
                                         <input v-model="form.company_name"
                                                type="text"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                               :class="props.errors.company_name ? 'border-red-500 bg-red-50' : 'border-gray-300'"
+                                               class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <p v-if="props.errors.company_name" class="mt-1 text-sm text-red-600">
+                                            {{ props.errors.company_name }}
+                                        </p>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Company Email</label>
@@ -86,18 +100,26 @@
                                 <h3 class="text-lg font-medium text-gray-900 mb-4">Currency Settings</h3>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Currency Symbol</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Currency Symbol *</label>
                                         <input v-model="form.currency_symbol"
                                                type="text"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                               :class="props.errors.currency_symbol ? 'border-red-500 bg-red-50' : 'border-gray-300'"
+                                               class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <p v-if="props.errors.currency_symbol" class="mt-1 text-sm text-red-600">
+                                            {{ props.errors.currency_symbol }}
+                                        </p>
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Currency Position</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Currency Position *</label>
                                         <select v-model="form.currency_position"
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                :class="props.errors.currency_position ? 'border-red-500 bg-red-50' : 'border-gray-300'"
+                                                class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                             <option value="before">Before Amount ($100)</option>
                                             <option value="after">After Amount (100$)</option>
                                         </select>
+                                        <p v-if="props.errors.currency_position" class="mt-1 text-sm text-red-600">
+                                            {{ props.errors.currency_position }}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -169,10 +191,15 @@
 import { ref, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+// Simple approach - no complex imports needed
 
 const props = defineProps({
     settings: Object,
-    timezones: Array
+    timezones: Array,
+    errors: {
+        type: Object,
+        default: () => ({})
+    }
 })
 
 const form = ref({
@@ -204,10 +231,6 @@ onMounted(() => {
 })
 
 const submitForm = () => {
-    router.put(route('settings.update'), form.value, {
-        onSuccess: () => {
-            // Show success message
-        }
-    })
+    router.put(route('settings.update'), form.value)
 }
 </script>
