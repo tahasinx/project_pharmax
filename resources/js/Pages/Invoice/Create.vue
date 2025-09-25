@@ -174,20 +174,20 @@
                                     <div class="space-y-3 mb-6">
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Subtotal:</span>
-                                            <span class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ subtotal.toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
+                                            <span class="font-medium">{{ props.ui.currency_position === 'before' ? props.ui.currency_symbol : '' }}{{ subtotal.toFixed(2) }}{{ props.ui.currency_position === 'after' ? props.ui.currency_symbol : '' }}</span>
                                         </div>
                                         <div class="flex justify-between">
-                                            <span class="text-gray-600">Tax ({{ $page.props.ui.default_tax_rate || 10 }}%):</span>
-                                            <span class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ tax.toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
+                                            <span class="text-gray-600">Tax ({{ props.ui.default_tax_rate || 10 }}%):</span>
+                                            <span class="font-medium">{{ props.ui.currency_position === 'before' ? props.ui.currency_symbol : '' }}{{ tax.toFixed(2) }}{{ props.ui.currency_position === 'after' ? props.ui.currency_symbol : '' }}</span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Discount:</span>
-                                            <span class="font-medium">-{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ discount.toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
+                                            <span class="font-medium">-{{ props.ui.currency_position === 'before' ? props.ui.currency_symbol : '' }}{{ discount.toFixed(2) }}{{ props.ui.currency_position === 'after' ? props.ui.currency_symbol : '' }}</span>
                                         </div>
                                         <hr class="my-2">
                                         <div class="flex justify-between text-lg font-bold">
                                             <span>Total:</span>
-                                            <span>{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ total.toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
+                                            <span>{{ props.ui.currency_position === 'before' ? props.ui.currency_symbol : '' }}{{ total.toFixed(2) }}{{ props.ui.currency_position === 'after' ? props.ui.currency_symbol : '' }}</span>
                                         </div>
                                     </div>
 
@@ -282,7 +282,7 @@ const subtotal = computed(() => {
 })
 
 const tax = computed(() => {
-    const taxRate = $page.props.ui.default_tax_rate || 10 // Use setting or default 10%
+    const taxRate = props.ui.default_tax_rate || 10 // Use setting or default 10%
     const taxAmount = subtotal.value * (taxRate / 100)
     return Math.round(taxAmount * 100) / 100 // Round to 2 decimal places
 })
