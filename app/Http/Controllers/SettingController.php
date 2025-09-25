@@ -375,7 +375,7 @@ class SettingController extends Controller
             $smsConfig = $request->input('sms_config');
             $phone = $request->input('phone');
 
-            $response = $this->sendSms($phone, 'Test SMS from PharmaCare system. Your SMS configuration is working correctly!', $smsConfig);
+            $response = $this->sendSms($phone, 'Test SMS from ' + config('app.name') + ' system. Your SMS configuration is working correctly!', $smsConfig);
 
             return response()->json([
                 'success' => true,
@@ -625,10 +625,10 @@ class SettingController extends Controller
         $fromName = $emailConfig['mail_from_name'] ?? config('app.name');
 
         Mail::raw(
-            'This is a test email from your PharmaCare system. Your email configuration is working correctly!',
+            'This is a test email from your ' + config('app.name') + ' system. Your email configuration is working correctly!',
             function ($message) use ($email, $fromAddress, $fromName) {
                 $message->to($email)
-                    ->subject('Test Email from PharmaCare')
+                    ->subject('Test Email from ' + config('app.name'))
                     ->from($fromAddress, $fromName);
             }
         );
