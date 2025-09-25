@@ -70,6 +70,7 @@ Route::middleware('auth')->group(function () {
 
     // Purchase Routes
     Route::resource('purchases', PurchaseController::class);
+    Route::get('api/manufacturers/search', [ManufacturerController::class, 'search'])->name('api.manufacturers.search');
 
     // Category Routes
     Route::resource('categories', CategoryController::class);

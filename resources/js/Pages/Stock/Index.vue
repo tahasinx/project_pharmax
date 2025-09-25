@@ -204,27 +204,8 @@
                                 Next
                             </Link>
                         </div>
-                        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                            <div>
-                                <p class="text-sm text-gray-700">
-                                    Showing {{ stocks.from }} to {{ stocks.to }} of {{ stocks.total }} results
-                                </p>
-                            </div>
-                            <div>
-                                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                                    <Link v-if="stocks.prev_page_url"
-                                          :href="stocks.prev_page_url"
-                                          class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                        Previous
-                                    </Link>
-                                    <Link v-if="stocks.next_page_url"
-                                          :href="stocks.next_page_url"
-                                          class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                        Next
-                                    </Link>
-                                </nav>
-                            </div>
-                        </div>
+                        <!-- Pagination -->
+                        <Pagination :pagination="stocks" />
                     </div>
                 </div>
             </div>
@@ -236,6 +217,7 @@
 import { ref, computed } from 'vue'
 import { Link, router, Head } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import Pagination from '@/Components/Pagination.vue'
 import Swal from 'sweetalert2'
 
 const props = defineProps({

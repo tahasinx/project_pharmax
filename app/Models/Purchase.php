@@ -16,10 +16,16 @@ class Purchase extends Model
         'manufacturer_id',
         'purchase_date',
         'purchase_no',
+        'chalan_no',
+        'payment_type',
         'details',
         'grand_total',
         'total_tax',
         'total_discount',
+        'paid_amount',
+        'due_amount',
+        'total_vat',
+        'bank_id',
         'user_id',
         'status',
     ];
@@ -29,6 +35,9 @@ class Purchase extends Model
         'grand_total' => 'decimal:2',
         'total_tax' => 'decimal:2',
         'total_discount' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
+        'due_amount' => 'decimal:2',
+        'total_vat' => 'decimal:2',
         'status' => 'boolean',
     ];
 

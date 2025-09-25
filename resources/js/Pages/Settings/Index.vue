@@ -207,16 +207,16 @@ const form = ref({
     company_email: '',
     company_phone: '',
     company_address: '',
-    default_tax_rate: 10,
-    invoice_prefix: 'INV',
-    next_invoice_number: 1000,
-    invoice_footer: 'Thank you for your business!',
-    currency_symbol: '$',
-    currency_position: 'before',
-    timezone: 'UTC',
-    date_format: 'Y-m-d',
-    items_per_page: 15,
-    enable_notifications: true
+    default_tax_rate: '',
+    invoice_prefix: '',
+    next_invoice_number: '',
+    invoice_footer: '',
+    currency_symbol: '',
+    currency_position: '',
+    timezone: '',
+    date_format: '',
+    items_per_page: '',
+    enable_notifications: ''
 })
 
 onMounted(() => {

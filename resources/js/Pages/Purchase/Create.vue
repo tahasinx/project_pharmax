@@ -27,14 +27,45 @@
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
                                                 <label class="block text-sm font-medium text-gray-700 mb-1">Manufacturer *</label>
-                                                <select v-model="form.manufacturer_id"
-                                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                        required>
-                                                    <option value="">Select Manufacturer</option>
-                                                    <option v-for="manufacturer in manufacturers" :key="manufacturer.id" :value="manufacturer.id">
-                                                        {{ manufacturer.name }}
-                                                    </option>
-                                                </select>
+                                                <div class="relative">
+                                                    <input v-model="manufacturerSearch"
+                                                           @input="searchManufacturers"
+                                                           @focus="showManufacturerResults = true"
+                                                           type="text"
+                                                           placeholder="Search manufacturers..."
+                                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                           :class="{ 'border-red-500': !selectedManufacturer && manufacturerSearch.length > 0 }">
+
+                                                    <!-- Manufacturer Search Results -->
+                                                    <div v-if="showManufacturerResults && manufacturerSearchResults.length > 0"
+                                                         class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                                        <div v-for="manufacturer in manufacturerSearchResults" :key="manufacturer.id"
+                                                             class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-200 last:border-b-0"
+                                                             @click="selectManufacturer(manufacturer)">
+                                                            <div class="font-medium">{{ manufacturer.name }}</div>
+                                                            <div v-if="manufacturer.email" class="text-sm text-gray-500">{{ manufacturer.email }}</div>
+                                                            <div v-if="manufacturer.mobile" class="text-sm text-gray-500">{{ manufacturer.mobile }}</div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Selected Manufacturer Display -->
+                                                    <div v-if="selectedManufacturer" class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                                                        <div class="flex justify-between items-center">
+                                                            <div>
+                                                                <div class="font-medium text-blue-900">{{ selectedManufacturer.name }}</div>
+                                                                <div v-if="selectedManufacturer.email" class="text-sm text-blue-700">{{ selectedManufacturer.email }}</div>
+                                                            </div>
+                                                            <button type="button" @click="clearManufacturer" class="text-blue-600 hover:text-blue-800">
+                                                                ✕
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Validation Message -->
+                                                    <div v-if="!selectedManufacturer && manufacturerSearch.length > 0" class="mt-1 text-sm text-red-600">
+                                                        Please select a manufacturer from the dropdown
+                                                    </div>
+                                                </div>
                                             </div>
 
                                             <div>
@@ -43,6 +74,48 @@
                                                        type="date"
                                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                        required>
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Chalan No</label>
+                                                <input v-model="form.chalan_no"
+                                                       type="text"
+                                                       placeholder="Auto-generated if empty"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Payment Type *</label>
+                                                <select v-model="form.payment_type"
+                                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                        required>
+                                                    <option value="cash">Cash</option>
+                                                    <option value="bank">Bank Transfer</option>
+                                                    <option value="credit">Credit</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Paid Amount</label>
+                                                <input v-model="form.paid_amount"
+                                                       type="number"
+                                                       step="0.01"
+                                                       min="0"
+                                                       placeholder="0.00"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Due Amount</label>
+                                                <input :value="dueAmount.toFixed(2)"
+                                                       type="number"
+                                                       step="0.01"
+                                                       readonly
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600">
                                             </div>
                                         </div>
 
@@ -59,16 +132,12 @@
                                     <div class="space-y-4">
                                         <h3 class="text-lg font-medium text-gray-900">Add Products</h3>
 
-                                        <div class="flex space-x-2">
+                                        <div class="relative">
                                             <input v-model="productSearch"
+                                                   @input="searchProducts"
                                                    type="text"
                                                    placeholder="Search medicines..."
-                                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                            <button type="button"
-                                                    @click="searchProducts"
-                                                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                                Search
-                                            </button>
+                                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                         </div>
 
                                         <!-- Search Results -->
@@ -200,13 +269,25 @@ const productSearch = ref('')
 const productSearchResults = ref([])
 const cartItems = ref([])
 
+// Manufacturer search
+const manufacturerSearch = ref('')
+const manufacturerSearchResults = ref([])
+const selectedManufacturer = ref(null)
+const showManufacturerResults = ref(false)
+
 const form = ref({
     manufacturer_id: '',
     purchase_date: new Date().toISOString().split('T')[0],
+    chalan_no: '',
+    payment_type: 'cash',
     details: '',
     grand_total: 0,
     total_tax: 0,
     total_discount: 0,
+    paid_amount: 0,
+    due_amount: 0,
+    total_vat: 0,
+    bank_id: null,
     items: []
 })
 
@@ -226,17 +307,54 @@ const total = computed(() => {
     return subtotal.value + tax.value - discount.value
 })
 
-const searchProducts = () => {
+const dueAmount = computed(() => {
+    return total.value - form.value.paid_amount
+})
+
+const searchProducts = async () => {
     if (productSearch.value.length < 2) {
         productSearchResults.value = []
         return
     }
 
-    const searchLower = productSearch.value.toLowerCase()
-    productSearchResults.value = props.medicines.filter(medicine =>
-        medicine.name.toLowerCase().includes(searchLower) ||
-        medicine.generic_name?.toLowerCase().includes(searchLower)
-    ).slice(0, 10)
+    try {
+        const response = await fetch(`/api/medicines/search?q=${productSearch.value}`)
+        productSearchResults.value = await response.json()
+    } catch (error) {
+        console.error('Error searching products:', error)
+        productSearchResults.value = []
+    }
+}
+
+const searchManufacturers = async () => {
+    if (manufacturerSearch.value.length < 2) {
+        manufacturerSearchResults.value = []
+        return
+    }
+
+    try {
+        const response = await fetch(`/api/manufacturers/search?q=${manufacturerSearch.value}`)
+        manufacturerSearchResults.value = await response.json()
+    } catch (error) {
+        console.error('Error searching manufacturers:', error)
+        manufacturerSearchResults.value = []
+    }
+}
+
+const selectManufacturer = (manufacturer) => {
+    selectedManufacturer.value = manufacturer
+    form.value.manufacturer_id = manufacturer.id
+    manufacturerSearch.value = ''
+    manufacturerSearchResults.value = []
+    showManufacturerResults.value = false
+}
+
+const clearManufacturer = () => {
+    selectedManufacturer.value = null
+    form.value.manufacturer_id = ''
+    manufacturerSearch.value = ''
+    manufacturerSearchResults.value = []
+    showManufacturerResults.value = false
 }
 
 const addProduct = (product) => {
@@ -246,13 +364,14 @@ const addProduct = (product) => {
         existingItem.quantity += 1
         updateItemTotal(cartItems.value.indexOf(existingItem))
     } else {
+        const rate = Number(product.manufacturer_price || product.price) || 0
         cartItems.value.push({
             medicine_id: product.id,
             name: product.name,
             generic_name: product.generic_name,
             quantity: 1,
-            rate: product.manufacturer_price || product.price,
-            total: product.manufacturer_price || product.price
+            rate: rate,
+            total: rate
         })
     }
 
@@ -262,7 +381,7 @@ const addProduct = (product) => {
 
 const updateItemTotal = (index) => {
     const item = cartItems.value[index]
-    item.total = item.quantity * item.rate
+    item.total = Number(item.quantity) * Number(item.rate)
 }
 
 const removeItem = (index) => {
@@ -270,6 +389,11 @@ const removeItem = (index) => {
 }
 
 const submitForm = () => {
+    if (!selectedManufacturer.value) {
+        alert('Please select a manufacturer.')
+        return
+    }
+
     if (cartItems.value.length === 0) {
         alert('Please add at least one product to the purchase.')
         return
@@ -278,6 +402,7 @@ const submitForm = () => {
     form.value.grand_total = total.value
     form.value.total_tax = tax.value
     form.value.total_discount = discount.value
+    form.value.due_amount = dueAmount.value
     form.value.items = cartItems.value
 
     router.post(route('purchases.store'), form.value, {

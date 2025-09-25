@@ -123,30 +123,7 @@
                         </div>
 
                         <!-- Pagination -->
-                        <div v-if="manufacturers.data.length > 0" class="mt-6 flex items-center justify-between">
-                            <div class="text-sm text-gray-700">
-                                Showing {{ manufacturers.from }} to {{ manufacturers.to }} of {{ manufacturers.total }} results
-                            </div>
-                            <div class="flex space-x-2">
-                                <Link v-if="manufacturers.prev_page_url"
-                                      :href="manufacturers.prev_page_url"
-                                      class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-                                    Previous
-                                </Link>
-                                <span v-else class="px-3 py-2 text-sm font-medium text-gray-400 bg-gray-100 border border-gray-300 rounded-md cursor-not-allowed">
-                                    Previous
-                                </span>
-
-                                <Link v-if="manufacturers.next_page_url"
-                                      :href="manufacturers.next_page_url"
-                                      class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-                                    Next
-                                </Link>
-                                <span v-else class="px-3 py-2 text-sm font-medium text-gray-400 bg-gray-100 border border-gray-300 rounded-md cursor-not-allowed">
-                                    Next
-                                </span>
-                            </div>
-                        </div>
+                        <Pagination :pagination="manufacturers" />
                     </div>
                 </div>
             </div>
@@ -158,6 +135,7 @@
 import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import Pagination from '@/Components/Pagination.vue'
 
 const props = defineProps({
     manufacturers: Object, // Paginated data

@@ -111,7 +111,7 @@
                                                         <p class="text-sm text-gray-500">{{ product.generic_name }}</p>
                                                     </div>
                                                     <div class="text-right">
-                                                        <p class="font-medium">${{ product.price }}</p>
+                                                        <p class="font-medium">{{ ui.currency_position === 'before' ? ui.currency_symbol : '' }}{{ product.price }}{{ ui.currency_position === 'after' ? ui.currency_symbol : '' }}</p>
                                                         <p class="text-sm text-gray-500">{{ product.category?.name }}</p>
                                                     </div>
                                                 </div>
@@ -152,7 +152,7 @@
                                                     </button>
                                                 </div>
                                                 <div class="w-20 text-right">
-                                                    <p class="font-medium">${{ Number(item.total ?? 0).toFixed(2) }}</p>
+                                                    <p class="font-medium">{{ ui.currency_position === 'before' ? ui.currency_symbol : '' }}{{ Number(item.total ?? 0).toFixed(2) }}{{ ui.currency_position === 'after' ? ui.currency_symbol : '' }}</p>
                                                 </div>
                                                 <button @click="removeItem(index)"
                                                         class="text-red-600 hover:text-red-800">
@@ -252,7 +252,8 @@ const props = defineProps({
     customers: Array,
     medicines: Array,
     invoiceNo: String,
-    invoicePrefix: String
+    invoicePrefix: String,
+    ui: Object
 })
 
 const productSearch = ref('')

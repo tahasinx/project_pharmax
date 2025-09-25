@@ -95,7 +95,7 @@
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            ${{ parseFloat(account.balance || 0).toFixed(2) }}
+                                            {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(account.balance || 0).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span :class="account.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"

@@ -25,7 +25,7 @@ class SettingController extends Controller
             'timezone'            => 'UTC',
             'date_format'         => 'Y-m-d',
             'items_per_page'      => 15,
-            'enable_notifications'=> true,
+            'enable_notifications' => true,
         ];
 
         // Load existing settings (only one row expected)
@@ -44,6 +44,27 @@ class SettingController extends Controller
                     'timezone'        => $setting->timezone    ?? $defaults['timezone'],
                 ]
             );
+        }
+
+        // Load UI settings from settings.json
+        try {
+            if (\Illuminate\Support\Facades\Storage::exists('settings.json')) {
+                $json = json_decode(\Illuminate\Support\Facades\Storage::get('settings.json'), true);
+                if (is_array($json)) {
+                    $settings = array_replace($settings, [
+                        'default_tax_rate'    => $json['default_tax_rate']    ?? $settings['default_tax_rate'],
+                        'invoice_prefix'      => $json['invoice_prefix']      ?? $settings['invoice_prefix'],
+                        'next_invoice_number' => $json['next_invoice_number'] ?? $settings['next_invoice_number'],
+                        'currency_symbol'     => $json['currency_symbol']     ?? $settings['currency_symbol'],
+                        'currency_position'   => $json['currency_position']   ?? $settings['currency_position'],
+                        'date_format'         => $json['date_format']         ?? $settings['date_format'],
+                        'items_per_page'      => $json['items_per_page']      ?? $settings['items_per_page'],
+                        'enable_notifications' => $json['enable_notifications'] ?? $settings['enable_notifications'],
+                    ]);
+                }
+            }
+        } catch (\Throwable $e) {
+            // noop: fallback to defaults
         }
 
         return Inertia::render('Settings/Index', [
@@ -68,7 +89,7 @@ class SettingController extends Controller
             'timezone'            => 'required|string',
             'date_format'         => 'required|string',
             'items_per_page'      => 'required|integer|min:1|max:1000',
-            'enable_notifications'=> 'boolean',
+            'enable_notifications' => 'boolean',
         ]);
 
         // Upsert settings row
@@ -99,7 +120,7 @@ class SettingController extends Controller
             'currency_position'   => $request->input('currency_position'),
             'date_format'         => $request->input('date_format'),
             'items_per_page'      => (int) $request->input('items_per_page'),
-            'enable_notifications'=> (bool) $request->boolean('enable_notifications'),
+            'enable_notifications' => (bool) $request->boolean('enable_notifications'),
         ];
         \Illuminate\Support\Facades\Storage::put('settings.json', json_encode($uiOnly, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 

@@ -59,9 +59,15 @@ class PurchaseController extends Controller
             'manufacturer_id' => $request->manufacturer_id,
             'purchase_date'   => $request->purchase_date,
             'purchase_no'     => $this->generatePurchaseNumber(),
+            'chalan_no'       => $request->chalan_no ?? $this->generateChalanNumber(),
+            'payment_type'    => $request->payment_type ?? 'cash',
             'grand_total'     => $request->grand_total,
             'total_tax'       => $request->total_tax ?? 0,
             'total_discount'  => $request->total_discount ?? 0,
+            'paid_amount'     => $request->paid_amount ?? 0,
+            'due_amount'      => $request->due_amount ?? $request->grand_total,
+            'total_vat'       => $request->total_vat ?? 0,
+            'bank_id'         => $request->bank_id ?? null,
             'user_id'         => auth()->id(),
             'details'         => $request->details,
             'status'          => $request->status ?? true,
@@ -147,7 +153,7 @@ class PurchaseController extends Controller
         $medicines = Medicine::with(['category', 'manufacturer'])
             ->where('status', true)
             ->get();
-        $purchase->load(['items.medicine']);
+        $purchase->load(['manufacturer', 'items.medicine']);
 
         return Inertia::render('Purchase/Edit', [
             'purchase' => $purchase,
@@ -170,9 +176,15 @@ class PurchaseController extends Controller
         $purchase->update([
             'manufacturer_id' => $request->manufacturer_id,
             'purchase_date'   => $request->purchase_date,
+            'chalan_no'       => $request->chalan_no ?? $purchase->chalan_no,
+            'payment_type'    => $request->payment_type ?? $purchase->payment_type,
             'grand_total'     => $request->grand_total,
             'total_tax'       => $request->total_tax ?? 0,
             'total_discount'  => $request->total_discount ?? 0,
+            'paid_amount'     => $request->paid_amount ?? $purchase->paid_amount,
+            'due_amount'      => $request->due_amount ?? $request->grand_total,
+            'total_vat'       => $request->total_vat ?? 0,
+            'bank_id'         => $request->bank_id ?? $purchase->bank_id,
             'details'         => $request->details,
             'status'          => $request->status ?? $purchase->status,
         ]);
@@ -217,5 +229,13 @@ class PurchaseController extends Controller
     {
         $lastPurchase = Purchase::orderBy('id', 'desc')->first();
         return $lastPurchase ? $lastPurchase->purchase_no + 1 : 1000;
+    }
+
+    private function generateChalanNumber()
+    {
+        $lastPurchase = Purchase::orderBy('id', 'desc')->first();
+        $lastChalanNo = $lastPurchase ? $lastPurchase->chalan_no : 'CHL000';
+        $number = (int) str_replace('CHL', '', $lastChalanNo);
+        return 'CHL' . str_pad($number + 1, 3, '0', STR_PAD_LEFT);
     }
 }

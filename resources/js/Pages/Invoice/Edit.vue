@@ -117,7 +117,7 @@
                                                         <p class="text-sm text-gray-500">{{ product.generic_name }}</p>
                                                     </div>
                                                     <div class="text-right">
-                                                        <p class="font-medium">${{ product.price }}</p>
+                                                        <p class="font-medium">{{ ui.currency_position === 'before' ? ui.currency_symbol : '' }}{{ product.price }}{{ ui.currency_position === 'after' ? ui.currency_symbol : '' }}</p>
                                                         <p class="text-sm text-gray-500">{{ product.category?.name }}</p>
                                                     </div>
                                                 </div>
@@ -158,7 +158,7 @@
                                                     </button>
                                                 </div>
                                                 <div class="w-20 text-right">
-                                                    <p class="font-medium">${{ formatMoney(item.total) }}</p>
+                                                    <p class="font-medium">{{ ui.currency_position === 'before' ? ui.currency_symbol : '' }}{{ formatMoney(item.total) }}{{ ui.currency_position === 'after' ? ui.currency_symbol : '' }}</p>
                                                 </div>
                                                 <button @click="removeItem(index)"
                                                         class="text-red-600 hover:text-red-800">
@@ -260,6 +260,7 @@ const props = defineProps({
     invoice: Object,
     customers: Array,
     medicines: Array,
+    ui: Object
 })
 
 // Ensure dates are in YYYY-MM-DD format for <input type="date">

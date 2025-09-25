@@ -110,7 +110,7 @@
                                             {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(invoice.invoice_discount || 0).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            ${{ parseFloat(invoice.paid_amount).toFixed(2) }}
+                                            {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(invoice.paid_amount).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             <span :class="invoice.due_amount > 0 ? 'text-red-600' : 'text-green-600'">
@@ -163,26 +163,8 @@
                                         Next
                                     </Link>
                                 </div>
-                                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                                    <div>
-                                        <p class="text-sm text-gray-700">
-                                            Showing {{ invoices.from }} to {{ invoices.to }} of {{ invoices.total }} results
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                                            <Link v-for="link in invoices.links"
-                                                  :key="link.label"
-                                                  :href="link.url"
-                                                  v-html="link.label"
-                                                  :class="[
-                                                      link.active ? 'z-10 bg-blue-50 border-blue-500 text-blue-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50',
-                                                      'relative inline-flex items-center px-4 py-2 border text-sm font-medium'
-                                                  ]">
-                                            </Link>
-                                        </nav>
-                                    </div>
-                                </div>
+                                <!-- Pagination -->
+                                <Pagination :pagination="invoices" />
                             </nav>
                         </div>
                     </div>
@@ -196,6 +178,7 @@
 import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import Pagination from '@/Components/Pagination.vue'
 
 defineOptions({
     title: 'Invoices'

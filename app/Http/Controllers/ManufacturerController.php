@@ -120,4 +120,25 @@ class ManufacturerController extends Controller
         return redirect()->route('manufacturers.index')
             ->with('success', 'Manufacturer deleted successfully.');
     }
+
+    public function search(Request $request)
+    {
+        $query = $request->get('q', '');
+
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        $manufacturers = Manufacturer::where('status', true)
+            ->where(function ($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%")
+                    ->orWhere('email', 'like', "%{$query}%")
+                    ->orWhere('mobile', 'like', "%{$query}%");
+            })
+            ->orderBy('name')
+            ->limit(10)
+            ->get(['id', 'name', 'email', 'mobile']);
+
+        return response()->json($manufacturers);
+    }
 }

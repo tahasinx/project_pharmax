@@ -69,7 +69,7 @@
                                             Today's Sales
                                         </dt>
                                         <dd class="text-lg font-medium text-gray-900">
-                                            ${{ stats.todays_sales.toLocaleString() }}
+                                            {{ ui.currency_position === 'before' ? ui.currency_symbol : '' }}{{ stats.todays_sales.toLocaleString() }}{{ ui.currency_position === 'after' ? ui.currency_symbol : '' }}
                                         </dd>
                                     </dl>
                                 </div>
@@ -91,7 +91,7 @@
                                             Today's Purchases
                                         </dt>
                                         <dd class="text-lg font-medium text-gray-900">
-                                            ${{ stats.todays_purchases.toLocaleString() }}
+                                            {{ ui.currency_position === 'before' ? ui.currency_symbol : '' }}{{ stats.todays_purchases.toLocaleString() }}{{ ui.currency_position === 'after' ? ui.currency_symbol : '' }}
                                         </dd>
                                     </dl>
                                 </div>
@@ -117,7 +117,7 @@
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-sm font-medium text-gray-900">${{ Number(product.display_price).toFixed(2) }}</p>
+                                    <p class="text-sm font-medium text-gray-900">{{ ui.currency_position === 'before' ? ui.currency_symbol : '' }}{{ Number(product.display_price).toFixed(2) }}{{ ui.currency_position === 'after' ? ui.currency_symbol : '' }}</p>
                                     <p class="text-xs text-gray-500">{{ product.sold_quantity }} sold</p>
                                 </div>
                             </div>
@@ -188,7 +188,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 const props = defineProps({
     stats: Object,
     bestSellingProducts: Array,
-    monthlyData: Array
+    monthlyData: Array,
+    ui: Object
 })
 </script>
 

@@ -45,7 +45,7 @@
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Current Balance</label>
-                                        <p class="text-sm text-gray-900 font-medium">${{ parseFloat(account.balance || 0).toFixed(2) }}</p>
+                                        <p class="text-sm text-gray-900 font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(account.balance || 0).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</p>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
@@ -100,7 +100,7 @@
                                                     {{ transaction.description || 'N/A' }}
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    ${{ parseFloat(transaction.amount || 0).toFixed(2) }}
+                                                    {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(transaction.amount || 0).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap">
                                                     <span :class="transaction.type === 'debit' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"

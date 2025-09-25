@@ -16,10 +16,12 @@ return new class extends Migration
             $table->string('purchase_id')->unique();
             $table->foreignId('manufacturer_id')->constrained()->onDelete('cascade');
             $table->date('purchase_date');
+            $table->integer('purchase_no')->nullable();
             $table->string('chalan_no');
             $table->text('details')->nullable();
             $table->enum('payment_type', ['cash', 'bank', 'credit']);
             $table->decimal('grand_total', 10, 2);
+            $table->decimal('total_tax', 10, 2)->default(0);
             $table->decimal('paid_amount', 10, 2)->default(0);
             $table->decimal('due_amount', 10, 2)->default(0);
             $table->decimal('total_discount', 10, 2)->default(0);

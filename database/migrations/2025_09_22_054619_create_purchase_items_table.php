@@ -16,9 +16,10 @@ return new class extends Migration
             $table->foreignId('purchase_id')->constrained()->onDelete('cascade');
             $table->foreignId('medicine_id')->constrained()->onDelete('cascade');
             $table->string('batch_id');
-            $table->date('expiry_date');
+            $table->date('expiry_date')->nullable();
             $table->integer('quantity');
             $table->decimal('rate', 10, 2);
+            $table->decimal('discount', 10, 2)->default(0);
             $table->decimal('total_amount', 10, 2);
             $table->timestamps();
         });
