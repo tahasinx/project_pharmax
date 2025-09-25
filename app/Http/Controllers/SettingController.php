@@ -57,12 +57,17 @@ class SettingController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Test email sent successfully!'
+                'message' => 'Test email sent successfully!',
+                'data' => [
+                    'email' => $request->input('email'),
+                    'provider' => $request->input('email_config')['email_provider'] ?? 'smtp'
+                ]
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to send test email: ' . $e->getMessage()
+                'message' => 'Failed to send test email: ' . $e->getMessage(),
+                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -109,6 +114,18 @@ class SettingController extends Controller
             'ses_region'           => 'us-east-1',
             'mail_from_name'       => '',
             'mail_from_address'    => '',
+
+            // SMS Configuration
+            'sms_provider'         => 'custom',
+            'sms_api_url'          => '',
+            'sms_http_method'      => 'POST',
+            'sms_custom_params'    => [],
+            'twilio_sid'           => '',
+            'twilio_token'         => '',
+            'twilio_from'          => '',
+            'nexmo_key'            => '',
+            'nexmo_secret'         => '',
+            'nexmo_from'           => '',
         ];
     }
 
@@ -178,6 +195,18 @@ class SettingController extends Controller
                 'ses_region'           => $json['ses_region'] ?? $settings['ses_region'],
                 'mail_from_name'       => $json['mail_from_name'] ?? $settings['mail_from_name'],
                 'mail_from_address'    => $json['mail_from_address'] ?? $settings['mail_from_address'],
+
+                // SMS Configuration
+                'sms_provider'         => $json['sms_provider'] ?? $settings['sms_provider'],
+                'sms_api_url'          => $json['sms_api_url'] ?? $settings['sms_api_url'],
+                'sms_http_method'     => $json['sms_http_method'] ?? $settings['sms_http_method'],
+                'sms_custom_params'   => $json['sms_custom_params'] ?? $settings['sms_custom_params'],
+                'twilio_sid'           => $json['twilio_sid'] ?? $settings['twilio_sid'],
+                'twilio_token'         => $json['twilio_token'] ?? $settings['twilio_token'],
+                'twilio_from'          => $json['twilio_from'] ?? $settings['twilio_from'],
+                'nexmo_key'            => $json['nexmo_key'] ?? $settings['nexmo_key'],
+                'nexmo_secret'         => $json['nexmo_secret'] ?? $settings['nexmo_secret'],
+                'nexmo_from'           => $json['nexmo_from'] ?? $settings['nexmo_from'],
             ]);
         } catch (\Throwable $e) {
             return $settings;
@@ -226,6 +255,18 @@ class SettingController extends Controller
             'ses_region'           => 'nullable|string|max:255',
             'mail_from_name'       => 'nullable|string|max:255',
             'mail_from_address'    => 'nullable|email|max:255',
+
+            // SMS Configuration
+            'sms_provider'         => 'required|in:twilio,nexmo,custom',
+            'sms_api_url'          => 'nullable|url|max:255',
+            'sms_http_method'     => 'nullable|in:GET,POST,PUT',
+            'sms_custom_params'   => 'nullable|array',
+            'twilio_sid'           => 'nullable|string|max:255',
+            'twilio_token'         => 'nullable|string|max:255',
+            'twilio_from'           => 'nullable|string|max:20',
+            'nexmo_key'            => 'nullable|string|max:255',
+            'nexmo_secret'         => 'nullable|string|max:255',
+            'nexmo_from'            => 'nullable|string|max:20',
         ]);
     }
 
@@ -288,6 +329,18 @@ class SettingController extends Controller
             'ses_region'           => $request->input('ses_region'),
             'mail_from_name'       => $request->input('mail_from_name'),
             'mail_from_address'    => $request->input('mail_from_address'),
+
+            // SMS Configuration
+            'sms_provider'         => $request->input('sms_provider'),
+            'sms_api_url'          => $request->input('sms_api_url'),
+            'sms_http_method'     => $request->input('sms_http_method'),
+            'sms_custom_params'   => $request->input('sms_custom_params'),
+            'twilio_sid'           => $request->input('twilio_sid'),
+            'twilio_token'         => $request->input('twilio_token'),
+            'twilio_from'           => $request->input('twilio_from'),
+            'nexmo_key'            => $request->input('nexmo_key'),
+            'nexmo_secret'         => $request->input('nexmo_secret'),
+            'nexmo_from'            => $request->input('nexmo_from'),
         ];
 
         Storage::put('settings.json', json_encode($uiOnly, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
@@ -302,6 +355,244 @@ class SettingController extends Controller
             'app.name'     => $request->input('company_name'),
             'app.timezone' => $request->input('timezone'),
         ]);
+    }
+
+    /**
+     * Send test SMS to verify configuration
+     */
+    public function testSms(Request $request)
+    {
+        $request->validate([
+            'phone'      => 'required|string',
+            'sms_config' => 'required|array',
+        ]);
+
+        try {
+            $smsConfig = $request->input('sms_config');
+            $phone = $request->input('phone');
+
+            $response = $this->sendSms($phone, 'Test SMS from PharmaCare system. Your SMS configuration is working correctly!', $smsConfig);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Test SMS sent successfully!',
+                'data' => [
+                    'phone' => $phone,
+                    'provider' => $smsConfig['sms_provider'] ?? 'custom',
+                    'response' => $response
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send test SMS: ' . $e->getMessage(),
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Send SMS using configured provider
+     */
+    private function sendSms(string $phone, string $message, array $config): string
+    {
+        switch ($config['sms_provider']) {
+            case 'twilio':
+                return $this->sendTwilioSms($phone, $message, $config);
+            case 'nexmo':
+                return $this->sendNexmoSms($phone, $message, $config);
+            case 'custom':
+                return $this->sendCustomSms($phone, $message, $config);
+            default:
+                throw new \Exception('Unsupported SMS provider: ' . $config['sms_provider']);
+        }
+    }
+
+
+    /**
+     * Send SMS via Twilio
+     */
+    private function sendTwilioSms(string $phone, string $message, array $config): string
+    {
+        $sid = $config['twilio_sid'];
+        $token = $config['twilio_token'];
+        $from = $config['twilio_from'];
+
+        $formattedPhone = $this->formatPhoneNumber($phone, $config['sms_country_code'] ?? '1');
+
+        $url = "https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json";
+
+        $data = [
+            'From' => $from,
+            'To'   => $formattedPhone,
+            'Body' => $message
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERPWD, "{$sid}:{$token}");
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200) {
+            throw new \Exception('Twilio API error: ' . $response);
+        }
+
+        return $response;
+    }
+
+    /**
+     * Send SMS via Nexmo (Vonage)
+     */
+    private function sendNexmoSms(string $phone, string $message, array $config): string
+    {
+        $apiKey = $config['nexmo_key'];
+        $apiSecret = $config['nexmo_secret'];
+        $from = $config['nexmo_from'];
+
+        $formattedPhone = $this->formatPhoneNumber($phone, $config['sms_country_code'] ?? '44');
+
+        $url = 'https://rest.nexmo.com/sms/json';
+
+        $data = [
+            'api_key'    => $apiKey,
+            'api_secret' => $apiSecret,
+            'to'         => $formattedPhone,
+            'from'       => $from,
+            'text'       => $message
+        ];
+
+        return $this->makeHttpRequest($url, $data);
+    }
+
+    /**
+     * Send SMS via Custom API
+     */
+    private function sendCustomSms(string $phone, string $message, array $config): string
+    {
+        $url = $config['sms_api_url'];
+        $httpMethod = $config['sms_http_method'] ?? 'POST';
+        $customParams = $config['sms_custom_params'] ?? [];
+
+        // Build data array from custom parameters
+        $data = [];
+        foreach ($customParams as $param) {
+            if (!empty($param['name'])) {
+                $value = $param['value'] ?? '';
+
+                // Handle different parameter types
+                switch ($param['type'] ?? 'static') {
+                    case 'phone':
+                        $value = $phone;
+                        break;
+                    case 'message':
+                        $value = $message;
+                        break;
+                    case 'placeholder':
+                        // Replace placeholders in custom placeholder values
+                        $value = str_replace(['{phone}', '{message}'], [$phone, $message], $value);
+                        break;
+                    case 'static':
+                    default:
+                        // Use the value as-is
+                        break;
+                }
+
+                $data[$param['name']] = $value;
+            }
+        }
+
+        if ($httpMethod === 'GET') {
+            return $this->makeHttpGetRequest($url, $data);
+        } else {
+            return $this->makeHttpRequest($url, $data);
+        }
+    }
+
+    /**
+     * Replace placeholders in parameter values
+     */
+    private function replacePlaceholders(array $data, string $phone, string $message): array
+    {
+        foreach ($data as $key => $value) {
+            $data[$key] = str_replace(['{phone}', '{message}'], [$phone, $message], $value);
+        }
+        return $data;
+    }
+
+    /**
+     * Make HTTP GET request
+     */
+    private function makeHttpGetRequest(string $url, array $data): string
+    {
+        $queryString = http_build_query($data);
+        $fullUrl = $url . '?' . $queryString;
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $fullUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200) {
+            throw new \Exception('HTTP GET request failed with code: ' . $httpCode . ', Response: ' . $response);
+        }
+
+        return $response;
+    }
+
+    /**
+     * Format phone number with country code
+     */
+    private function formatPhoneNumber(string $phone, string $countryCode): string
+    {
+        // Remove any non-numeric characters except +
+        $phone = preg_replace('/[^0-9+]/', '', $phone);
+
+        // If phone starts with +, return as is
+        if (str_starts_with($phone, '+')) {
+            return $phone;
+        }
+
+        // If phone starts with country code, add +
+        if (str_starts_with($phone, $countryCode)) {
+            return '+' . $phone;
+        }
+
+        // Otherwise, add country code
+        return '+' . $countryCode . $phone;
+    }
+
+    /**
+     * Make HTTP request
+     */
+    private function makeHttpRequest(string $url, array $data): string
+    {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200) {
+            throw new \Exception('HTTP request failed with code: ' . $httpCode . ', Response: ' . $response);
+        }
+
+        return $response;
     }
 
     /**

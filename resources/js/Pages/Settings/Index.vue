@@ -343,6 +343,246 @@
                             </div>
                         </div>
 
+                        <!-- SMS Configuration -->
+                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                            <div class="p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">SMS Configuration</h3>
+                                <div class="space-y-6">
+                                    <!-- SMS Provider Selection -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">SMS Provider</label>
+                                        <select v-model="form.sms_provider"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="twilio">Twilio</option>
+                                            <option value="nexmo">Nexmo (Vonage)</option>
+                                            <option value="custom">Custom API</option>
+                                        </select>
+                                        <p class="mt-1 text-sm text-gray-500">Choose your SMS service provider</p>
+                                    </div>
+
+
+                                    <!-- Twilio Configuration -->
+                                    <div v-if="form.sms_provider === 'twilio'" class="space-y-4">
+                                        <h4 class="text-md font-medium text-gray-800 border-b pb-2">Twilio Settings</h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Account SID *</label>
+                                                <input v-model="form.twilio_sid"
+                                                       type="text"
+                                                       placeholder="Your Twilio Account SID"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Auth Token *</label>
+                                                <input v-model="form.twilio_token"
+                                                       type="password"
+                                                       placeholder="Your Twilio Auth Token"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">From Number *</label>
+                                                <input v-model="form.twilio_from"
+                                                       type="text"
+                                                       placeholder="+1234567890"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Default Country Code</label>
+                                                <input v-model="form.sms_country_code"
+                                                       type="text"
+                                                       placeholder="1"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Nexmo Configuration -->
+                                    <div v-if="form.sms_provider === 'nexmo'" class="space-y-4">
+                                        <h4 class="text-md font-medium text-gray-800 border-b pb-2">Nexmo (Vonage) Settings</h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">API Key *</label>
+                                                <input v-model="form.nexmo_key"
+                                                       type="text"
+                                                       placeholder="Your Nexmo API Key"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">API Secret *</label>
+                                                <input v-model="form.nexmo_secret"
+                                                       type="password"
+                                                       placeholder="Your Nexmo API Secret"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">From Number *</label>
+                                                <input v-model="form.nexmo_from"
+                                                       type="text"
+                                                       placeholder="Your Nexmo number"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Default Country Code</label>
+                                                <input v-model="form.sms_country_code"
+                                                       type="text"
+                                                       placeholder="44"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Custom API Configuration -->
+                                    <div v-if="form.sms_provider === 'custom'" class="space-y-4">
+                                        <h4 class="text-md font-medium text-gray-800 border-b pb-2">Custom API Settings</h4>
+
+                                        <!-- Basic API Configuration -->
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">API URL *</label>
+                                                <input v-model="form.sms_api_url"
+                                                       type="url"
+                                                       placeholder="https://your-sms-api.com/send"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">HTTP Method</label>
+                                                <select v-model="form.sms_http_method"
+                                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                    <option value="POST">POST</option>
+                                                    <option value="GET">GET</option>
+                                                    <option value="PUT">PUT</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <!-- Custom Parameters -->
+                                        <div class="border rounded-lg p-4 bg-gray-50">
+                                            <div class="flex justify-between items-center mb-4">
+                                                <h5 class="text-sm font-medium text-gray-700">Custom Parameters</h5>
+                                                <button type="button"
+                                                        @click="addCustomParameter"
+                                                        class="bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold py-1 px-3 rounded flex items-center space-x-1">
+                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                    <span>Add Parameter</span>
+                                                </button>
+                                            </div>
+
+                                            <div v-if="form.sms_custom_params.length === 0" class="text-center text-gray-500 py-4">
+                                                No custom parameters added yet. Click "Add Parameter" to get started.
+                                            </div>
+
+                                            <div v-for="(param, index) in form.sms_custom_params"
+                                                 :key="index"
+                                                 class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3 p-3 bg-white rounded border">
+                                                <div>
+                                                    <label class="block text-xs font-medium text-gray-600 mb-1">Parameter Name</label>
+                                                    <input v-model="param.name"
+                                                           type="text"
+                                                           placeholder="e.g., api_key, senderid"
+                                                           class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-medium text-gray-600 mb-1">Parameter Value</label>
+                                                    <input v-model="param.value"
+                                                           type="text"
+                                                           :placeholder="getParameterPlaceholder(param.name)"
+                                                           class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-medium text-gray-600 mb-1">Type</label>
+                                                    <select v-model="param.type"
+                                                            class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                                        <option value="static">Static Value</option>
+                                                        <option value="phone">Phone Number</option>
+                                                        <option value="message">Message Text</option>
+                                                        <option value="placeholder">Custom Placeholder</option>
+                                                    </select>
+                                                </div>
+                                                <div class="flex items-end">
+                                                    <button type="button"
+                                                            @click="removeCustomParameter(index)"
+                                                            class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded flex items-center space-x-1">
+                                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                                        </svg>
+                                                        <span>Remove</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Common Parameters Presets -->
+                                        <div class="border rounded-lg p-4 bg-blue-50">
+                                            <h5 class="text-sm font-medium text-gray-700 mb-3">Common Parameter Presets</h5>
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                                                <button type="button"
+                                                        @click="addPresetParameters('bulksms')"
+                                                        class="text-left p-3 bg-white rounded border hover:bg-gray-50 transition-colors">
+                                                    <div class="font-medium text-sm">BulkSMS Structure</div>
+                                                    <div class="text-xs text-gray-500">api_key, senderid, number, message</div>
+                                                </button>
+                                                <button type="button"
+                                                        @click="addPresetParameters('generic')"
+                                                        class="text-left p-3 bg-white rounded border hover:bg-gray-50 transition-colors">
+                                                    <div class="font-medium text-sm">Generic Structure</div>
+                                                    <div class="text-xs text-gray-500">key, from, to, text</div>
+                                                </button>
+                                            </div>
+
+                                            <!-- Common Parameter Names Reference -->
+                                            <div class="border-t pt-3">
+                                                <h6 class="text-xs font-medium text-gray-600 mb-2">Common Parameter Names by Provider:</h6>
+                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                                                    <div class="bg-white p-2 rounded border">
+                                                        <div class="font-medium text-gray-700 mb-1">Phone/Number:</div>
+                                                        <div class="text-gray-500">number, to, phone, recipient, mobile</div>
+                                                    </div>
+                                                    <div class="bg-white p-2 rounded border">
+                                                        <div class="font-medium text-gray-700 mb-1">Message/Text:</div>
+                                                        <div class="text-gray-500">message, text, body, content, msg</div>
+                                                    </div>
+                                                    <div class="bg-white p-2 rounded border">
+                                                        <div class="font-medium text-gray-700 mb-1">Sender/From:</div>
+                                                        <div class="text-gray-500">senderid, from, sender, source</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Test SMS Section -->
+                                    <div class="border-t pt-6">
+                                        <h4 class="text-md font-medium text-gray-800 mb-4">Test SMS Configuration</h4>
+                                        <div class="flex items-end space-x-4">
+                                            <div class="flex-1">
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Test Phone Number</label>
+                                                <input v-model="testSms"
+                                                       type="tel"
+                                                       placeholder="+8801612345678"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                            <button type="button"
+                                                    @click="sendTestSms"
+                                                    :disabled="!testSms || sendingSms"
+                                                    class="bg-green-500 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded flex items-center space-x-2">
+                                                <svg v-if="sendingSms" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                <svg v-else class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                                                </svg>
+                                                <span>{{ sendingSms ? 'Sending...' : 'Send Test SMS' }}</span>
+                                            </button>
+                                        </div>
+                                        <p class="mt-2 text-sm text-gray-500">Send a test SMS to verify your configuration</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Form Actions -->
                         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                             <div class="p-6">
@@ -359,6 +599,93 @@
             </div>
         </div>
     </AuthenticatedLayout>
+
+    <!-- Response Modal -->
+    <div v-if="responseModal.open" class="fixed inset-0 z-50 flex items-center justify-center">
+        <div class="absolute inset-0 bg-black bg-opacity-40" @click="closeResponseModal"></div>
+        <div class="relative bg-white w-full max-w-3xl mx-4 rounded-lg shadow-xl">
+            <div class="flex items-center justify-between px-5 py-3 border-b">
+                <h3 class="text-lg font-semibold text-gray-900">{{ responseModal.title }}</h3>
+                <button @click="closeResponseModal" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+            <div class="px-5 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div>
+                    <div class="text-sm font-medium text-gray-700 mb-2">Request</div>
+                    <pre class="text-xs bg-gray-50 border rounded p-3 overflow-x-auto"><code>{{ formatJson(responseModal.request) }}</code></pre>
+                </div>
+                <div>
+                    <div class="text-sm font-medium text-gray-700 mb-2">App Response</div>
+                    <pre class="text-xs bg-gray-50 border rounded p-3 overflow-x-auto"><code>{{ formatJson(responseModal.appResponse) }}</code></pre>
+                </div>
+                <div v-if="responseModal.remoteRaw">
+                    <div class="text-sm font-medium text-gray-700 mb-2">Remote API Raw Response</div>
+                    <pre class="text-xs bg-gray-50 border rounded p-3 overflow-x-auto"><code>{{ responseModal.remoteRaw }}</code></pre>
+                </div>
+                <div v-if="responseModal.remoteParsed">
+                    <div class="text-sm font-medium text-gray-700 mb-2">Remote API Parsed</div>
+                    <pre class="text-xs bg-gray-50 border rounded p-3 overflow-x-auto"><code>{{ formatJson(responseModal.remoteParsed) }}</code></pre>
+                </div>
+            </div>
+            <div class="px-5 py-3 border-t flex justify-end">
+                <button @click="closeResponseModal" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Beautiful Toast Notification -->
+    <div v-if="toast.show"
+         class="fixed top-4 right-4 z-50 max-w-sm w-full bg-white rounded-lg shadow-lg border-l-4 transform transition-all duration-300 ease-in-out"
+         :class="{
+             'border-green-500': toast.type === 'success',
+             'border-red-500': toast.type === 'error',
+             'border-blue-500': toast.type === 'info'
+         }">
+        <div class="p-4">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <!-- Success Icon -->
+                    <svg v-if="toast.type === 'success'" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <!-- Error Icon -->
+                    <svg v-else-if="toast.type === 'error'" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <!-- Info Icon -->
+                    <svg v-else class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="ml-3 w-0 flex-1">
+                    <p class="text-sm font-medium text-gray-900">
+                        {{ toast.title }}
+                    </p>
+                    <p class="mt-1 text-sm text-gray-500">
+                        {{ toast.message }}
+                    </p>
+                </div>
+                <div class="ml-4 flex-shrink-0 flex">
+                    <button @click="hideToast"
+                            class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <span class="sr-only">Close</span>
+                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="h-1 bg-gray-200 rounded-b-lg overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-b-lg animate-pulse"
+                 :style="{ animationDuration: toast.duration + 'ms' }"></div>
+        </div>
+    </div>
 </template>
 
 <script setup>
@@ -375,6 +702,39 @@ const props = defineProps({
         default: () => ({})
     }
 })
+
+// Response Modal State
+const responseModal = ref({
+    open: false,
+    title: '',
+    request: null,
+    appResponse: null,
+    remoteRaw: '',
+    remoteParsed: null
+})
+
+const openResponseModal = ({ title, request, appResponse, remoteRaw, remoteParsed }) => {
+    responseModal.value = {
+        open: true,
+        title,
+        request,
+        appResponse,
+        remoteRaw,
+        remoteParsed
+    }
+}
+
+const closeResponseModal = () => {
+    responseModal.value.open = false
+}
+
+const formatJson = (obj) => {
+    try {
+        return JSON.stringify(obj, null, 2)
+    } catch (e) {
+        return String(obj || '')
+    }
+}
 
 const form = ref({
     company_name: '',
@@ -404,12 +764,54 @@ const form = ref({
     ses_secret: '',
     ses_region: 'us-east-1',
     mail_from_name: '',
-    mail_from_address: ''
+    mail_from_address: '',
+    // SMS Configuration
+    sms_provider: 'custom',
+    sms_api_url: '',
+    sms_http_method: 'POST',
+    sms_custom_params: [],
+    twilio_sid: '',
+    twilio_token: '',
+    twilio_from: '',
+    nexmo_key: '',
+    nexmo_secret: '',
+    nexmo_from: ''
 })
 
 // Test email functionality
 const testEmail = ref('')
 const sendingTest = ref(false)
+
+// Test SMS functionality
+const testSms = ref('')
+const sendingSms = ref(false)
+
+// Toast notification system
+const toast = ref({
+    show: false,
+    type: 'success', // success, error, info
+    title: '',
+    message: '',
+    duration: 5000
+})
+
+const showToast = (type, title, message, duration = 5000) => {
+    toast.value = {
+        show: true,
+        type,
+        title,
+        message,
+        duration
+    }
+
+    setTimeout(() => {
+        toast.value.show = false
+    }, duration)
+}
+
+const hideToast = () => {
+    toast.value.show = false
+}
 
 onMounted(() => {
     // Populate form with existing settings
@@ -432,18 +834,169 @@ const sendTestEmail = async () => {
     sendingTest.value = true
 
     try {
-        await router.post(route('settings.test-email'), {
-            email: testEmail.value,
-            email_config: form.value
+        const response = await fetch('/api/settings/test-email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                email: testEmail.value,
+                email_config: form.value
+            })
         })
 
-        // Show success message (you can implement a toast notification here)
-        alert('Test email sent successfully!')
+        const data = await response.json()
+
+        if (data.success) {
+            showToast('success', 'Email Sent Successfully!',
+                     `Test email has been sent to ${testEmail.value}. Please check your inbox.`)
+            openResponseModal({
+                title: 'Test Email Result',
+                request: { email: testEmail.value, provider: form.value.email_provider },
+                appResponse: data,
+                remoteRaw: null,
+                remoteParsed: null
+            })
+        } else {
+            showToast('error', 'Email Failed', data.message)
+            openResponseModal({
+                title: 'Test Email Error',
+                request: { email: testEmail.value, provider: form.value.email_provider },
+                appResponse: data,
+                remoteRaw: null,
+                remoteParsed: null
+            })
+        }
     } catch (error) {
-        // Show error message
-        alert('Failed to send test email. Please check your configuration.')
+        showToast('error', 'Email Failed', 'Failed to send test email. Please check your configuration.')
     } finally {
         sendingTest.value = false
     }
+}
+
+const sendTestSms = async () => {
+    if (!testSms.value) return
+
+    sendingSms.value = true
+
+    try {
+        const response = await fetch('/api/settings/test-sms', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                phone: testSms.value,
+                sms_config: form.value
+            })
+        })
+
+        const data = await response.json()
+
+        if (data.success) {
+            showToast('success', 'SMS Sent Successfully!',
+                     `Test SMS has been sent to ${testSms.value}. Please check your phone.`)
+            let remoteParsed = null
+            try {
+                remoteParsed = JSON.parse(data.data?.response || '{}')
+            } catch (e) {}
+            openResponseModal({
+                title: 'Test SMS Result',
+                request: { phone: testSms.value, provider: form.value.sms_provider, url: form.value.sms_api_url },
+                appResponse: data,
+                remoteRaw: data.data?.response || '',
+                remoteParsed
+            })
+        } else {
+            showToast('error', 'SMS Failed', data.message)
+            let remoteParsed = null
+            try {
+                remoteParsed = JSON.parse(data.data?.response || '{}')
+            } catch (e) {}
+            openResponseModal({
+                title: 'Test SMS Error',
+                request: { phone: testSms.value, provider: form.value.sms_provider, url: form.value.sms_api_url },
+                appResponse: data,
+                remoteRaw: data.data?.response || '',
+                remoteParsed
+            })
+        }
+    } catch (error) {
+        showToast('error', 'SMS Failed', 'Failed to send test SMS. Please check your configuration.')
+    } finally {
+        sendingSms.value = false
+    }
+}
+
+// Custom SMS parameter management
+const addCustomParameter = () => {
+    form.value.sms_custom_params.push({
+        name: '',
+        value: '',
+        type: 'static'
+    })
+}
+
+const removeCustomParameter = (index) => {
+    form.value.sms_custom_params.splice(index, 1)
+}
+
+const addPresetParameters = (type) => {
+    // Clear existing parameters
+    form.value.sms_custom_params = []
+
+    if (type === 'bulksms') {
+        form.value.sms_custom_params = [
+            { name: 'api_key', value: '', type: 'static' },
+            { name: 'senderid', value: '', type: 'static' },
+            { name: 'number', value: '{phone}', type: 'phone' },
+            { name: 'message', value: '{message}', type: 'message' }
+        ]
+    } else if (type === 'generic') {
+        form.value.sms_custom_params = [
+            { name: 'key', value: '', type: 'static' },
+            { name: 'from', value: '', type: 'static' },
+            { name: 'to', value: '{phone}', type: 'phone' },
+            { name: 'text', value: '{message}', type: 'message' }
+        ]
+    }
+}
+
+const getParameterPlaceholder = (paramName) => {
+    const commonNames = {
+        // Phone/Number parameters
+        'number': 'Use {phone} for dynamic phone number',
+        'to': 'Use {phone} for dynamic phone number',
+        'phone': 'Use {phone} for dynamic phone number',
+        'recipient': 'Use {phone} for dynamic phone number',
+        'mobile': 'Use {phone} for dynamic phone number',
+
+        // Message/Text parameters
+        'message': 'Use {message} for dynamic message text',
+        'text': 'Use {message} for dynamic message text',
+        'body': 'Use {message} for dynamic message text',
+        'content': 'Use {message} for dynamic message text',
+        'msg': 'Use {message} for dynamic message text',
+
+        // Sender/From parameters
+        'senderid': 'Your sender ID',
+        'from': 'Your sender ID or phone number',
+        'sender': 'Your sender ID',
+        'source': 'Your sender ID',
+
+        // API Key parameters
+        'api_key': 'Your API key',
+        'key': 'Your API key',
+        'token': 'Your API token',
+        'auth': 'Your authentication token'
+    }
+
+    return commonNames[paramName.toLowerCase()] || 'Enter parameter value'
 }
 </script>

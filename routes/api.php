@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SettingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,4 +17,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
+});
+
+// Settings Test Routes (API endpoints for JSON responses)
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::post('settings/test-email', [SettingController::class, 'testEmail'])->name('api.settings.test-email');
+    Route::post('settings/test-sms', [SettingController::class, 'testSms'])->name('api.settings.test-sms');
 });
