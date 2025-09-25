@@ -550,6 +550,87 @@
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <!-- Custom Response Mapping -->
+                                        <div class="border rounded-lg p-4 bg-green-50">
+                                            <div class="flex justify-between items-center mb-4">
+                                                <h5 class="text-sm font-medium text-gray-700">Custom Response Mapping</h5>
+                                                <button type="button"
+                                                        @click="addResponseMapping"
+                                                        class="bg-green-500 hover:bg-green-700 text-white text-xs font-bold py-1 px-3 rounded flex items-center space-x-1">
+                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                    <span>Add Response</span>
+                                                </button>
+                                            </div>
+
+                                            <p class="text-xs text-gray-600 mb-4">
+                                                Map any response from your SMS provider to user-friendly messages.
+                                                Supports JSON responses (with key-value pairs) or plain string responses.
+                                                The system will automatically detect and show your custom messages in notifications.
+                                            </p>
+
+                                            <div v-if="form.sms_response_mappings.length === 0" class="text-center text-gray-500 py-4">
+                                                No response mappings added yet. Click "Add Response" to get started.
+                                            </div>
+
+                                            <div v-for="(mapping, index) in form.sms_response_mappings"
+                                                 :key="index"
+                                                 class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3 p-3 bg-white rounded border">
+                                                <div>
+                                                    <label class="block text-xs font-medium text-gray-600 mb-1">Response Key</label>
+                                                    <input v-model="mapping.key"
+                                                           type="text"
+                                                           placeholder="e.g., status, code, result (leave empty for string match)"
+                                                           class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-medium text-gray-600 mb-1">Response Value</label>
+                                                    <input v-model="mapping.value"
+                                                           type="text"
+                                                           placeholder="e.g., success, 200, OK, error"
+                                                           class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                                </div>
+                                                <div class="flex items-end space-x-2">
+                                                    <div class="flex-1">
+                                                        <label class="block text-xs font-medium text-gray-600 mb-1">Custom Message</label>
+                                                        <input v-model="mapping.message"
+                                                               type="text"
+                                                               placeholder="Your custom message here"
+                                                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                                    </div>
+                                                    <button type="button"
+                                                            @click="removeResponseMapping(index)"
+                                                            class="bg-red-500 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded flex items-center space-x-1">
+                                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                                        </svg>
+                                                        <span>Remove</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Response Mapping Examples -->
+                                            <div class="border-t pt-3">
+                                                <h6 class="text-xs font-medium text-gray-600 mb-2">Response Mapping Examples:</h6>
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                                    <div class="bg-white p-2 rounded border">
+                                                        <div class="font-medium text-gray-700 mb-1">JSON Response:</div>
+                                                        <div class="text-gray-500">Key: "status", Value: "success"</div>
+                                                        <div class="text-gray-500">Key: "code", Value: "200"</div>
+                                                    </div>
+                                                    <div class="bg-white p-2 rounded border">
+                                                        <div class="font-medium text-gray-700 mb-1">String Response:</div>
+                                                        <div class="text-gray-500">Key: "", Value: "OK"</div>
+                                                        <div class="text-gray-500">Key: "", Value: "SUCCESS"</div>
+                                                    </div>
+                                                </div>
+                                                <p class="text-xs text-gray-500 mt-2">
+                                                    Leave "Response Key" empty to match the entire response value as a string.
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <!-- Test SMS Section -->
@@ -770,6 +851,7 @@ const form = ref({
     sms_api_url: '',
     sms_http_method: 'POST',
     sms_custom_params: [],
+    sms_response_mappings: [],
     twilio_sid: '',
     twilio_token: '',
     twilio_from: '',
@@ -900,8 +982,12 @@ const sendTestSms = async () => {
         const data = await response.json()
 
         if (data.success) {
-            showToast('success', 'SMS Sent Successfully!',
-                     `Test SMS has been sent to ${testSms.value}. Please check your phone.`)
+            // Check for custom response message
+            const customMessage = getCustomResponseMessage(data.data?.response || '')
+            const toastMessage = customMessage || `Test SMS has been sent to ${testSms.value}. Please check your phone.`
+
+            showToast('success', 'SMS Sent Successfully!', toastMessage)
+
             let remoteParsed = null
             try {
                 remoteParsed = JSON.parse(data.data?.response || '{}')
@@ -914,7 +1000,12 @@ const sendTestSms = async () => {
                 remoteParsed
             })
         } else {
-            showToast('error', 'SMS Failed', data.message)
+            // Check for custom response message even for errors
+            const customMessage = getCustomResponseMessage(data.data?.response || '')
+            const toastMessage = customMessage || data.message
+
+            showToast('error', 'SMS Failed', toastMessage)
+
             let remoteParsed = null
             try {
                 remoteParsed = JSON.parse(data.data?.response || '{}')
@@ -998,5 +1089,64 @@ const getParameterPlaceholder = (paramName) => {
     }
 
     return commonNames[paramName.toLowerCase()] || 'Enter parameter value'
+}
+
+// Response mapping management
+const addResponseMapping = () => {
+    form.value.sms_response_mappings.push({
+        key: '',
+        value: '',
+        message: ''
+    })
+}
+
+const removeResponseMapping = (index) => {
+    form.value.sms_response_mappings.splice(index, 1)
+}
+
+
+// Function to get custom message based on response mappings
+const getCustomResponseMessage = (remoteResponse) => {
+    if (!remoteResponse || !form.value.sms_response_mappings.length) {
+        return null
+    }
+
+    // Convert response to string for comparison
+    const responseStr = typeof remoteResponse === 'string' ? remoteResponse : JSON.stringify(remoteResponse)
+
+    for (const mapping of form.value.sms_response_mappings) {
+        if (!mapping.value || !mapping.message) continue
+
+        // Case 1: Empty key - match entire response value
+        if (!mapping.key || mapping.key.trim() === '') {
+            if (responseStr === mapping.value || responseStr.includes(mapping.value)) {
+                return mapping.message
+            }
+        }
+        // Case 2: Has key - try to parse as JSON and match specific field
+        else {
+            try {
+                const parsed = typeof remoteResponse === 'string' ? JSON.parse(remoteResponse) : remoteResponse
+
+                // Check if the key exists and value matches
+                if (parsed[mapping.key] !== undefined) {
+                    const responseValue = parsed[mapping.key]
+                    if (responseValue === mapping.value ||
+                        responseValue === String(mapping.value) ||
+                        String(responseValue) === mapping.value) {
+                        return mapping.message
+                    }
+                }
+            } catch (e) {
+                // If JSON parsing fails, try string matching with key
+                const keyPattern = new RegExp(`"${mapping.key}"\\s*:\\s*"${mapping.value}"`, 'i')
+                if (keyPattern.test(responseStr)) {
+                    return mapping.message
+                }
+            }
+        }
+    }
+
+    return null
 }
 </script>
