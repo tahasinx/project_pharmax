@@ -11,6 +11,9 @@ use App\Models\StockTransaction;
 use App\Traits\HasSettingsPagination;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use App\Mail\InvoiceCreatedMail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -63,6 +66,8 @@ class InvoiceController extends Controller
             'items.*.medicine_id'   => 'required|exists:medicines,id',
             'items.*.quantity'      => 'required|integer|min:1',
             'items.*.rate'          => 'required|numeric|min:0',
+            'send_sms'              => 'nullable|boolean',
+            'send_email'            => 'nullable|boolean',
         ]);
 
         // Recalculate due on server for accuracy and safety
@@ -155,6 +160,51 @@ class InvoiceController extends Controller
                 }
             }
         });
+
+        // Conditional notifications
+        try {
+            $customer = Customer::find($request->customer_id);
+            if ($customer) {
+                // Load invoice relations for messaging
+                $invoice->load(['items.medicine', 'customer']);
+
+                // Load settings
+                $settings = [];
+                try {
+                    $settingsRaw = Storage::get('settings.json');
+                    $settings = json_decode($settingsRaw, true) ?: [];
+                } catch (\Throwable $e) {
+                }
+
+                $companyName = $settings['company_name'] ?? config('app.name', 'PharmaCare');
+                $currencySymbol = $settings['currency_symbol'] ?? ($request->user()?->ui['currency_symbol'] ?? '$');
+                $currencyPosition = $settings['currency_position'] ?? 'before';
+
+                $formatMoney = function ($amount) use ($currencySymbol, $currencyPosition) {
+                    $val = number_format((float)$amount, 2);
+                    return $currencyPosition === 'before' ? ($currencySymbol . $val) : ($val . $currencySymbol);
+                };
+
+                $itemsCount = $invoice->items->count();
+                $smsText = 'Invoice #' . $invoice->invoice_no
+                    . ' | Date ' . ($invoice->date ? date('Y-m-d', strtotime($invoice->date)) : date('Y-m-d'))
+                    . ' | Items ' . $itemsCount
+                    . ' | Total ' . $formatMoney($invoice->total_amount)
+                    . ' | Paid ' . $formatMoney($invoice->paid_amount)
+                    . ' | Due ' . $formatMoney($invoice->due_amount)
+                    . ' | ' . $companyName . ' - Thank you!';
+
+                if ($request->boolean('send_sms') && !empty($customer->mobile)) {
+                    \App\Helpers\NotificationHelper::sendSms($customer->mobile, $smsText);
+                }
+                if ($request->boolean('send_email') && !empty($customer->email)) {
+                    // Send rich HTML invoice email
+                    Mail::to($customer->email)->send(new InvoiceCreatedMail($invoice, $settings));
+                }
+            }
+        } catch (\Throwable $e) {
+            // Do not block the flow on notification errors
+        }
 
         return redirect()->route('invoices.show', $invoice)
             ->with('success', 'Invoice created successfully.');

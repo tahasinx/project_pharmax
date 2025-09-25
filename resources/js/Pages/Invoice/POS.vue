@@ -198,10 +198,30 @@
                                                class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100">
                                     </div>
 
+                                    <!-- Notifications -->
+                                    <div class="border-t pt-4">
+                                        <h4 class="text-sm font-medium text-gray-700 mb-2">Notifications</h4>
+                                        <div class="flex flex-col space-y-2">
+                                            <label v-if="hasCustomerPhone" class="inline-flex items-center space-x-2">
+                                                <input type="checkbox" v-model="form.send_sms" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                                <span class="text-sm text-gray-700">Send SMS to customer ({{ customerPhoneDisplay }})</span>
+                                            </label>
+                                            <label v-if="hasCustomerEmail" class="inline-flex items-center space-x-2">
+                                                <input type="checkbox" v-model="form.send_email" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                                <span class="text-sm text-gray-700">Send Email to customer ({{ customerEmailDisplay }})</span>
+                                            </label>
+                                            <p v-if="!hasCustomerPhone && !hasCustomerEmail" class="text-xs text-gray-500">Customer has no phone/email on file.</p>
+                                        </div>
+                                    </div>
+
                                     <button @click="processSale"
-                                            :disabled="cartItems.length === 0 || !selectedCustomer"
-                                            class="w-full bg-green-500 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded">
-                                        Process Sale
+                                            :disabled="isProcessing || cartItems.length === 0 || !selectedCustomer"
+                                            class="w-full bg-green-500 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded flex items-center justify-center space-x-2">
+                                        <svg v-if="isProcessing" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V2a10 10 0 100 20v-2a8 8 0 01-8-8z"></path>
+                                        </svg>
+                                        <span>{{ isProcessing ? 'Processing...' : 'Process Sale' }}</span>
                                     </button>
                                 </div>
                             </div>
@@ -267,6 +287,9 @@ const productSearchInput = ref(null)
 const cartItems = ref([])
 const discountAmount = ref(0)
 const submitError = ref('')
+const isProcessing = ref(false)
+const round2 = (n) => Number((Number(n) || 0).toFixed(2))
+
 
 const form = ref({
     customer_id: null,
@@ -275,7 +298,9 @@ const form = ref({
     due_amount: 0,
     invoice_no: props.invoiceNo,
     date: new Date().toISOString().split('T')[0],
-    items: []
+    items: [],
+    send_sms: false,
+    send_email: false
 })
 
 const subtotal = computed(() => {
@@ -296,7 +321,7 @@ const total = computed(() => {
 
 // Watch for changes in paid amount and discount to update due amount
 watch([() => form.value.paid_amount, () => discountAmount.value], () => {
-    form.value.due_amount = total.value - form.value.paid_amount
+    form.value.due_amount = round2(total.value - form.value.paid_amount)
 })
 
 const searchCustomers = async () => {
@@ -319,6 +344,22 @@ const selectCustomer = (customer) => {
     customerSearch.value = customer.name
     customerSearchResults.value = []
 }
+
+const hasCustomerPhone = computed(() => {
+    return !!(selectedCustomer.value && (selectedCustomer.value.mobile || selectedCustomer.value.phone))
+})
+
+const hasCustomerEmail = computed(() => {
+    return !!(selectedCustomer.value && selectedCustomer.value.email)
+})
+
+const customerPhoneDisplay = computed(() => {
+    return selectedCustomer.value?.mobile || selectedCustomer.value?.phone || ''
+})
+
+const customerEmailDisplay = computed(() => {
+    return selectedCustomer.value?.email || ''
+})
 
 const searchProducts = async () => {
     if (productSearch.value.length < 2) {
@@ -393,6 +434,7 @@ const removeItem = (index) => {
 
 const processSale = () => {
     submitError.value = ''
+    isProcessing.value = true
     form.value.items = cartItems.value.map(item => ({
         medicine_id: item.medicine_id,
         quantity: item.quantity,
@@ -416,6 +458,9 @@ const processSale = () => {
             discountAmount.value = 0
             form.value.paid_amount = 0
             form.value.due_amount = 0
+        },
+        onFinish: () => {
+            isProcessing.value = false
         }
         ,
         onError: (errors) => {
@@ -438,8 +483,8 @@ const updateDiscount = () => {
     if (discountAmount.value > maxDiscount) {
         discountAmount.value = maxDiscount
     }
-    // Trigger due amount recalculation
-    form.value.due_amount = total.value - form.value.paid_amount
+    // Trigger due amount recalculation (rounded)
+    form.value.due_amount = round2(total.value - form.value.paid_amount)
 }
 
 // Click outside handler to close search results
