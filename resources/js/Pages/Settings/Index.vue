@@ -169,6 +169,180 @@
                             </div>
                         </div>
 
+                        <!-- Email Configuration -->
+                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                            <div class="p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">Email Configuration</h3>
+                                <div class="space-y-6">
+                                    <!-- Email Provider Selection -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Provider</label>
+                                        <select v-model="form.email_provider"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="smtp">SMTP</option>
+                                            <option value="mailgun">Mailgun</option>
+                                            <option value="ses">Amazon SES</option>
+                                            <option value="sendmail">Sendmail</option>
+                                        </select>
+                                        <p class="mt-1 text-sm text-gray-500">Choose your email service provider</p>
+                                    </div>
+
+                                    <!-- SMTP Configuration -->
+                                    <div v-if="form.email_provider === 'smtp'" class="space-y-4">
+                                        <h4 class="text-md font-medium text-gray-800 border-b pb-2">SMTP Settings</h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">SMTP Host *</label>
+                                                <input v-model="form.smtp_host"
+                                                       type="text"
+                                                       placeholder="smtp.gmail.com"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">SMTP Port *</label>
+                                                <input v-model.number="form.smtp_port"
+                                                       type="number"
+                                                       placeholder="587"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">SMTP Username *</label>
+                                                <input v-model="form.smtp_username"
+                                                       type="text"
+                                                       placeholder="your-email@gmail.com"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">SMTP Password *</label>
+                                                <input v-model="form.smtp_password"
+                                                       type="password"
+                                                       placeholder="Your app password"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Encryption</label>
+                                                <select v-model="form.smtp_encryption"
+                                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                    <option value="tls">TLS</option>
+                                                    <option value="ssl">SSL</option>
+                                                    <option value="">None</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">From Name</label>
+                                                <input v-model="form.mail_from_name"
+                                                       type="text"
+                                                       placeholder="Your Company Name"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Mailgun Configuration -->
+                                    <div v-if="form.email_provider === 'mailgun'" class="space-y-4">
+                                        <h4 class="text-md font-medium text-gray-800 border-b pb-2">Mailgun Settings</h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Mailgun Domain *</label>
+                                                <input v-model="form.mailgun_domain"
+                                                       type="text"
+                                                       placeholder="mg.yourdomain.com"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Mailgun Secret *</label>
+                                                <input v-model="form.mailgun_secret"
+                                                       type="password"
+                                                       placeholder="Your Mailgun secret key"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">From Name</label>
+                                                <input v-model="form.mail_from_name"
+                                                       type="text"
+                                                       placeholder="Your Company Name"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">From Email</label>
+                                                <input v-model="form.mail_from_address"
+                                                       type="email"
+                                                       placeholder="noreply@yourdomain.com"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Amazon SES Configuration -->
+                                    <div v-if="form.email_provider === 'ses'" class="space-y-4">
+                                        <h4 class="text-md font-medium text-gray-800 border-b pb-2">Amazon SES Settings</h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">AWS Access Key ID *</label>
+                                                <input v-model="form.ses_key"
+                                                       type="text"
+                                                       placeholder="Your AWS access key"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">AWS Secret Access Key *</label>
+                                                <input v-model="form.ses_secret"
+                                                       type="password"
+                                                       placeholder="Your AWS secret key"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">AWS Region *</label>
+                                                <select v-model="form.ses_region"
+                                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                    <option value="us-east-1">US East (N. Virginia)</option>
+                                                    <option value="us-west-2">US West (Oregon)</option>
+                                                    <option value="eu-west-1">Europe (Ireland)</option>
+                                                    <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">From Name</label>
+                                                <input v-model="form.mail_from_name"
+                                                       type="text"
+                                                       placeholder="Your Company Name"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Test Email Section -->
+                                    <div class="border-t pt-6">
+                                        <h4 class="text-md font-medium text-gray-800 mb-4">Test Email Configuration</h4>
+                                        <div class="flex items-end space-x-4">
+                                            <div class="flex-1">
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Test Email Address</label>
+                                                <input v-model="testEmail"
+                                                       type="email"
+                                                       placeholder="test@example.com"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            </div>
+                                            <button type="button"
+                                                    @click="sendTestEmail"
+                                                    :disabled="!testEmail || sendingTest"
+                                                    class="bg-green-500 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded flex items-center space-x-2">
+                                                <svg v-if="sendingTest" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                <svg v-else class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                                                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                                                </svg>
+                                                <span>{{ sendingTest ? 'Sending...' : 'Send Test Email' }}</span>
+                                            </button>
+                                        </div>
+                                        <p class="mt-2 text-sm text-gray-500">Send a test email to verify your configuration</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Form Actions -->
                         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                             <div class="p-6">
@@ -216,8 +390,26 @@ const form = ref({
     timezone: '',
     date_format: '',
     items_per_page: '',
-    enable_notifications: ''
+    enable_notifications: '',
+    // Email Configuration
+    email_provider: 'smtp',
+    smtp_host: '',
+    smtp_port: 587,
+    smtp_username: '',
+    smtp_password: '',
+    smtp_encryption: 'tls',
+    mailgun_domain: '',
+    mailgun_secret: '',
+    ses_key: '',
+    ses_secret: '',
+    ses_region: 'us-east-1',
+    mail_from_name: '',
+    mail_from_address: ''
 })
+
+// Test email functionality
+const testEmail = ref('')
+const sendingTest = ref(false)
 
 onMounted(() => {
     // Populate form with existing settings
@@ -232,5 +424,26 @@ onMounted(() => {
 
 const submitForm = () => {
     router.put(route('settings.update'), form.value)
+}
+
+const sendTestEmail = async () => {
+    if (!testEmail.value) return
+
+    sendingTest.value = true
+
+    try {
+        await router.post(route('settings.test-email'), {
+            email: testEmail.value,
+            email_config: form.value
+        })
+
+        // Show success message (you can implement a toast notification here)
+        alert('Test email sent successfully!')
+    } catch (error) {
+        // Show error message
+        alert('Failed to send test email. Please check your configuration.')
+    } finally {
+        sendingTest.value = false
+    }
 }
 </script>
