@@ -88,35 +88,35 @@ class UserSeeder extends Seeder
         $users = [
             [
                 'name' => 'Admin User',
-                'email' => 'admin@pharmacare.com',
+                'email' => 'admin@pharma.com',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
                 'role' => 'admin'
             ],
             [
                 'name' => 'John Manager',
-                'email' => 'manager@pharmacare.com',
+                'email' => 'manager@pharma.com',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
                 'role' => 'manager'
             ],
             [
                 'name' => 'Sarah Cashier',
-                'email' => 'cashier@pharmacare.com',
+                'email' => 'cashier@pharma.com',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
                 'role' => 'cashier'
             ],
             [
                 'name' => 'Dr. Michael Pharmacist',
-                'email' => 'pharmacist@pharmacare.com',
+                'email' => 'pharmacist@pharma.com',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
                 'role' => 'pharmacist'
             ],
             [
                 'name' => 'Test User',
-                'email' => 'test@pharmacare.com',
+                'email' => 'test@pharma.com',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
                 'role' => 'cashier'
@@ -133,10 +133,10 @@ class UserSeeder extends Seeder
 
         $this->command->info('Users created successfully!');
         $this->command->info('Default login credentials:');
-        $this->command->info('Admin: admin@pharmacare.com / password');
-        $this->command->info('Manager: manager@pharmacare.com / password');
-        $this->command->info('Cashier: cashier@pharmacare.com / password');
-        $this->command->info('Pharmacist: pharmacist@pharmacare.com / password');
-        $this->command->info('Test: test@pharmacare.com / password');
+        $this->command->info('Admin: admin@pharma.com / password');
+        $this->command->info('Manager: manager@pharma.com / password');
+        $this->command->info('Cashier: cashier@pharma.com / password');
+        $this->command->info('Pharmacist: pharmacist@pharma.com / password');
+        $this->command->info('Test: test@pharma.com / password');
     }
 }
