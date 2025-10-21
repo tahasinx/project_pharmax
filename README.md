@@ -45,9 +45,40 @@ A modern, comprehensive pharmacy management system built with Laravel 10, Vue.js
 - **Database Migrations** - Comprehensive database schema
 - **Seeders** - Sample data for testing and development
 
-## 📋 Installation Guide
+## 🚀 Installation
 
-### Prerequisites
+### Quick Installation (Recommended)
+
+1. **Upload Files**: Upload all files to your web server
+2. **Set Permissions**: Ensure proper file permissions
+3. **Visit Installation**: Go to `https://your-domain.com/install`
+4. **Follow Wizard**: Complete the 5-step installation process
+5. **Login**: Use your admin credentials to access the system
+
+### Manual Installation
+
+1. Clone the repository
+2. Install dependencies: `composer install && npm install`
+3. Copy `.env.example` to `.env` and configure your database
+4. Generate application key: `php artisan key:generate`
+5. Run migrations: `php artisan migrate`
+6. Seed the database: `php artisan db:seed`
+7. Build assets: `npm run build`
+8. Set proper permissions: `chmod -R 755 storage bootstrap/cache`
+
+### System Requirements
+
+- **PHP**: 8.1 or higher
+- **MySQL**: 8.0 or higher
+- **Web Server**: Apache/Nginx
+- **Memory**: 256MB minimum (512MB recommended)
+- **Disk Space**: 100MB minimum
+
+### Detailed Installation Guide
+
+For complete installation instructions, see [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md)
+
+## 📋 Prerequisites
 - PHP 8.1 or higher
 - Composer
 - Node.js and NPM

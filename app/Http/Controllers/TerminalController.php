@@ -13,6 +13,7 @@ class TerminalController extends Controller
     public function __construct(SimpleCommandService $commandService)
     {
         $this->commandService = $commandService;
+        $this->middleware(['auth', 'permission:manage-system']);
     }
 
     /**

@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\InstallController;
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DataExportController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
@@ -116,6 +119,28 @@ Route::middleware('auth')->group(function () {
     Route::get('/terminal/commands', [App\Http\Controllers\TerminalController::class, 'getAvailableCommands'])->name('terminal.commands');
     Route::get('/terminal/system-info', [App\Http\Controllers\TerminalController::class, 'getSystemInfo'])->name('terminal.system-info');
     Route::post('/terminal/refresh-paths', [App\Http\Controllers\TerminalController::class, 'refreshCommandPaths'])->name('terminal.refresh-paths');
+
+    // Backup routes
+    Route::resource('backup', BackupController::class)->only(['index', 'create', 'destroy']);
+    Route::post('/backup/restore', [BackupController::class, 'restore'])->name('backup.restore');
+    Route::get('/backup/{backupName}/download', [BackupController::class, 'download'])->name('backup.download');
+
+    // Data Export/Import routes
+    Route::get('/data-export', [DataExportController::class, 'index'])->name('data-export.index');
+    Route::post('/data-export/export-medicines', [DataExportController::class, 'exportMedicines'])->name('data-export.export-medicines');
+    Route::post('/data-export/export-customers', [DataExportController::class, 'exportCustomers'])->name('data-export.export-customers');
+    Route::post('/data-export/export-invoices', [DataExportController::class, 'exportInvoices'])->name('data-export.export-invoices');
+    Route::post('/data-export/export-stocks', [DataExportController::class, 'exportStocks'])->name('data-export.export-stocks');
+    Route::post('/data-export/import-medicines', [DataExportController::class, 'importMedicines'])->name('data-export.import-medicines');
+    Route::post('/data-export/import-customers', [DataExportController::class, 'importCustomers'])->name('data-export.import-customers');
+    Route::post('/data-export/import-stocks', [DataExportController::class, 'importStocks'])->name('data-export.import-stocks');
+    Route::post('/data-export/sample', [DataExportController::class, 'downloadSample'])->name('data-export.sample');
+    Route::post('/data-export/validation-rules', [DataExportController::class, 'getValidationRules'])->name('data-export.validation-rules');
 });
+
+// Installation routes (should be before auth middleware)
+Route::get('/install', [InstallController::class, 'index'])->name('install');
+Route::post('/install/database', [InstallController::class, 'checkDatabase'])->name('install.database');
+Route::post('/install', [InstallController::class, 'install'])->name('install.process');
 
 require __DIR__ . '/auth.php';

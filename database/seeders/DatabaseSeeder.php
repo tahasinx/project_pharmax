@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             ManufacturerSeeder::class,
             MenuSeeder::class,
+            DemoDataSeeder::class, // Add demo data
         ]);
     }
 }

@@ -21,6 +21,10 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+        \App\Http\Middleware\SecurityHeaders::class,
+        \App\Http\Middleware\InputSanitization::class,
+        \App\Http\Middleware\AuditLogging::class,
+        \App\Http\Middleware\CheckInstallation::class,
     ];
 
     /**
@@ -45,6 +49,7 @@ class Kernel extends HttpKernel
             // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\RateLimiting::class,
         ],
     ];
 
@@ -70,5 +75,9 @@ class Kernel extends HttpKernel
         'signed' => \App\Http\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'rate.limit' => \App\Http\Middleware\RateLimiting::class,
+        'security.headers' => \App\Http\Middleware\SecurityHeaders::class,
+        'input.sanitize' => \App\Http\Middleware\InputSanitization::class,
+        'audit.log' => \App\Http\Middleware\AuditLogging::class,
     ];
 }
