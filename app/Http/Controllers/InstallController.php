@@ -24,11 +24,19 @@ class InstallController extends Controller
         return inertia('Install/Index', [
             'requirements' => $this->checkRequirements(),
             'permissions' => $this->checkPermissions(),
+            'appName' => config('app.name'),
         ]);
     }
 
     public function checkDatabase(Request $request)
     {
+        // Debug logging
+        \Log::info('Database check request received', [
+            'method' => $request->method(),
+            'content_type' => $request->header('Content-Type'),
+            'data' => $request->all(),
+        ]);
+
         $validator = Validator::make($request->all(), [
             'db_host' => 'required|string',
             'db_port' => 'required|integer',
@@ -38,6 +46,7 @@ class InstallController extends Controller
         ]);
 
         if ($validator->fails()) {
+            \Log::error('Database validation failed', $validator->errors()->toArray());
             return response()->json([
                 'success' => false,
                 'errors' => $validator->errors(),
@@ -69,6 +78,10 @@ class InstallController extends Controller
                 ], 422);
             }
         } catch (\Exception $e) {
+            \Log::error('Database connection exception', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Database connection failed: ' . $e->getMessage(),
@@ -222,24 +235,45 @@ class InstallController extends Controller
     protected function testDatabaseConnection($config)
     {
         try {
+            // Handle empty password
+            $password = $config['db_password'] ?? '';
+
             $connection = new \PDO(
                 "mysql:host={$config['db_host']};port={$config['db_port']};dbname={$config['db_name']}",
                 $config['db_username'],
-                $config['db_password'],
+                $password,
                 [
                     \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
                     \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+                    \PDO::ATTR_TIMEOUT => 5, // 5 second timeout
                 ]
             );
+
+            // Test a simple query to ensure the connection is working
+            $stmt = $connection->query("SELECT 1 as test");
+            $result = $stmt->fetch();
 
             return [
                 'success' => true,
                 'message' => 'Database connection successful',
             ];
         } catch (\PDOException $e) {
+            $errorMessage = $e->getMessage();
+
+            // Provide more user-friendly error messages
+            if (strpos($errorMessage, 'Access denied') !== false) {
+                $errorMessage = 'Access denied. Please check your username and password.';
+            } elseif (strpos($errorMessage, 'Unknown database') !== false) {
+                $errorMessage = 'Database "' . $config['db_name'] . '" does not exist. Please create it first.';
+            } elseif (strpos($errorMessage, 'Connection refused') !== false) {
+                $errorMessage = 'Cannot connect to MySQL server. Please check if MySQL is running and the host/port are correct.';
+            } elseif (strpos($errorMessage, 'timeout') !== false) {
+                $errorMessage = 'Connection timeout. Please check your network connection and MySQL server status.';
+            }
+
             return [
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => $errorMessage,
             ];
         }
     }

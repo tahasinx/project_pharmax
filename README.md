@@ -1,6 +1,6 @@
-# PharmaCare Modern - Pharmacy Management System
+# Pharmax - Pharmacy Management System
 
-A modern, comprehensive pharmacy management system built with Laravel 10, Vue.js 3, Inertia.js, and Tailwind CSS.
+A modern, comprehensive pharmacy management system built with Laravel 10, Vue.js 3, Inertia.js, and Tailwind CSS. Pharmax provides everything you need to manage your pharmacy operations efficiently.
 
 ## 🚀 Version 1.0 Features
 

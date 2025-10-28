@@ -8,7 +8,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
           </svg>
         </div>
-        <h2 class="text-3xl font-bold text-gray-900">PharmaCare Modern</h2>
+        <h2 class="text-3xl font-bold text-gray-900">{{ appName }}</h2>
         <p class="mt-2 text-lg text-gray-600">Pharmacy Management System Installation</p>
       </div>
 
@@ -396,6 +396,10 @@ import Swal from 'sweetalert2'
 const props = defineProps({
   requirements: Object,
   permissions: Object,
+  appName: {
+    type: String,
+    default: 'PharmaCare Modern'
+  }
 })
 
 const currentStep = ref(0)
@@ -450,16 +454,41 @@ const testDatabase = async () => {
   databaseTestResult.value = null
 
   try {
-    const response = await fetch('/install/database', {
+    console.log('Testing database with config:', databaseConfig)
+
+    // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                     document.querySelector('input[name="_token"]')?.value ||
+                     '';
+
+    console.log('CSRF Token:', csrfToken ? 'Found' : 'Not found');
+
+    // Use proper URL construction - use relative path to avoid double path issues
+    const installUrl = '/install/database';
+    console.log('Request URL:', installUrl);
+
+    const response = await fetch(installUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'X-CSRF-TOKEN': csrfToken,
       },
       body: JSON.stringify(databaseConfig),
     })
 
+    console.log('Response status:', response.status)
+    console.log('Response headers:', response.headers)
+
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type')
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text()
+      console.error('Non-JSON response:', text)
+      throw new Error(`Server returned HTML instead of JSON. Status: ${response.status}`)
+    }
+
     const result = await response.json()
+    console.log('Database test result:', result)
     databaseTestResult.value = result
 
     if (result.success) {
@@ -476,14 +505,15 @@ const testDatabase = async () => {
       })
     }
   } catch (error) {
+    console.error('Database test error:', error)
     databaseTestResult.value = {
       success: false,
-      message: 'Failed to test database connection',
+      message: 'Network error: ' + error.message,
     }
     await Swal.fire({
       icon: 'error',
-      title: 'Error!',
-      text: 'Failed to test database connection',
+      title: 'Network Error!',
+      text: 'Failed to test database connection: ' + error.message,
     })
   } finally {
     isTestingDatabase.value = false
@@ -494,11 +524,20 @@ const install = async () => {
   isInstalling.value = true
 
   try {
-    const response = await fetch('/install', {
+    // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                     document.querySelector('input[name="_token"]')?.value ||
+                     '';
+
+    // Use proper URL construction - use relative path to avoid double path issues
+    const installUrl = '/install';
+    console.log('Install URL:', installUrl);
+
+    const response = await fetch(installUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'X-CSRF-TOKEN': csrfToken,
       },
       body: JSON.stringify(appConfig),
     })
