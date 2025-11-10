@@ -27,8 +27,8 @@ class SecurityHeaders
         // Content Security Policy
         $csp = "default-src 'self'; " .
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdn.skypack.dev; " .
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " .
-            "font-src 'self' https://fonts.gstatic.com; " .
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net; " .
+            "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net; " .
             "img-src 'self' data: https:; " .
             "connect-src 'self' https://medex.com.bd; " .
             "frame-ancestors 'none';";

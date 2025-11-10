@@ -413,9 +413,23 @@ const databaseConfig = reactive({
   db_password: '',
 })
 
+// Helper function to get base path correctly for subdirectory installations
+const getBasePath = () => {
+  const pathname = window.location.pathname;
+  // Remove /install and everything after it to get the base path
+  const basePath = pathname.replace(/\/install.*$/, '') || '';
+  return basePath;
+}
+
+// Helper function to get base URL correctly
+const getBaseUrl = () => {
+  const origin = window.location.origin;
+  return origin + getBasePath();
+}
+
 const appConfig = reactive({
   app_name: 'PharmaCare Modern',
-  app_url: window.location.origin,
+  app_url: getBaseUrl(),
   admin_name: 'Administrator',
   admin_email: 'admin@pharmacare.com',
   admin_password: '',
@@ -461,19 +475,33 @@ const testDatabase = async () => {
                      document.querySelector('input[name="_token"]')?.value ||
                      '';
 
+    if (!csrfToken) {
+      throw new Error('CSRF token not found. Please refresh the page and try again.');
+    }
+
     console.log('CSRF Token:', csrfToken ? 'Found' : 'Not found');
 
-    // Use proper URL construction - use relative path to avoid double path issues
-    const installUrl = '/install/database';
+    // Construct URL properly for subdirectory installations
+    const basePath = getBasePath();
+    const installUrl = basePath + '/install/database';
     console.log('Request URL:', installUrl);
+
+    // Include CSRF token in both header and body
+    const requestData = {
+      ...databaseConfig,
+      _token: csrfToken,
+    };
 
     const response = await fetch(installUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'X-CSRF-TOKEN': csrfToken,
+        'X-Requested-With': 'XMLHttpRequest',
       },
-      body: JSON.stringify(databaseConfig),
+      credentials: 'same-origin',
+      body: JSON.stringify(requestData),
     })
 
     console.log('Response status:', response.status)
@@ -529,18 +557,59 @@ const install = async () => {
                      document.querySelector('input[name="_token"]')?.value ||
                      '';
 
-    // Use proper URL construction - use relative path to avoid double path issues
-    const installUrl = '/install';
+    if (!csrfToken) {
+      throw new Error('CSRF token not found. Please refresh the page and try again.');
+    }
+
+    // Construct URL properly for subdirectory installations
+    const basePath = getBasePath();
+    const installUrl = basePath + '/install';
     console.log('Install URL:', installUrl);
 
-    const response = await fetch(installUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': csrfToken,
-      },
-      body: JSON.stringify(appConfig),
-    })
+    // Include CSRF token in both header and body
+    const requestData = {
+      ...appConfig,
+      _token: csrfToken,
+    };
+
+    // Create AbortController for timeout handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
+
+    let response;
+    try {
+      response = await fetch(installUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': csrfToken,
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(requestData),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        throw new Error('Installation request timed out. The installation process may take several minutes. Please try again.');
+      }
+      throw fetchError;
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = 'Installation failed';
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.message || errorMessage;
+      } catch (e) {
+        errorMessage = errorText || `Server returned status ${response.status}`;
+      }
+      throw new Error(errorMessage);
+    }
 
     const result = await response.json()
 
@@ -559,10 +628,22 @@ const install = async () => {
       })
     }
   } catch (error) {
+    console.error('Installation error:', error);
+    let errorMessage = 'Installation failed. Please try again.';
+
+    if (error.message) {
+      errorMessage = error.message;
+    } else if (error.name === 'AbortError') {
+      errorMessage = 'Installation request timed out. The process may take several minutes. Please check if the installation completed and refresh the page.';
+    } else if (error.message && error.message.includes('ERR_CONNECTION_RESET')) {
+      errorMessage = 'Connection was reset. The installation process may still be running. Please wait a moment and refresh the page to check if installation completed.';
+    }
+
     await Swal.fire({
       icon: 'error',
-      title: 'Error!',
-      text: 'Installation failed. Please try again.',
+      title: 'Installation Error!',
+      text: errorMessage,
+      footer: 'If the installation process is still running, please wait and refresh the page.',
     })
   } finally {
     isInstalling.value = false

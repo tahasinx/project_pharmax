@@ -91,6 +91,11 @@ class InstallController extends Controller
 
     public function install(Request $request)
     {
+        // Increase execution time limit for installation process
+        set_time_limit(300); // 5 minutes
+        ini_set('max_execution_time', '300');
+        ini_set('memory_limit', '256M');
+
         $validator = Validator::make($request->all(), [
             'app_name' => 'required|string|max:255',
             'app_url' => 'required|url',
@@ -111,14 +116,34 @@ class InstallController extends Controller
         }
 
         try {
+            // Retrieve database configuration from session (saved during database test step)
+            $databaseConfig = [
+                'db_host' => session('install.db_host'),
+                'db_port' => session('install.db_port'),
+                'db_name' => session('install.db_name'),
+                'db_username' => session('install.db_username'),
+                'db_password' => session('install.db_password'),
+            ];
+
+            // Check if database config exists in session
+            if (empty($databaseConfig['db_host']) || empty($databaseConfig['db_name'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Database configuration not found. Please test the database connection first.',
+                ], 422);
+            }
+
+            // Merge database config with app config
+            $allConfig = array_merge($request->all(), $databaseConfig);
+
             // Step 1: Update .env file
-            $this->updateEnvFile($request->all());
+            $this->updateEnvFile($allConfig);
 
             // Step 2: Run migrations
             Artisan::call('migrate', ['--force' => true]);
 
             // Step 3: Create admin user
-            $this->createAdminUser($request->all());
+            $this->createAdminUser($allConfig);
 
             // Step 4: Seed initial data
             Artisan::call('db:seed', ['--force' => true]);
@@ -138,9 +163,27 @@ class InstallController extends Controller
                 'redirect_url' => route('login'),
             ]);
         } catch (\Exception $e) {
+            \Log::error('Installation failed', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            $errorMessage = 'Installation failed: ' . $e->getMessage();
+            
+            // Provide more user-friendly error messages
+            if (strpos($e->getMessage(), 'SQLSTATE') !== false) {
+                $errorMessage = 'Database error during installation. Please check your database configuration and try again.';
+            } elseif (strpos($e->getMessage(), 'timeout') !== false) {
+                $errorMessage = 'Installation timed out. Please try again or check your server configuration.';
+            } elseif (strpos($e->getMessage(), 'memory') !== false) {
+                $errorMessage = 'Insufficient memory during installation. Please increase PHP memory limit and try again.';
+            }
+
             return response()->json([
                 'success' => false,
-                'message' => 'Installation failed: ' . $e->getMessage(),
+                'message' => $errorMessage,
             ], 500);
         }
     }
