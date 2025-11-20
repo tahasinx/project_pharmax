@@ -30,26 +30,53 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        return [
-            ...parent::share($request),
-            'auth' => [
-                'user' => $request->user(),
-            ],
-            'app' => [
-                'name' => config('app.name'),
-            ],
-            'ziggy' => fn() => [
-                ...(new Ziggy)->toArray(),
-                'location' => $request->url(),
-            ],
-            'menus' => fn() => $request->user() ? $this->getUserMenus($request->user()) : [],
-            'flash' => [
-                'success' => fn() => $request->session()->get('success'),
-                'error' => fn() => $request->session()->get('error'),
-                'warning' => fn() => $request->session()->get('warning'),
-                'info' => fn() => $request->session()->get('info'),
-            ],
-        ];
+        // Skip database-dependent operations for install routes
+        $isInstallRoute = $request->is('install*');
+        
+        try {
+            return [
+                ...parent::share($request),
+                'auth' => [
+                    'user' => $request->user(),
+                ],
+                'app' => [
+                    'name' => config('app.name'),
+                ],
+                'ziggy' => $isInstallRoute ? [] : fn() => [
+                    ...(new Ziggy)->toArray(),
+                    'location' => $request->url(),
+                ],
+                'menus' => fn() => ($request->user() && !$isInstallRoute) ? $this->getUserMenus($request->user()) : [],
+                'flash' => [
+                    'success' => fn() => $request->session()->get('success'),
+                    'error' => fn() => $request->session()->get('error'),
+                    'warning' => fn() => $request->session()->get('warning'),
+                    'info' => fn() => $request->session()->get('info'),
+                ],
+            ];
+        } catch (\Exception $e) {
+            // If database is not available (during installation), return minimal data
+            if ($isInstallRoute) {
+                return [
+                    ...parent::share($request),
+                    'auth' => [
+                        'user' => null,
+                    ],
+                    'app' => [
+                        'name' => config('app.name', 'Laravel'),
+                    ],
+                    'ziggy' => [],
+                    'menus' => [],
+                    'flash' => [
+                        'success' => fn() => $request->session()->get('success'),
+                        'error' => fn() => $request->session()->get('error'),
+                        'warning' => fn() => $request->session()->get('warning'),
+                        'info' => fn() => $request->session()->get('info'),
+                    ],
+                ];
+            }
+            throw $e;
+        }
     }
 
     private function getUserMenus($user)

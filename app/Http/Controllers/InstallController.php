@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Config;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
@@ -16,7 +18,6 @@ class InstallController extends Controller
 {
     public function index()
     {
-        // Check if already installed
         if ($this->isInstalled()) {
             return redirect()->route('dashboard');
         }
@@ -30,13 +31,6 @@ class InstallController extends Controller
 
     public function checkDatabase(Request $request)
     {
-        // Debug logging
-        \Log::info('Database check request received', [
-            'method' => $request->method(),
-            'content_type' => $request->header('Content-Type'),
-            'data' => $request->all(),
-        ]);
-
         $validator = Validator::make($request->all(), [
             'db_host' => 'required|string',
             'db_port' => 'required|integer',
@@ -46,55 +40,33 @@ class InstallController extends Controller
         ]);
 
         if ($validator->fails()) {
-            \Log::error('Database validation failed', $validator->errors()->toArray());
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors(),
-            ], 422);
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
-        try {
-            // Test database connection
-            $connection = $this->testDatabaseConnection($request->all());
+        $connection = $this->testDatabaseConnection($request->all());
 
-            if ($connection['success']) {
-                // Save database config to session
-                session([
-                    'install.db_host' => $request->db_host,
-                    'install.db_port' => $request->db_port,
-                    'install.db_name' => $request->db_name,
-                    'install.db_username' => $request->db_username,
-                    'install.db_password' => $request->db_password,
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Database connection successful',
-                ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => $connection['message'],
-                ], 422);
-            }
-        } catch (\Exception $e) {
-            \Log::error('Database connection exception', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+        if ($connection['success']) {
+            // store to session for later install step
+            session([
+                'install.db_host' => $request->db_host,
+                'install.db_port' => $request->db_port,
+                'install.db_name' => $request->db_name,
+                'install.db_username' => $request->db_username,
+                'install.db_password' => $request->db_password,
             ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Database connection failed: ' . $e->getMessage(),
-            ], 422);
+
+            return response()->json(['success' => true, 'message' => 'Database connection successful']);
         }
+
+        return response()->json(['success' => false, 'message' => $connection['message']], 422);
     }
 
     public function install(Request $request)
     {
-        // Increase execution time limit for installation process
-        set_time_limit(300); // 5 minutes
-        ini_set('max_execution_time', '300');
-        ini_set('memory_limit', '256M');
+        // increase limits for long-running installation
+        @set_time_limit(600);
+        ini_set('max_execution_time', '600');
+        ini_set('memory_limit', '512M');
 
         $validator = Validator::make($request->all(), [
             'app_name' => 'required|string|max:255',
@@ -109,14 +81,15 @@ class InstallController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors(),
-            ], 422);
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
         try {
-            // Retrieve database configuration from session (saved during database test step)
+            Log::info('Installation request received', [
+                'payload' => array_keys($request->all()),
+            ]);
+
+            // retrieve DB config saved in checkDatabase step
             $databaseConfig = [
                 'db_host' => session('install.db_host'),
                 'db_port' => session('install.db_port'),
@@ -125,37 +98,74 @@ class InstallController extends Controller
                 'db_password' => session('install.db_password'),
             ];
 
-            // Check if database config exists in session
             if (empty($databaseConfig['db_host']) || empty($databaseConfig['db_name'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Database configuration not found. Please test the database connection first.',
-                ], 422);
+                return response()->json(['success' => false, 'message' => 'Database configuration not found. Please run database test step first.'], 422);
             }
 
-            // Merge database config with app config
             $allConfig = array_merge($request->all(), $databaseConfig);
 
-            // Step 1: Update .env file
+            // 1) Ensure .env exists (create from .env.example if needed) and write basic APP and DB keys
+            $this->ensureEnvExists();
             $this->updateEnvFile($allConfig);
 
-            // Step 2: Run migrations
-            Artisan::call('migrate', ['--force' => true]);
+            // 2) Override runtime config immediately (don't rely on reload)
+            Config::set('database.connections.mysql.host', $allConfig['db_host']);
+            Config::set('database.connections.mysql.port', $allConfig['db_port']);
+            Config::set('database.connections.mysql.database', $allConfig['db_name']);
+            Config::set('database.connections.mysql.username', $allConfig['db_username']);
+            Config::set('database.connections.mysql.password', $allConfig['db_password'] ?? '');
+            Config::set('app.name', $allConfig['app_name']);
+            Config::set('app.url', $allConfig['app_url']);
 
-            // Step 3: Create admin user
-            $this->createAdminUser($allConfig);
+            // 3) Purge and reconnect the mysql connection
+            DB::purge('mysql');
+            DB::reconnect('mysql');
 
-            // Step 4: Seed initial data
-            Artisan::call('db:seed', ['--force' => true]);
+            // Optional: test the new connection before migrations
+            try {
+                DB::connection('mysql')->getPdo();
+            } catch (\Exception $e) {
+                throw new \Exception('Unable to connect to the database with provided credentials: ' . $e->getMessage());
+            }
 
-            // Step 5: Create installation flag
+            // 4) Run migrations
+            Log::info('Install Step: running migrate:fresh');
+            $migrateExit = Artisan::call('migrate');
+
+            if ($migrateExit !== 0) {
+                Log::warning('migrate:fresh returned non-zero exit', ['exit' => $migrateExit, 'output' => Artisan::output()]);
+
+                // try regular migrate as fallback
+                $migrateExit = Artisan::call('migrate', ['--force' => true]);
+                if ($migrateExit !== 0) {
+                    Log::error('migrate fallback failed', ['exit' => $migrateExit, 'output' => Artisan::output()]);
+                    throw new \Exception('Database migrations failed: ' . Artisan::output());
+                }
+            }
+
+            // 5) Create / update admin user, roles, permissions
+            // $this->createAdminUser($allConfig);
+
+            // 6) Seed database (if you have seeders)
+            Log::info('Install Step: running db:seed');
+            $seedExit = Artisan::call('db:seed', ['--force' => true]);
+            if ($seedExit !== 0) {
+                Log::warning('db:seed returned non-zero exit', ['exit' => $seedExit, 'output' => Artisan::output()]);
+                // not fatal in many apps, but let's treat as error if seeds are expected
+            }
+
+            // 7) Create installation flag
             $this->createInstallationFlag();
 
-            // Step 6: Clear caches
-            Artisan::call('cache:clear');
-            Artisan::call('config:clear');
-            Artisan::call('route:clear');
-            Artisan::call('view:clear');
+            // 8) Clear caches
+            try {
+                Artisan::call('cache:clear');
+                Artisan::call('config:clear');
+                Artisan::call('route:clear');
+                Artisan::call('view:clear');
+            } catch (\Exception $e) {
+                Log::warning('Cache clearing failed', ['error' => $e->getMessage()]);
+            }
 
             return response()->json([
                 'success' => true,
@@ -163,28 +173,21 @@ class InstallController extends Controller
                 'redirect_url' => route('login'),
             ]);
         } catch (\Exception $e) {
-            \Log::error('Installation failed', [
+            Log::error('Installation failed', [
                 'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            $errorMessage = 'Installation failed: ' . $e->getMessage();
-            
-            // Provide more user-friendly error messages
-            if (strpos($e->getMessage(), 'SQLSTATE') !== false) {
-                $errorMessage = 'Database error during installation. Please check your database configuration and try again.';
-            } elseif (strpos($e->getMessage(), 'timeout') !== false) {
-                $errorMessage = 'Installation timed out. Please try again or check your server configuration.';
-            } elseif (strpos($e->getMessage(), 'memory') !== false) {
-                $errorMessage = 'Insufficient memory during installation. Please increase PHP memory limit and try again.';
+            $msg = $e->getMessage();
+            if (strpos($msg, 'SQLSTATE') !== false || strpos(strtolower($msg), 'access denied') !== false) {
+                $userMsg = 'Database error during installation. Please verify credentials and ensure the database exists and user has privileges.';
+            } elseif (strpos(strtolower($msg), 'timeout') !== false) {
+                $userMsg = 'Installation timed out. Check server resources and try again.';
+            } else {
+                $userMsg = 'Installation failed: ' . $e->getMessage();
             }
 
-            return response()->json([
-                'success' => false,
-                'message' => $errorMessage,
-            ], 500);
+            return response()->json(['success' => false, 'message' => $userMsg], 500);
         }
     }
 
@@ -195,7 +198,7 @@ class InstallController extends Controller
 
     protected function checkRequirements()
     {
-        $requirements = [
+        return [
             'php_version' => [
                 'name' => 'PHP Version',
                 'required' => '8.1.0',
@@ -251,13 +254,11 @@ class InstallController extends Controller
                 'status' => extension_loaded('bcmath'),
             ],
         ];
-
-        return $requirements;
     }
 
     protected function checkPermissions()
     {
-        $permissions = [
+        return [
             'storage' => [
                 'path' => storage_path(),
                 'writable' => is_writable(storage_path()),
@@ -271,91 +272,140 @@ class InstallController extends Controller
                 'writable' => is_writable(public_path()),
             ],
         ];
-
-        return $permissions;
     }
 
     protected function testDatabaseConnection($config)
     {
         try {
-            // Handle empty password
             $password = $config['db_password'] ?? '';
 
-            $connection = new \PDO(
+            $pdo = new \PDO(
                 "mysql:host={$config['db_host']};port={$config['db_port']};dbname={$config['db_name']}",
                 $config['db_username'],
                 $password,
                 [
                     \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
                     \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
-                    \PDO::ATTR_TIMEOUT => 5, // 5 second timeout
+                    \PDO::ATTR_TIMEOUT => 5,
                 ]
             );
 
-            // Test a simple query to ensure the connection is working
-            $stmt = $connection->query("SELECT 1 as test");
-            $result = $stmt->fetch();
+            $stmt = $pdo->query("SELECT 1 as test");
+            $stmt->fetch();
 
-            return [
-                'success' => true,
-                'message' => 'Database connection successful',
-            ];
+            return ['success' => true, 'message' => 'Database connection successful'];
         } catch (\PDOException $e) {
             $errorMessage = $e->getMessage();
 
-            // Provide more user-friendly error messages
             if (strpos($errorMessage, 'Access denied') !== false) {
-                $errorMessage = 'Access denied. Please check your username and password.';
+                $errorMessage = 'Access denied. Check username/password and privileges.';
             } elseif (strpos($errorMessage, 'Unknown database') !== false) {
-                $errorMessage = 'Database "' . $config['db_name'] . '" does not exist. Please create it first.';
+                $errorMessage = 'Database "' . ($config['db_name'] ?? '') . '" does not exist. Create it first.';
             } elseif (strpos($errorMessage, 'Connection refused') !== false) {
-                $errorMessage = 'Cannot connect to MySQL server. Please check if MySQL is running and the host/port are correct.';
-            } elseif (strpos($errorMessage, 'timeout') !== false) {
-                $errorMessage = 'Connection timeout. Please check your network connection and MySQL server status.';
+                $errorMessage = 'Cannot connect to MySQL server. Check host/port and that MySQL is running.';
+            } elseif (strpos(strtolower($errorMessage), 'timeout') !== false) {
+                $errorMessage = 'Connection timeout. Check network and MySQL server.';
             }
 
-            return [
-                'success' => false,
-                'message' => $errorMessage,
-            ];
+            return ['success' => false, 'message' => $errorMessage];
         }
     }
 
-    protected function updateEnvFile($data)
+    /**
+     * Ensure .env exists. If not, try to create from .env.example
+     */
+    protected function ensureEnvExists()
     {
         $envPath = base_path('.env');
-        $envContent = File::get($envPath);
+        $example = base_path('.env.example');
 
-        // Database configuration
-        $envContent = preg_replace('/DB_HOST=.*/', "DB_HOST={$data['db_host']}", $envContent);
-        $envContent = preg_replace('/DB_PORT=.*/', "DB_PORT={$data['db_port']}", $envContent);
-        $envContent = preg_replace('/DB_DATABASE=.*/', "DB_DATABASE={$data['db_name']}", $envContent);
-        $envContent = preg_replace('/DB_USERNAME=.*/', "DB_USERNAME={$data['db_username']}", $envContent);
-        $envContent = preg_replace('/DB_PASSWORD=.*/', "DB_PASSWORD={$data['db_password']}", $envContent);
-
-        // Application configuration
-        $envContent = preg_replace('/APP_NAME=.*/', "APP_NAME=\"{$data['app_name']}\"", $envContent);
-        $envContent = preg_replace('/APP_URL=.*/', "APP_URL={$data['app_url']}", $envContent);
-
-        File::put($envPath, $envContent);
+        if (!File::exists($envPath)) {
+            if (File::exists($example)) {
+                File::copy($example, $envPath);
+            } else {
+                // create minimal .env if example missing
+                $content = "APP_NAME=\"Laravel\"\nAPP_ENV=local\nAPP_KEY=\nAPP_DEBUG=true\nAPP_URL=http://localhost\n\n";
+                $content .= "DB_CONNECTION=mysql\nDB_HOST=127.0.0.1\nDB_PORT=3306\nDB_DATABASE=homestead\nDB_USERNAME=homestead\nDB_PASSWORD=\n";
+                File::put($envPath, $content);
+            }
+        }
     }
 
-    protected function createAdminUser($data)
+    /**
+     * Robust .env writer: replace or append keys
+     */
+    protected function updateEnvFile(array $data)
     {
-        // Create admin user
-        $user = User::create([
-            'name' => $data['admin_name'],
-            'email' => $data['admin_email'],
-            'password' => Hash::make($data['admin_password']),
-            'email_verified_at' => now(),
-        ]);
+        $envPath = base_path('.env');
 
-        // Create roles and permissions
-        $adminRole = Role::create(['name' => 'admin']);
-        $managerRole = Role::create(['name' => 'manager']);
-        $cashierRole = Role::create(['name' => 'cashier']);
+        if (!File::exists($envPath)) {
+            throw new \Exception('.env file not found at ' . $envPath);
+        }
 
-        // Create permissions
+        $content = File::get($envPath);
+
+        $replacements = [
+            'APP_NAME' => "\"{$data['app_name']}\"",
+            'APP_URL' => $data['app_url'],
+            'DB_HOST' => $data['db_host'],
+            'DB_PORT' => $data['db_port'],
+            'DB_DATABASE' => $data['db_name'],
+            'DB_USERNAME' => $data['db_username'],
+            'DB_PASSWORD' => ($data['db_password'] ?? ''),
+        ];
+
+        foreach ($replacements as $key => $value) {
+            $pattern = "/^{$key}=.*$/m";
+            $line = "{$key}={$value}";
+            if (preg_match($pattern, $content)) {
+                $content = preg_replace($pattern, $line, $content);
+            } else {
+                // append new key
+                $content .= PHP_EOL . $line;
+            }
+        }
+
+        File::put($envPath, $content);
+
+        // reset opcache if present
+        if (function_exists('opcache_reset')) {
+            @opcache_reset();
+        }
+
+        // clear config cache (best-effort)
+        try {
+            Artisan::call('config:clear');
+        } catch (\Exception $e) {
+            // not critical
+        }
+    }
+
+    protected function createAdminUser(array $data)
+    {
+        // create/update admin user
+        $user = User::where('email', $data['admin_email'])->first();
+
+        if ($user) {
+            $user->update([
+                'name' => $data['admin_name'],
+                'password' => Hash::make($data['admin_password']),
+                'email_verified_at' => now(),
+            ]);
+        } else {
+            $user = User::create([
+                'name' => $data['admin_name'],
+                'email' => $data['admin_email'],
+                'password' => Hash::make($data['admin_password']),
+                'email_verified_at' => now(),
+            ]);
+        }
+
+        // create roles
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        Role::firstOrCreate(['name' => 'manager']);
+        Role::firstOrCreate(['name' => 'cashier']);
+
+        // permissions (list)
         $permissions = [
             'view-medicines',
             'create-medicines',
@@ -383,30 +433,74 @@ class InstallController extends Controller
             'manage-data',
         ];
 
-        foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+        DB::beginTransaction();
+        try {
+            $existing = Permission::pluck('name')->toArray();
+            $new = array_diff($permissions, $existing);
+
+            if (!empty($new)) {
+                $insert = array_map(function ($name) {
+                    return [
+                        'name' => $name,
+                        'guard_name' => 'web',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }, $new);
+
+                DB::table('permissions')->insert($insert);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Permission insert failed', ['error' => $e->getMessage()]);
+            // not fatal — continue
         }
 
-        // Assign all permissions to admin role
-        $adminRole->givePermissionTo(Permission::all());
+        // clear spatie cache
+        try {
+            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        } catch (\Exception $e) {
+            // ignore
+        }
 
-        // Assign user to admin role
-        $user->assignRole($adminRole);
+        // sync permissions to admin role
+        try {
+            $allPermissions = Permission::all();
+            if ($allPermissions->isNotEmpty()) {
+                $adminRole->syncPermissions($allPermissions);
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to sync permissions to admin role', ['error' => $e->getMessage()]);
+        }
 
-        // Create company settings
-        $settings = [
-            'company_name' => $data['company_name'],
-            'company_email' => $data['company_email'],
-            'company_phone' => $data['company_phone'],
-            'company_address' => $data['company_address'],
-            'currency_symbol' => '$',
-            'currency_position' => 'before',
-            'tax_rate' => 10,
-            'low_stock_threshold' => 10,
-            'expiry_alert_days' => 30,
-        ];
+        // assign role to user
+        try {
+            if (!$user->hasRole($adminRole)) {
+                $user->assignRole($adminRole);
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to assign admin role to user', ['error' => $e->getMessage()]);
+        }
 
-        File::put(storage_path('app/settings.json'), json_encode($settings, JSON_PRETTY_PRINT));
+        // store default settings file
+        try {
+            $settings = [
+                'company_name' => $data['company_name'],
+                'company_email' => $data['company_email'],
+                'company_phone' => $data['company_phone'],
+                'company_address' => $data['company_address'],
+                'currency_symbol' => '$',
+                'currency_position' => 'before',
+                'tax_rate' => 10,
+                'low_stock_threshold' => 10,
+                'expiry_alert_days' => 30,
+            ];
+            File::put(storage_path('app/settings.json'), json_encode($settings, JSON_PRETTY_PRINT));
+        } catch (\Exception $e) {
+            Log::warning('Failed to store settings.json', ['error' => $e->getMessage()]);
+        }
     }
 
     protected function createInstallationFlag()

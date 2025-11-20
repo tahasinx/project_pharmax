@@ -164,7 +164,7 @@
                   v-model="databaseConfig.db_name"
                   type="text"
                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="pharmacare"
+                  placeholder=""
                   required
                 />
               </div>
@@ -244,7 +244,7 @@
                   v-model="appConfig.app_name"
                   type="text"
                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="PharmaCare Modern"
+                  placeholder=""
                   required
                 />
               </div>
@@ -279,7 +279,7 @@
                     v-model="appConfig.admin_email"
                     type="email"
                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="admin@pharmacare.com"
+                    placeholder=""
                     required
                   />
                 </div>
@@ -370,7 +370,7 @@
             </svg>
           </div>
           <h3 class="text-2xl font-bold text-gray-900">Installation Complete!</h3>
-          <p class="text-lg text-gray-600">PharmaCare Modern has been successfully installed.</p>
+          <p class="text-lg text-gray-600">App has been successfully installed.</p>
           <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h4 class="font-medium text-blue-900 mb-2">Login Credentials:</h4>
             <p class="text-blue-800">Email: {{ appConfig.admin_email }}</p>
@@ -398,7 +398,7 @@ const props = defineProps({
   permissions: Object,
   appName: {
     type: String,
-    default: 'PharmaCare Modern'
+    default: 'App'
   }
 })
 
@@ -408,7 +408,7 @@ const steps = ['Requirements', 'Permissions', 'Database', 'Configuration', 'Comp
 const databaseConfig = reactive({
   db_host: 'localhost',
   db_port: 3306,
-  db_name: 'pharmacare',
+  db_name: '',
   db_username: 'root',
   db_password: '',
 })
@@ -428,10 +428,10 @@ const getBaseUrl = () => {
 }
 
 const appConfig = reactive({
-  app_name: 'PharmaCare Modern',
+  app_name: 'App',
   app_url: getBaseUrl(),
   admin_name: 'Administrator',
-  admin_email: 'admin@pharmacare.com',
+  admin_email: 'admin@pharmax.com',
   admin_password: '',
   company_name: '',
   company_email: '',
@@ -481,10 +481,22 @@ const testDatabase = async () => {
 
     console.log('CSRF Token:', csrfToken ? 'Found' : 'Not found');
 
-    // Construct URL properly for subdirectory installations
-    const basePath = getBasePath();
-    const installUrl = basePath + '/install/database';
+    // Construct URL - use relative URL for better compatibility
+    let installUrl;
+    try {
+      const basePath = getBasePath();
+      installUrl = (basePath ? basePath : '') + '/install/database';
+      // If basePath is empty and we're at /install, use relative URL
+      if (!basePath && window.location.pathname.includes('/install')) {
+        installUrl = '/install/database';
+      }
+    } catch (e) {
+      // Fallback to relative URL
+      installUrl = '/install/database';
+    }
     console.log('Request URL:', installUrl);
+    console.log('Full URL:', window.location.origin + installUrl);
+    console.log('Current Pathname:', window.location.pathname);
 
     // Include CSRF token in both header and body
     const requestData = {
@@ -492,20 +504,57 @@ const testDatabase = async () => {
       _token: csrfToken,
     };
 
-    const response = await fetch(installUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': csrfToken,
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      credentials: 'same-origin',
-      body: JSON.stringify(requestData),
-    })
+    let response;
+    try {
+      response = await fetch(installUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': csrfToken,
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(requestData),
+      })
+    } catch (fetchError) {
+      // Handle network errors
+      if (fetchError.message) {
+        throw new Error('Network error: ' + fetchError.message + '. Please check your connection and try again.');
+      }
+      throw new Error('Failed to connect to server. Please check your connection and try again.');
+    }
 
     console.log('Response status:', response.status)
     console.log('Response headers:', response.headers)
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = 'Database connection test failed';
+
+      // Check for CSRF token mismatch
+      if (response.status === 419 || errorText.includes('CSRF token mismatch') || errorText.includes('419')) {
+        errorMessage = 'CSRF token mismatch. Please refresh the page and try again.';
+      } else {
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.message || errorJson.error || errorMessage;
+          // Check for validation errors
+          if (errorJson.errors) {
+            const validationErrors = Object.values(errorJson.errors).flat().join(', ');
+            errorMessage = 'Validation errors: ' + validationErrors;
+          }
+        } catch (e) {
+          // If response is HTML, it might be an error page
+          if (errorText.includes('<!DOCTYPE') || errorText.includes('<html')) {
+            errorMessage = `Server returned an error page (Status: ${response.status}). Please check server logs for details.`;
+          } else {
+            errorMessage = errorText || `Server returned status ${response.status}`;
+          }
+        }
+      }
+      throw new Error(errorMessage);
+    }
 
     // Check if response is JSON
     const contentType = response.headers.get('content-type')
@@ -536,12 +585,20 @@ const testDatabase = async () => {
     console.error('Database test error:', error)
     databaseTestResult.value = {
       success: false,
-      message: 'Network error: ' + error.message,
+      message: error.message || 'Network error: ' + error.message,
     }
+
+    let errorMessage = 'Failed to test database connection: ' + (error.message || 'Unknown error');
+    if (error.message && error.message.includes('Failed to fetch')) {
+      errorMessage = 'Failed to connect to server. Please check your connection and server status.';
+    } else if (error.message && error.message.includes('Network error')) {
+      errorMessage = error.message;
+    }
+
     await Swal.fire({
       icon: 'error',
       title: 'Network Error!',
-      text: 'Failed to test database connection: ' + error.message,
+      text: errorMessage,
     })
   } finally {
     isTestingDatabase.value = false
@@ -561,10 +618,23 @@ const install = async () => {
       throw new Error('CSRF token not found. Please refresh the page and try again.');
     }
 
-    // Construct URL properly for subdirectory installations
-    const basePath = getBasePath();
-    const installUrl = basePath + '/install';
+    // Construct URL - use relative URL for better compatibility
+    // Try to get base path, but fallback to relative URL
+    let installUrl;
+    try {
+      const basePath = getBasePath();
+      installUrl = (basePath ? basePath : '') + '/install';
+      // If basePath is empty and we're at /install, use relative URL
+      if (!basePath && window.location.pathname.includes('/install')) {
+        installUrl = '/install';
+      }
+    } catch (e) {
+      // Fallback to relative URL
+      installUrl = '/install';
+    }
     console.log('Install URL:', installUrl);
+    console.log('Full URL:', window.location.origin + installUrl);
+    console.log('Current Pathname:', window.location.pathname);
 
     // Include CSRF token in both header and body
     const requestData = {
@@ -596,17 +666,37 @@ const install = async () => {
       if (fetchError.name === 'AbortError') {
         throw new Error('Installation request timed out. The installation process may take several minutes. Please try again.');
       }
-      throw fetchError;
+      // Handle network errors
+      if (fetchError.message) {
+        throw new Error('Network error: ' + fetchError.message + '. Please check your connection and try again.');
+      }
+      throw new Error('Failed to connect to server. Please check your connection and try again.');
     }
 
     if (!response.ok) {
       const errorText = await response.text();
       let errorMessage = 'Installation failed';
-      try {
-        const errorJson = JSON.parse(errorText);
-        errorMessage = errorJson.message || errorMessage;
-      } catch (e) {
-        errorMessage = errorText || `Server returned status ${response.status}`;
+
+      // Check for CSRF token mismatch
+      if (response.status === 419 || errorText.includes('CSRF token mismatch') || errorText.includes('419')) {
+        errorMessage = 'CSRF token mismatch. Please refresh the page and try again.';
+      } else {
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.message || errorJson.error || errorMessage;
+          // Check for validation errors
+          if (errorJson.errors) {
+            const validationErrors = Object.values(errorJson.errors).flat().join(', ');
+            errorMessage = 'Validation errors: ' + validationErrors;
+          }
+        } catch (e) {
+          // If response is HTML, it might be an error page
+          if (errorText.includes('<!DOCTYPE') || errorText.includes('<html')) {
+            errorMessage = `Server returned an error page (Status: ${response.status}). Please check server logs for details.`;
+          } else {
+            errorMessage = errorText || `Server returned status ${response.status}`;
+          }
+        }
       }
       throw new Error(errorMessage);
     }
@@ -637,6 +727,10 @@ const install = async () => {
       errorMessage = 'Installation request timed out. The process may take several minutes. Please check if the installation completed and refresh the page.';
     } else if (error.message && error.message.includes('ERR_CONNECTION_RESET')) {
       errorMessage = 'Connection was reset. The installation process may still be running. Please wait a moment and refresh the page to check if installation completed.';
+    } else if (error.message && error.message.includes('Failed to fetch')) {
+      errorMessage = 'Failed to connect to server. Please check your connection and server status.';
+    } else if (error.message && error.message.includes('Network error')) {
+      errorMessage = error.message;
     }
 
     await Swal.fire({

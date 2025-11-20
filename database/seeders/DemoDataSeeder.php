@@ -175,18 +175,69 @@ class DemoDataSeeder extends Seeder
     private function createManufacturers()
     {
         $manufacturers = [
-            ['name' => 'Pfizer', 'contact_person' => 'John Smith', 'email' => 'contact@pfizer.com', 'phone' => '+1-555-0123'],
-            ['name' => 'Johnson & Johnson', 'contact_person' => 'Sarah Johnson', 'email' => 'contact@jnj.com', 'phone' => '+1-555-0124'],
-            ['name' => 'Novartis', 'contact_person' => 'Michael Brown', 'email' => 'contact@novartis.com', 'phone' => '+1-555-0125'],
-            ['name' => 'Roche', 'contact_person' => 'Emily Davis', 'email' => 'contact@roche.com', 'phone' => '+1-555-0126'],
-            ['name' => 'Merck & Co.', 'contact_person' => 'David Wilson', 'email' => 'contact@merck.com', 'phone' => '+1-555-0127'],
-            ['name' => 'GlaxoSmithKline', 'contact_person' => 'Lisa Anderson', 'email' => 'contact@gsk.com', 'phone' => '+1-555-0128'],
-            ['name' => 'Sanofi', 'contact_person' => 'Robert Taylor', 'email' => 'contact@sanofi.com', 'phone' => '+1-555-0129'],
-            ['name' => 'AbbVie', 'contact_person' => 'Jennifer Martinez', 'email' => 'contact@abbvie.com', 'phone' => '+1-555-0130'],
+            [
+                'name' => 'Pfizer',
+                'address' => '235 East 42nd Street, New York, NY 10017',
+                'mobile' => '+1-555-0123',
+                'email' => 'contact@pfizer.com',
+                'details' => 'Primary contact: John Smith',
+            ],
+            [
+                'name' => 'Johnson & Johnson',
+                'address' => '1 Johnson & Johnson Plaza, New Brunswick, NJ 08933',
+                'mobile' => '+1-555-0124',
+                'email' => 'contact@jnj.com',
+                'details' => 'Primary contact: Sarah Johnson',
+            ],
+            [
+                'name' => 'Novartis',
+                'address' => 'Lichtstrasse 35, 4056 Basel, Switzerland',
+                'mobile' => '+1-555-0125',
+                'email' => 'contact@novartis.com',
+                'details' => 'Primary contact: Michael Brown',
+            ],
+            [
+                'name' => 'Roche',
+                'address' => 'Grenzacherstrasse 124, 4070 Basel, Switzerland',
+                'mobile' => '+1-555-0126',
+                'email' => 'contact@roche.com',
+                'details' => 'Primary contact: Emily Davis',
+            ],
+            [
+                'name' => 'Merck & Co.',
+                'address' => '126 E Lincoln Ave, Rahway, NJ 07065',
+                'mobile' => '+1-555-0127',
+                'email' => 'contact@merck.com',
+                'details' => 'Primary contact: David Wilson',
+            ],
+            [
+                'name' => 'GlaxoSmithKline',
+                'address' => '980 Great West Road, Brentford TW8 9GS, UK',
+                'mobile' => '+1-555-0128',
+                'email' => 'contact@gsk.com',
+                'details' => 'Primary contact: Lisa Anderson',
+            ],
+            [
+                'name' => 'Sanofi',
+                'address' => '54 Rue La Boétie, 75008 Paris, France',
+                'mobile' => '+1-555-0129',
+                'email' => 'contact@sanofi.com',
+                'details' => 'Primary contact: Robert Taylor',
+            ],
+            [
+                'name' => 'AbbVie',
+                'address' => '1 N Waukegan Rd, North Chicago, IL 60064',
+                'mobile' => '+1-555-0130',
+                'email' => 'contact@abbvie.com',
+                'details' => 'Primary contact: Jennifer Martinez',
+            ],
         ];
 
         foreach ($manufacturers as $manufacturer) {
-            Manufacturer::firstOrCreate(['name' => $manufacturer['name']], $manufacturer);
+            Manufacturer::firstOrCreate(
+                ['name' => $manufacturer['name']],
+                collect($manufacturer)->except('name')->toArray()
+            );
         }
     }
 

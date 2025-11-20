@@ -17,10 +17,10 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         // Create roles first
-        $adminRole = Role::create(['name' => 'admin']);
-        $managerRole = Role::create(['name' => 'manager']);
-        $cashierRole = Role::create(['name' => 'cashier']);
-        $pharmacistRole = Role::create(['name' => 'pharmacist']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $managerRole = Role::firstOrCreate(['name' => 'manager']);
+        $cashierRole = Role::firstOrCreate(['name' => 'cashier']);
+        $pharmacistRole = Role::firstOrCreate(['name' => 'pharmacist']);
 
         // Create permissions
         $permissions = [
@@ -43,7 +43,7 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
         // Assign permissions to roles
@@ -127,8 +127,11 @@ class UserSeeder extends Seeder
             $role = $userData['role'];
             unset($userData['role']);
 
-            $user = User::create($userData);
-            $user->assignRole($role);
+            $user = User::updateOrCreate(
+                ['email' => $userData['email']],
+                collect($userData)->except('role')->toArray()
+            );
+            $user->syncRoles($role);
         }
 
         $this->command->info('Users created successfully!');

@@ -32,12 +32,20 @@ class HandleApiErrors
 
     protected function handleException(Request $request, \Exception $e): Response
     {
+        // Skip user() call for install routes to avoid database access
+        $userId = null;
+        try {
+            $userId = $request->user()?->id;
+        } catch (\Exception $userException) {
+            // Ignore user lookup errors during installation
+        }
+
         Log::error('API Error', [
             'url' => $request->fullUrl(),
             'method' => $request->method(),
             'error' => $e->getMessage(),
             'trace' => $e->getTraceAsString(),
-            'user_id' => $request->user()?->id,
+            'user_id' => $userId,
         ]);
 
         if ($request->expectsJson()) {
@@ -55,11 +63,19 @@ class HandleApiErrors
 
     protected function logError(Request $request, Response $response): void
     {
+        // Skip user() call for install routes to avoid database access
+        $userId = null;
+        try {
+            $userId = $request->user()?->id;
+        } catch (\Exception $userException) {
+            // Ignore user lookup errors during installation
+        }
+
         Log::warning('API Error Response', [
             'url' => $request->fullUrl(),
             'method' => $request->method(),
             'status_code' => $response->getStatusCode(),
-            'user_id' => $request->user()?->id,
+            'user_id' => $userId,
             'ip' => $request->ip(),
         ]);
     }

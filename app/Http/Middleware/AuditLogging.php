@@ -15,6 +15,11 @@ class AuditLogging
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Skip audit logging for install routes
+        if ($request->is('install*')) {
+            return $next($request);
+        }
+
         $startTime = microtime(true);
 
         $response = $next($request);
