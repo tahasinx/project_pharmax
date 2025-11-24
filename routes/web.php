@@ -139,8 +139,6 @@ Route::middleware('auth')->group(function () {
 });
 
 // Installation routes (should be before auth middleware)
-Route::get('/install', [InstallController::class, 'index'])->name('install');
-Route::post('/install/database', [InstallController::class, 'checkDatabase'])->name('install.database');
-Route::post('/install', [InstallController::class, 'install'])->name('install.process');
+require __DIR__ . '/install.php';
 
 require __DIR__ . '/auth.php';
