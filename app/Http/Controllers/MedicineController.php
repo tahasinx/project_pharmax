@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Generic;
 use App\Models\Manufacturer;
 use App\Models\Medicine;
 use App\Traits\HasSettingsPagination;
@@ -39,6 +41,8 @@ class MedicineController extends Controller
         return Inertia::render('Medicine/Create', [
             'categories' => $categories,
             'manufacturers' => $manufacturers,
+            'generics' => Generic::orderBy('name')->get(['id', 'name']),
+            'brands' => Brand::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -58,8 +62,19 @@ class MedicineController extends Controller
             'name'              => $request->name,
             'category_id'       => $request->category_id,
             'manufacturer_id'   => $request->manufacturer_id,
-            'generic_name'      => $request->generic_name,
+            'generic_name'      => $request->generic_id ? Generic::find($request->generic_id)?->name : $request->generic_name,
+            'generic_id'        => $request->generic_id,
+            'brand_id'          => $request->brand_id,
             'strength'          => $request->strength,
+            'dosage_form'       => $request->dosage_form,
+            'atc_code'          => $request->atc_code,
+            'sku'               => $request->sku,
+            'requires_prescription' => $request->boolean('requires_prescription'),
+            'is_controlled'     => $request->boolean('is_controlled'),
+            'is_antibiotic'     => $request->boolean('is_antibiotic'),
+            'is_high_risk'      => $request->boolean('is_high_risk'),
+            'is_refrigerated'   => $request->boolean('is_refrigerated'),
+            'is_narcotic'       => $request->boolean('is_narcotic'),
             'box_size'          => $request->box_size,
             'product_location'  => $request->product_location,
             'price'             => $request->price,
@@ -71,6 +86,7 @@ class MedicineController extends Controller
 
         // Auto-generate QR code and barcode for new medicine
         $this->generateDefaultCodes($medicine);
+        $this->syncUnits($medicine, $request->input('units', []));
 
         return redirect()->route('medicines.index')
             ->with('success', 'Medicine created successfully.');
@@ -90,10 +106,14 @@ class MedicineController extends Controller
         $categories = Category::where('status', true)->get();
         $manufacturers = Manufacturer::where('status', true)->get();
 
+        $medicine->load('units');
+
         return Inertia::render('Medicine/Edit', [
             'medicine' => $medicine,
             'categories' => $categories,
             'manufacturers' => $manufacturers,
+            'generics' => Generic::orderBy('name')->get(['id', 'name']),
+            'brands' => Brand::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -108,7 +128,36 @@ class MedicineController extends Controller
             'box_size' => 'required|integer|min:1',
         ]);
 
-        $medicine->update($request->all());
+        $oldPrice = $medicine->price;
+        $medicine->update([
+            'name' => $request->name,
+            'category_id' => $request->category_id,
+            'manufacturer_id' => $request->manufacturer_id,
+            'generic_name' => $request->generic_id ? Generic::find($request->generic_id)?->name : $request->generic_name,
+            'generic_id' => $request->generic_id,
+            'brand_id' => $request->brand_id,
+            'strength' => $request->strength,
+            'dosage_form' => $request->dosage_form,
+            'atc_code' => $request->atc_code,
+            'sku' => $request->sku,
+            'price' => $request->price,
+            'manufacturer_price' => $request->manufacturer_price,
+            'box_size' => $request->box_size,
+            'unit' => $request->unit,
+            'product_location' => $request->product_location,
+            'details' => $request->details,
+            'status' => $request->boolean('status'),
+            'requires_prescription' => $request->boolean('requires_prescription'),
+            'is_controlled' => $request->boolean('is_controlled'),
+            'is_antibiotic' => $request->boolean('is_antibiotic'),
+            'is_high_risk' => $request->boolean('is_high_risk'),
+            'is_refrigerated' => $request->boolean('is_refrigerated'),
+            'is_narcotic' => $request->boolean('is_narcotic'),
+        ]);
+        $this->syncUnits($medicine, $request->input('units', []));
+        if ((float) $oldPrice !== (float) $medicine->price) {
+            \App\Domain\Audit\AuditRecorder::record('medicine', $medicine, 'price', ['price' => $oldPrice], ['price' => $medicine->price]);
+        }
 
         // Auto-generate codes if they don't exist
         if (!$medicine->qr_code_data || !$medicine->barcode_data) {
@@ -466,5 +515,25 @@ class MedicineController extends Controller
             'barcode_data' => $barcodeData,
             'barcode_type' => 'code128',
         ]);
+    }
+
+    private function syncUnits(Medicine $medicine, array $units): void
+    {
+        if ($units === []) {
+            $medicine->units()->create(['name' => 'Piece', 'factor_to_base' => 1, 'sort' => 0]);
+
+            return;
+        }
+        $medicine->units()->delete();
+        foreach (array_values($units) as $index => $unit) {
+            if (empty($unit['name'])) {
+                continue;
+            }
+            $medicine->units()->create([
+                'name' => $unit['name'],
+                'factor_to_base' => max(1, (int) ($unit['factor_to_base'] ?? 1)),
+                'sort' => $index,
+            ]);
+        }
     }
 }

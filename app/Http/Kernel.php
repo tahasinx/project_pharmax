@@ -38,6 +38,8 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
+            \App\Http\Middleware\SwitchTenantDatabase::class,
+            \App\Http\Middleware\KeepCentralOnPlatform::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
@@ -80,5 +82,7 @@ class Kernel extends HttpKernel
         'security.headers' => \App\Http\Middleware\SecurityHeaders::class,
         'input.sanitize' => \App\Http\Middleware\InputSanitization::class,
         'audit.log' => \App\Http\Middleware\AuditLogging::class,
+        'central.host' => \App\Http\Middleware\EnsureCentralHost::class,
+        'platform.admin' => \App\Http\Middleware\EnsurePlatformAdmin::class,
     ];
 }

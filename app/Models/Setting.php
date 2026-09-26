@@ -24,6 +24,7 @@ class Setting extends Model
         'timezone',
         'rtl',
         'footer_text',
+        'dead_stock_days',
     ];
 
     protected $casts = [

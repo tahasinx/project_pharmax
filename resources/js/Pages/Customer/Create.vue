@@ -110,6 +110,8 @@
 
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                                        <textarea v-model="form.allergies" placeholder="Allergies, stored as notes only" class="w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
+                                        <textarea v-model="form.chronic_medicines" placeholder="Chronic medicines, stored as notes only" class="w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
                                         <input v-model="form.country"
                                                type="text"
                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -152,6 +154,8 @@ const form = ref({
     state: '',
     zip: '',
     country: '',
+    allergies: '',
+    chronic_medicines: '',
     status: true
 })
 

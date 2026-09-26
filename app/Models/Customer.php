@@ -22,11 +22,21 @@ class Customer extends Model
         'phone',
         'fax',
         'status',
+        'date_of_birth',
+        'gender',
+        'allergies',
+        'chronic_medicines',
     ];
 
     protected $casts = [
         'status' => 'boolean',
+        'date_of_birth' => 'date',
     ];
+
+    public function prescriptions(): HasMany
+    {
+        return $this->hasMany(Prescription::class);
+    }
 
     public function invoices(): HasMany
     {

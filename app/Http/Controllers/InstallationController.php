@@ -393,32 +393,7 @@ class InstallationController extends Controller
                 Role::firstOrCreate(['name' => 'cashier', 'guard_name' => 'web']);
 
                 // Create permissions
-                $permissions = [
-                    'view-medicines',
-                    'create-medicines',
-                    'edit-medicines',
-                    'delete-medicines',
-                    'view-customers',
-                    'create-customers',
-                    'edit-customers',
-                    'delete-customers',
-                    'view-invoices',
-                    'create-invoices',
-                    'edit-invoices',
-                    'delete-invoices',
-                    'view-stocks',
-                    'create-stocks',
-                    'edit-stocks',
-                    'delete-stocks',
-                    'view-purchases',
-                    'create-purchases',
-                    'edit-purchases',
-                    'delete-purchases',
-                    'view-reports',
-                    'manage-users',
-                    'manage-system',
-                    'manage-data',
-                ];
+                $permissions = \App\Domain\Access\PermissionCatalog::names();
 
                 // Create permissions using DB transaction for better error handling
                 DB::beginTransaction();
@@ -452,6 +427,8 @@ class InstallationController extends Controller
                 } catch (\Exception $e) {
                     // Ignore cache clearing errors
                 }
+
+                \App\Domain\Access\PermissionCatalog::sync();
 
                 // Sync all permissions to admin role
                 try {

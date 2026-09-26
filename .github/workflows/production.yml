@@ -1,0 +1,144 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Why this production deploy was triggered'
+        required: false
+        default: 'Manual promote'
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Show deploy target
+        run: |
+          echo "Host: ${{ secrets.PROD_SERVER }}"
+          echo "User: ${{ secrets.PROD_USERNAME }}"
+          echo "Port: ${{ secrets.PROD_PORT }}"
+          echo "Note: epharma-production-deploy home dir IS the app root — we rsync to ~/ "
+
+      - name: Install sshpass / rsync
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq sshpass rsync openssh-client
+
+      - name: Write deploy marker (local)
+        run: |
+          date -u +"%Y-%m-%dT%H:%M:%SZ commit=${GITHUB_SHA}" > .deploy_marker
+          cat .deploy_marker
+
+      - name: Test SSH + show remote before deploy
+        env:
+          SSHPASS: ${{ secrets.PROD_PASSWORD }}
+        run: |
+          set -e
+          sshpass -e ssh -p "${{ secrets.PROD_PORT }}" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -o ConnectTimeout=20 \
+            "${{ secrets.PROD_USERNAME }}@${{ secrets.PROD_SERVER }}" \
+            'echo USER=$(whoami); echo HOME=$HOME; echo PWD=$(pwd); ls -la "$HOME" | head -20; echo "--- marker before ---"; cat "$HOME/.deploy_marker" 2>/dev/null || echo "(no marker yet)"; echo "--- env db ---"; grep -E "^DB_DATABASE=" "$HOME/.env" | head -1'
+
+      - name: Prepare remote write access
+        env:
+          SSHPASS: ${{ secrets.PROD_PASSWORD }}
+        run: |
+          sshpass -e ssh -p "${{ secrets.PROD_PORT }}" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            "${{ secrets.PROD_USERNAME }}@${{ secrets.PROD_SERVER }}" \
+            'sudo -n /usr/local/sbin/epharma-prep-deploy "$HOME" "$(whoami)" || echo "epharma-prep-deploy unavailable — rsync will still run"'
+
+      - name: Rsync code into production HOME (app root)
+        env:
+          SSHPASS: ${{ secrets.PROD_PASSWORD }}
+        run: |
+          echo "Rsync -> ${{ secrets.PROD_USERNAME }}@${{ secrets.PROD_SERVER }}:~/"
+          set +e
+          sshpass -e rsync -rltz --itemize-changes --human-readable \
+            --no-owner --no-group --no-perms --omit-dir-times \
+            -e "ssh -p ${{ secrets.PROD_PORT }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='.cursor/' \
+            --exclude='.idea/' \
+            --exclude='.vscode/' \
+            --exclude='node_modules/' \
+            --exclude='vendor/' \
+            --exclude='tests/' \
+            --exclude='phpunit.xml' \
+            --exclude='phpunit.xml.dist' \
+            --exclude='.phpunit.result.cache' \
+            --exclude='.env' \
+            --exclude='.env.backup' \
+            --exclude='.env.local' \
+            --exclude='.env.production' \
+            --exclude='storage/' \
+            --exclude='public/uploads/' \
+            --exclude='public/storage' \
+            --exclude='bootstrap/cache/*.php' \
+            ./ "${{ secrets.PROD_USERNAME }}@${{ secrets.PROD_SERVER }}:~/"
+          code=$?
+          set -e
+          echo "Rsync exit code: $code"
+          if [ "$code" -eq 0 ]; then
+            echo "Rsync finished cleanly."
+          elif [ "$code" -eq 23 ] || [ "$code" -eq 24 ]; then
+            echo "Rsync partial transfer (code $code) — continuing; verify step will confirm deploy."
+          else
+            echo "Rsync failed with code $code"
+            exit "$code"
+          fi
+
+      - name: Verify marker + preserve production .env
+        env:
+          SSHPASS: ${{ secrets.PROD_PASSWORD }}
+        run: |
+          set -e
+          sshpass -e ssh -p "${{ secrets.PROD_PORT }}" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            "${{ secrets.PROD_USERNAME }}@${{ secrets.PROD_SERVER }}" \
+            'set -e
+             echo HOME=$HOME
+             echo "--- marker after ---"
+             cat "$HOME/.deploy_marker"
+             echo
+             echo "--- production env check ---"
+             test -f "$HOME/.env"
+             grep -q "^DB_DATABASE=epharma_central$" "$HOME/.env"
+             echo "DB_DATABASE OK (epharma_central)"
+             ls -lt "$HOME" | head -15'
+
+      - name: Post-deploy clear caches (safe)
+        env:
+          SSHPASS: ${{ secrets.PROD_PASSWORD }}
+        run: |
+          set -e
+          sshpass -e ssh -p "${{ secrets.PROD_PORT }}" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            "${{ secrets.PROD_USERNAME }}@${{ secrets.PROD_SERVER }}" \
+            'set -e
+             cd "$HOME"
+             chmod -R ug+rwX storage bootstrap/cache 2>/dev/null || true
+             find storage/framework/cache -type d -exec chmod 775 {} + 2>/dev/null || true
+             find storage/framework/cache -type f -exec chmod 664 {} + 2>/dev/null || true
+             rm -f storage/framework/views/*.php 2>/dev/null || true
+             php artisan config:clear || true
+             php artisan view:clear || true
+             php artisan optimize:clear || true
+             echo "Post-deploy cache clear done."
+             cat .deploy_marker'

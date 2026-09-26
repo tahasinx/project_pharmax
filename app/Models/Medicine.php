@@ -17,7 +17,18 @@ class Medicine extends Model
         'category_id',
         'manufacturer_id',
         'generic_name',
+        'generic_id',
+        'brand_id',
         'strength',
+        'dosage_form',
+        'atc_code',
+        'sku',
+        'requires_prescription',
+        'is_controlled',
+        'is_antibiotic',
+        'is_high_risk',
+        'is_refrigerated',
+        'is_narcotic',
         'box_size',
         'product_location',
         'price',
@@ -41,6 +52,12 @@ class Medicine extends Model
         'manufacturer_price' => 'decimal:2',
         'box_size' => 'integer',
         'status' => 'boolean',
+        'requires_prescription' => 'boolean',
+        'is_controlled' => 'boolean',
+        'is_antibiotic' => 'boolean',
+        'is_high_risk' => 'boolean',
+        'is_refrigerated' => 'boolean',
+        'is_narcotic' => 'boolean',
     ];
 
     public function category(): BelongsTo
@@ -51,6 +68,34 @@ class Medicine extends Model
     public function manufacturer(): BelongsTo
     {
         return $this->belongsTo(Manufacturer::class);
+    }
+
+    public function generic(): BelongsTo
+    {
+        return $this->belongsTo(Generic::class);
+    }
+
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class);
+    }
+
+    public function units(): HasMany
+    {
+        return $this->hasMany(MedicineUnit::class)->orderByDesc('factor_to_base');
+    }
+
+    public function alternatives()
+    {
+        if (!$this->generic_id) {
+            return collect();
+        }
+
+        return static::query()
+            ->where('generic_id', $this->generic_id)
+            ->where('id', '!=', $this->id)
+            ->where('status', true)
+            ->get();
     }
 
     public function purchaseItems(): HasMany

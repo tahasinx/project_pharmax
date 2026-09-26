@@ -25,6 +25,14 @@ class Stock extends Model
         'supplier',
         'notes',
         'is_active',
+        'branch_id',
+        'warehouse_id',
+        'supplier_id',
+        'manufacturing_date',
+        'mrp',
+        'free_quantity',
+        'status',
+        'recalled',
     ];
 
     protected $casts = [
@@ -35,6 +43,9 @@ class Stock extends Model
         'purchase_price' => 'decimal:2',
         'selling_price' => 'decimal:2',
         'is_active' => 'boolean',
+        'manufacturing_date' => 'date',
+        'mrp' => 'decimal:2',
+        'recalled' => 'boolean',
     ];
 
     public function medicine(): BelongsTo
@@ -45,6 +56,21 @@ class Stock extends Model
     public function purchase(): BelongsTo
     {
         return $this->belongsTo(Purchase::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
+
+    public function supplierProfile(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
     }
 
     public function transactions(): HasMany

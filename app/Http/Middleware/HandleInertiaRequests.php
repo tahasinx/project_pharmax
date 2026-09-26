@@ -32,6 +32,7 @@ class HandleInertiaRequests extends Middleware
     {
         // Skip database-dependent operations for install routes
         $isInstallRoute = $request->is('install*');
+        $isCentral = $request->attributes->get('tenant.mode') === 'central';
         
         try {
             return [
@@ -39,6 +40,15 @@ class HandleInertiaRequests extends Middleware
                 'auth' => [
                     'user' => $request->user(),
                 ],
+                'platform' => [
+                    'central' => $isCentral,
+                    'deploy' => \App\Support\StagingDeployHost::matches(),
+                ],
+                'branch' => fn () => $request->user() && !$isCentral && !$isInstallRoute ? [
+                    'current' => session('branch_id') ?: $request->user()->branch_id,
+                    'options' => \App\Models\Branch::orderBy('name')->get(['id', 'name', 'is_head_office']),
+                    'canSwitch' => $request->user()->hasRole('admin') || $request->user()->can('view-all-branches') || $request->user()->can('manage-branches'),
+                ] : null,
                 'app' => [
                     'name' => config('app.name'),
                 ],
@@ -46,7 +56,7 @@ class HandleInertiaRequests extends Middleware
                     ...(new Ziggy)->toArray(),
                     'location' => $request->url(),
                 ],
-                'menus' => fn() => ($request->user() && !$isInstallRoute) ? $this->getUserMenus($request->user()) : [],
+                'menus' => fn() => ($request->user() && !$isCentral && !$isInstallRoute) ? $this->getUserMenus($request->user()) : [],
                 'flash' => [
                     'success' => fn() => $request->session()->get('success'),
                     'error' => fn() => $request->session()->get('error'),
@@ -81,35 +91,6 @@ class HandleInertiaRequests extends Middleware
 
     private function getUserMenus($user)
     {
-        // Admin users see all menus
-        if ($user->hasRole('admin')) {
-            return \App\Models\Menu::active()
-                ->ordered()
-                ->get()
-                ->filter(function ($menu) use ($user) {
-                    // Check if user has the required permission
-                    if ($menu->permission) {
-                        return $user->can($menu->permission);
-                    }
-                    return true;
-                });
-        }
-
-        // Other users see only menus assigned to their roles
-        $userRoles = $user->roles->pluck('id');
-
-        return \App\Models\Menu::active()
-            ->ordered()
-            ->whereHas('roles', function ($query) use ($userRoles) {
-                $query->whereIn('roles.id', $userRoles);
-            })
-            ->get()
-            ->filter(function ($menu) use ($user) {
-                // Check if user has the required permission
-                if ($menu->permission) {
-                    return $user->can($menu->permission);
-                }
-                return true;
-            });
+        return \App\Models\Menu::active()->ordered()->get();
     }
 }

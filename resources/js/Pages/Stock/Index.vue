@@ -124,6 +124,18 @@
                                         Expiry Date
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Location
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Batch status
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Weighted cost
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        MRP
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Purchase Price
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -159,6 +171,18 @@
                                             <span v-else-if="isExpiringSoon(stock)" class="ml-1 text-xs text-orange-600">⏰</span>
                                         </div>
                                         <span v-else class="text-gray-400">N/A</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ stock.warehouse?.name || 'Unassigned' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ stock.status || 'available' }}{{ stock.recalled ? ' · recalled' : '' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ Number(weightedCosts[stock.medicine_id] || 0).toFixed(2) }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ stock.mrp != null ? Number(stock.mrp).toFixed(2) : '—' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(stock.purchase_price || 0).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
@@ -222,7 +246,8 @@ import Swal from 'sweetalert2'
 
 const props = defineProps({
     stocks: Object,
-    alerts: Object
+    alerts: Object,
+    weightedCosts: { type: Object, default: () => ({}) }
 })
 
 const search = ref('')

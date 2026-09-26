@@ -21,16 +21,25 @@ class StockController extends Controller
     public function index()
     {
         $itemsPerPage = $this->getItemsPerPage();
-        $stocks = Stock::with('medicine.category', 'medicine.manufacturer')
-            ->active()
+        $stocks = Stock::with('medicine.category', 'medicine.manufacturer', 'warehouse')
             ->orderBy('created_at', 'desc')
             ->paginate($itemsPerPage);
+
+        $weightedCosts = Stock::query()
+            ->where('quantity', '>', 0)
+            ->where(function ($q) {
+                $q->whereNull('status')->orWhere('status', 'available');
+            })
+            ->selectRaw('medicine_id, SUM(quantity * purchase_price) / NULLIF(SUM(quantity), 0) as wac')
+            ->groupBy('medicine_id')
+            ->pluck('wac', 'medicine_id');
 
         $alerts = $this->getStockAlerts();
 
         return Inertia::render('Stock/Index', [
             'stocks' => $stocks,
             'alerts' => $alerts,
+            'weightedCosts' => $weightedCosts,
         ]);
     }
 

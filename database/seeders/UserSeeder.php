@@ -6,8 +6,6 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 
 class UserSeeder extends Seeder
 {
@@ -16,73 +14,7 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create roles first
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        $managerRole = Role::firstOrCreate(['name' => 'manager']);
-        $cashierRole = Role::firstOrCreate(['name' => 'cashier']);
-        $pharmacistRole = Role::firstOrCreate(['name' => 'pharmacist']);
-
-        // Create permissions
-        $permissions = [
-            'view-dashboard',
-            'manage-medicines',
-            'manage-customers',
-            'manage-invoices',
-            'manage-purchases',
-            'manage-accounts',
-            'manage-categories',
-            'manage-manufacturers',
-            'manage-banks',
-            'manage-settings',
-            'view-reports',
-            'manage-users',
-            'pos-access',
-            'print-invoices',
-            'import-data',
-            'export-data'
-        ];
-
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
-        }
-
-        // Assign permissions to roles
-        $adminRole->givePermissionTo(Permission::all());
-
-        $managerRole->givePermissionTo([
-            'view-dashboard',
-            'manage-medicines',
-            'manage-customers',
-            'manage-invoices',
-            'manage-purchases',
-            'manage-accounts',
-            'manage-categories',
-            'manage-manufacturers',
-            'manage-banks',
-            'view-reports',
-            'pos-access',
-            'print-invoices',
-            'import-data',
-            'export-data'
-        ]);
-
-        $cashierRole->givePermissionTo([
-            'view-dashboard',
-            'manage-customers',
-            'manage-invoices',
-            'pos-access',
-            'print-invoices'
-        ]);
-
-        $pharmacistRole->givePermissionTo([
-            'view-dashboard',
-            'manage-medicines',
-            'manage-customers',
-            'manage-invoices',
-            'pos-access',
-            'print-invoices',
-            'view-reports'
-        ]);
+        \App\Domain\Access\PermissionCatalog::sync();
 
         // Create users
         $users = [

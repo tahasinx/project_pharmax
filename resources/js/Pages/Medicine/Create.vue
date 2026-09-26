@@ -34,6 +34,39 @@
                                     </div>
 
                                     <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Generic</label>
+                                        <select v-model="form.generic_id" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                            <option value="">None</option>
+                                            <option v-for="g in generics" :key="g.id" :value="g.id">{{ g.name }}</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Brand</label>
+                                        <select v-model="form.brand_id" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                            <option value="">None</option>
+                                            <option v-for="b in brands" :key="b.id" :value="b.id">{{ b.name }}</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Dosage form</label>
+                                        <input v-model="form.dosage_form" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">ATC / SKU</label>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <input v-model="form.atc_code" placeholder="ATC" class="px-3 py-2 border border-gray-300 rounded-md">
+                                            <input v-model="form.sku" placeholder="SKU" class="px-3 py-2 border border-gray-300 rounded-md">
+                                        </div>
+                                    </div>
+                                    <div class="text-sm space-y-1">
+                                        <label class="flex gap-2"><input type="checkbox" v-model="form.requires_prescription"> Prescription required</label>
+                                        <label class="flex gap-2"><input type="checkbox" v-model="form.is_controlled"> Controlled</label>
+                                        <label class="flex gap-2"><input type="checkbox" v-model="form.is_antibiotic"> Antibiotic</label>
+                                        <label class="flex gap-2"><input type="checkbox" v-model="form.is_high_risk"> High risk</label>
+                                        <label class="flex gap-2"><input type="checkbox" v-model="form.is_refrigerated"> Refrigerated</label>
+                                        <label class="flex gap-2"><input type="checkbox" v-model="form.is_narcotic"> Narcotic</label>
+                                    </div>
+                                    <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Generic Name</label>
                                         <input v-model="form.generic_name"
                                                type="text"
@@ -188,6 +221,8 @@ import ValidationErrors from '@/Components/ValidationErrors.vue'
 const props = defineProps({
     categories: Array,
     manufacturers: Array,
+    generics: { type: Array, default: () => [] },
+    brands: { type: Array, default: () => [] },
     errors: Object
 })
 
@@ -214,6 +249,22 @@ const manufacturerOptions = computed(() => {
 const form = ref({
     name: '',
     generic_name: '',
+    generic_id: '',
+    brand_id: '',
+    dosage_form: '',
+    atc_code: '',
+    sku: '',
+    requires_prescription: false,
+    is_controlled: false,
+    is_antibiotic: false,
+    is_high_risk: false,
+    is_refrigerated: false,
+    is_narcotic: false,
+    units: [
+        { name: 'Box', factor_to_base: 100 },
+        { name: 'Strip', factor_to_base: 10 },
+        { name: 'Piece', factor_to_base: 1 },
+    ],
     strength: '',
     category_id: '',
     manufacturer_id: '',

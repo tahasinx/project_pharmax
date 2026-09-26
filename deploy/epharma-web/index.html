@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Epharma — pharmacy, clearly</title>
+    <style>
+        :root { color-scheme: light; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Georgia, "Iowan Old Style", serif; color: #1c2b24; background: #f4f1ea; }
+        a { color: inherit; }
+        header, main, footer { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+        header { display: flex; justify-content: space-between; align-items: center; padding-top: 28px; font-family: "Segoe UI", sans-serif; }
+        .mark { font-weight: 650; letter-spacing: .04em; text-transform: uppercase; font-size: 13px; }
+        nav a { margin-left: 18px; text-decoration: none; font-size: 14px; color: #3d5348; }
+        .hero { padding: 72px 0 40px; display: grid; grid-template-columns: 1.2fr .8fr; gap: 40px; align-items: end; }
+        h1 { font-size: 64px; line-height: .95; font-weight: 500; margin: 0 0 18px; }
+        p.lead { font-family: "Segoe UI", sans-serif; font-size: 18px; line-height: 1.5; color: #3d5348; max-width: 36rem; }
+        .panel { background: #1f3d32; color: #f4f1ea; border-radius: 28px; padding: 28px; min-height: 280px; font-family: "Segoe UI", sans-serif; }
+        .panel span { display: block; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; opacity: .7; }
+        .panel strong { display: block; font-size: 42px; margin: 12px 0; font-family: Georgia, serif; font-weight: 500; }
+        .row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; padding-bottom: 72px; font-family: "Segoe UI", sans-serif; }
+        .row article { background: white; border-radius: 18px; padding: 18px; }
+        .row h2 { font-family: Georgia, serif; font-size: 22px; font-weight: 500; margin: 0 0 8px; }
+        .row p { margin: 0; color: #52685d; font-size: 14px; line-height: 1.5; }
+        footer { padding: 24px; font-family: "Segoe UI", sans-serif; font-size: 13px; color: #6b7f74; }
+        @media (max-width: 800px) {
+            h1 { font-size: 42px; }
+            .hero, .row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="mark">Epharma</div>
+        <nav>
+            <a href="https://admin.epharma.cloud">Platform</a>
+            <a href="https://demo.epharma.cloud">Demo pharmacy</a>
+        </nav>
+    </header>
+    <main>
+        <section class="hero">
+            <div>
+                <h1>A quieter way to run the pharmacy.</h1>
+                <p class="lead">Stock, sales, and prescriptions stay with each pharmacy. The front door is shared. The ledgers are not.</p>
+            </div>
+            <div class="panel">
+                <span>Today</span>
+                <strong>Each counter, its own books.</strong>
+                <p>Batches, expiry, and the day’s sales live in that pharmacy’s database. The platform only keeps the directory.</p>
+            </div>
+        </section>
+        <section class="row">
+            <article>
+                <h2>Dispense</h2>
+                <p>The counter finds a medicine, takes the earliest usable batch, and writes the sale.</p>
+            </article>
+            <article>
+                <h2>Separate</h2>
+                <p>One pharmacy cannot open another’s stock. The address in the browser chooses the database.</p>
+            </article>
+            <article>
+                <h2>Accountable</h2>
+                <p>Purchases, returns, and the day’s cash stay with the pharmacy that made them.</p>
+            </article>
+        </section>
+    </main>
+    <footer>Epharma · epharma.cloud</footer>
+</body>
+</html>

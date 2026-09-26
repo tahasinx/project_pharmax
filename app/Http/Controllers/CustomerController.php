@@ -13,7 +13,6 @@ class CustomerController extends Controller
 
     public function __construct()
     {
-        $this->middleware('permission:manage-customers');
     }
     public function index()
     {
@@ -55,6 +54,10 @@ class CustomerController extends Controller
             'zip'     => $request->zip,
             'country' => $request->country,
             'status'  => $request->status ?? true,
+            'date_of_birth' => $request->date_of_birth,
+            'gender' => $request->gender,
+            'allergies' => $request->allergies,
+            'chronic_medicines' => $request->chronic_medicines,
         ]);
 
         return redirect()->route('customers.index')

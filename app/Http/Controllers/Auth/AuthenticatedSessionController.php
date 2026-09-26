@@ -34,7 +34,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(RouteServiceProvider::HOME);
+        $home = $request->attributes->get('tenant.mode') === 'central'
+            ? '/platform'
+            : RouteServiceProvider::HOME;
+
+        return redirect()->intended($home);
     }
 
     /**

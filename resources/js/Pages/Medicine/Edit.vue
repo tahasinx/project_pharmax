@@ -40,6 +40,36 @@
                                     </div>
 
                                     <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Generic</label>
+                                        <select v-model="form.generic_id" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                            <option value="">None</option>
+                                            <option v-for="g in generics" :key="g.id" :value="g.id">{{ g.name }}</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Brand</label>
+                                        <select v-model="form.brand_id" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                            <option value="">None</option>
+                                            <option v-for="b in brands" :key="b.id" :value="b.id">{{ b.name }}</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Dosage form / ATC / SKU</label>
+                                        <input v-model="form.dosage_form" placeholder="Dosage form" class="w-full px-3 py-2 border border-gray-300 rounded-md mb-2">
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <input v-model="form.atc_code" placeholder="ATC" class="px-3 py-2 border border-gray-300 rounded-md">
+                                            <input v-model="form.sku" placeholder="SKU" class="px-3 py-2 border border-gray-300 rounded-md">
+                                        </div>
+                                    </div>
+                                    <div class="text-sm space-y-1">
+                                        <label class="flex gap-2"><input type="checkbox" v-model="form.requires_prescription"> Prescription required</label>
+                                        <label class="flex gap-2"><input type="checkbox" v-model="form.is_controlled"> Controlled</label>
+                                        <label class="flex gap-2"><input type="checkbox" v-model="form.is_antibiotic"> Antibiotic</label>
+                                        <label class="flex gap-2"><input type="checkbox" v-model="form.is_high_risk"> High risk</label>
+                                        <label class="flex gap-2"><input type="checkbox" v-model="form.is_refrigerated"> Refrigerated</label>
+                                        <label class="flex gap-2"><input type="checkbox" v-model="form.is_narcotic"> Narcotic</label>
+                                    </div>
+                                    <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Generic Name</label>
                                         <input v-model="form.generic_name"
                                                type="text"
@@ -200,7 +230,9 @@ import SearchableSelect from '@/Components/SearchableSelect.vue'
 const props = defineProps({
     medicine: Object,
     categories: Array,
-    manufacturers: Array
+    manufacturers: Array,
+    generics: { type: Array, default: () => [] },
+    brands: { type: Array, default: () => [] },
 })
 
 // Formatted categories for SearchableSelect
@@ -243,6 +275,18 @@ onMounted(() => {
     form.value = {
         name: props.medicine.name,
         generic_name: props.medicine.generic_name || '',
+        generic_id: props.medicine.generic_id || '',
+        brand_id: props.medicine.brand_id || '',
+        dosage_form: props.medicine.dosage_form || '',
+        atc_code: props.medicine.atc_code || '',
+        sku: props.medicine.sku || '',
+        requires_prescription: !!props.medicine.requires_prescription,
+        is_controlled: !!props.medicine.is_controlled,
+        is_antibiotic: !!props.medicine.is_antibiotic,
+        is_high_risk: !!props.medicine.is_high_risk,
+        is_refrigerated: !!props.medicine.is_refrigerated,
+        is_narcotic: !!props.medicine.is_narcotic,
+        units: props.medicine.units?.length ? props.medicine.units.map(unit => ({ name: unit.name, factor_to_base: unit.factor_to_base })) : [{ name: 'Piece', factor_to_base: 1 }],
         strength: props.medicine.strength || '',
         category_id: props.medicine.category_id,
         manufacturer_id: props.medicine.manufacturer_id,

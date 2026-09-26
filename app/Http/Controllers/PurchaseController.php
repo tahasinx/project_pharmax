@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Finance\JournalPoster;
+use App\Domain\Organization\BranchContext;
 use App\Models\Manufacturer;
 use App\Models\Medicine;
 use App\Models\Purchase;
@@ -56,6 +58,7 @@ class PurchaseController extends Controller
 
         $purchase = Purchase::create([
             'purchase_id'     => $this->generatePurchaseId(),
+            'branch_id'       => BranchContext::id(),
             'manufacturer_id' => $request->manufacturer_id,
             'purchase_date'   => $request->purchase_date,
             'purchase_no'     => $this->generatePurchaseNumber(),
@@ -98,6 +101,8 @@ class PurchaseController extends Controller
                     $stock->update([
                         'purchase_price' => $item['rate'],
                         'supplier' => $purchase->manufacturer->name ?? 'Unknown',
+                        'branch_id' => $stock->branch_id ?? BranchContext::id(),
+                        'status' => $stock->status ?: 'available',
                     ]);
                 } else {
                     // Create new stock entry
@@ -114,6 +119,8 @@ class PurchaseController extends Controller
                         'supplier' => $purchase->manufacturer->name ?? 'Unknown',
                         'notes' => 'Created from purchase',
                         'is_active' => true,
+                        'branch_id' => BranchContext::id(),
+                        'status' => 'available',
                     ]);
                 }
 
@@ -133,6 +140,18 @@ class PurchaseController extends Controller
                 ]);
             }
         });
+
+        $total = (float) $purchase->grand_total;
+        $paid = (float) $purchase->paid_amount;
+        $due = max($total - $paid, 0);
+        $cash = $purchase->payment_type === 'bank' ? 0 : $paid;
+        $bank = $purchase->payment_type === 'bank' ? $paid : 0;
+        app(JournalPoster::class)->post($purchase->branch_id, $purchase->purchase_date->toDateString(), 'purchase', $purchase->id, 'Purchase ' . $purchase->purchase_id, [
+            ['code' => '1200', 'debit' => $total],
+            ['code' => '1000', 'credit' => $cash],
+            ['code' => '1010', 'credit' => $bank],
+            ['code' => '2000', 'credit' => $due],
+        ]);
 
         return redirect()->route('purchases.show', $purchase)
             ->with('success', 'Purchase created successfully.');
