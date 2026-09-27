@@ -15,7 +15,7 @@ class SchemaCompare
     public function files(): array
     {
         return collect(glob(database_path('migrations/*.php')) ?: [])
-            ->map(fn (string $path) => pathinfo($path, 'PATHINFO_FILENAME'))
+            ->map(fn (string $path) => pathinfo($path, PATHINFO_FILENAME))
             ->sort()
             ->values()
             ->all();
@@ -43,7 +43,7 @@ class SchemaCompare
     public function central(): array
     {
         $files = collect(glob(database_path('migrations/central/*.php')) ?: [])
-            ->map(fn (string $path) => pathinfo($path, 'PATHINFO_FILENAME'))
+            ->map(fn (string $path) => pathinfo($path, PATHINFO_FILENAME))
             ->sort()
             ->values()
             ->all();

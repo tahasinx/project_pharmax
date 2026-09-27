@@ -3,7 +3,6 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 const page = usePage();
-const flash = computed(() => page.props.flash || {});
 const errors = computed(() => page.props.errors || {});
 const items = computed(() => {
     const rows = [
@@ -47,8 +46,6 @@ const items = computed(() => {
                 <div class="mb-4 flex gap-3 overflow-x-auto md:hidden">
                     <Link v-for="[label, href] in items" :key="href" :href="href" class="shrink-0 text-sm underline">{{ label }}</Link>
                 </div>
-                <p v-if="flash.success" class="mb-4 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">{{ flash.success }}</p>
-                <p v-if="flash.error" class="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">{{ flash.error }}</p>
                 <p v-for="(message, key) in errors" :key="key" class="mb-2 text-sm text-red-700">{{ message }}</p>
                 <slot />
             </main>
