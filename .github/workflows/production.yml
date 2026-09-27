@@ -22,6 +22,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Build frontend
+        run: npm ci && npm run build
+
       - name: Show deploy target
         run: |
           echo "Host: ${{ secrets.PROD_SERVER }}"
