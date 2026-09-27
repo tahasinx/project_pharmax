@@ -14,7 +14,7 @@ class KeepCentralOnPlatform
             return $next($request);
         }
 
-        if ($request->is('platform*', 'login', 'logout', 'forgot-password', 'reset-password*', 'company-login/*', 'sanctum/*')) {
+        if ($request->is('platform*', 'profile*', 'login', 'logout', 'forgot-password', 'reset-password*', 'company-login/*', 'sanctum/*')) {
             return $next($request);
         }
 

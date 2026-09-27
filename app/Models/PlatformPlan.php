@@ -9,10 +9,11 @@ class PlatformPlan extends Model
 {
     protected $connection = 'mysql_central';
 
-    protected $fillable = ['name', 'code', 'monthly_amount', 'currency', 'status'];
+    protected $fillable = ['name', 'code', 'monthly_amount', 'currency', 'status', 'features'];
 
     protected $casts = [
         'monthly_amount' => 'decimal:2',
+        'features' => 'array',
     ];
 
     public function subscriptions(): HasMany

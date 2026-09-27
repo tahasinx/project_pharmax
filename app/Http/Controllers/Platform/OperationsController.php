@@ -13,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 use InvalidArgumentException;
@@ -41,10 +42,61 @@ class OperationsController extends Controller
             'address' => 'nullable|string|max:2000',
             'default_currency' => 'required|string|max:8',
             'invoice_footer' => 'nullable|string|max:2000',
+            'theme_primary' => 'required|regex:/^#[0-9A-Fa-f]{6}$/',
+            'theme_shape' => 'required|in:default,rounded,flat',
+            'theme_font_family' => 'required|string|max:60',
+            'theme_font_href' => 'nullable|string|max:500',
+            'theme_font_size' => 'required|integer|min:12|max:22',
+            'theme_font_weight' => 'required|integer|in:300,400,500,600,700,800,900',
+            'email_enabled' => 'nullable|boolean',
+            'email_host' => 'nullable|string|max:255',
+            'email_port' => 'nullable|integer|min:1|max:65535',
+            'email_encryption' => 'nullable|in:tls,ssl,',
+            'email_username' => 'nullable|string|max:255',
+            'email_password' => 'nullable|string|max:255',
+            'email_from_address' => 'nullable|email|max:255',
+            'email_from_name' => 'nullable|string|max:255',
         ]);
+        $data['theme_font_href'] = $settings->stylesheet((string) ($data['theme_font_href'] ?? ''));
+        $data['email_enabled'] = $request->boolean('email_enabled');
+        $data['email_encryption'] = $data['email_encryption'] ?: 'tls';
         $settings->save($data);
 
         return back()->with('success', 'Platform settings saved.');
+    }
+
+    public function testEmail(Request $request, PlatformSettingsStore $settings): RedirectResponse
+    {
+        $data = $request->validate([
+            'email_test_to' => 'required|email|max:255',
+        ]);
+        $mail = $settings->mailer();
+        if (! $mail['enabled'] || $mail['host'] === '' || $mail['from_address'] === '') {
+            return back()->with('error', 'Turn on outbound email, save the SMTP host, and set a from address before sending a test.');
+        }
+
+        config([
+            'mail.default' => 'smtp',
+            'mail.mailers.smtp.transport' => 'smtp',
+            'mail.mailers.smtp.host' => $mail['host'],
+            'mail.mailers.smtp.port' => $mail['port'] ?: 587,
+            'mail.mailers.smtp.encryption' => $mail['encryption'] ?: null,
+            'mail.mailers.smtp.username' => $mail['username'],
+            'mail.mailers.smtp.password' => $mail['password'],
+            'mail.from.address' => $mail['from_address'],
+            'mail.from.name' => $mail['from_name'] ?: $settings->all()['name'],
+        ]);
+
+        try {
+            Mail::purge('smtp');
+            Mail::raw('This is a test from the Epharma platform mailer.', function ($message) use ($data) {
+                $message->to($data['email_test_to'])->subject('Epharma mail test');
+            });
+        } catch (Throwable $e) {
+            return back()->with('error', 'The test did not send. '.$e->getMessage());
+        }
+
+        return back()->with('success', 'Test email sent to '.$data['email_test_to'].'.');
     }
 
     public function commands(): Response

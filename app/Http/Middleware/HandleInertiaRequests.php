@@ -43,6 +43,7 @@ class HandleInertiaRequests extends Middleware
                 'platform' => [
                     'central' => $isCentral,
                     'deploy' => \App\Support\StagingDeployHost::matches(),
+                    'theme' => $isCentral ? app(\App\Services\Platform\PlatformSettingsStore::class)->theme() : null,
                 ],
                 'branch' => fn () => $request->user() && !$isCentral && !$isInstallRoute ? [
                     'current' => session('branch_id') ?: $request->user()->branch_id,

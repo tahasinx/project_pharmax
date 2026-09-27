@@ -15,10 +15,19 @@ class DashboardController extends Controller
 {
     public function index(PlatformSettingsStore $settings): Response
     {
-        $companies = Company::query()->get();
+        $companies = Company::query()->latest('id')->get();
 
         return Inertia::render('Platform/Dashboard', [
             'settings' => $settings->all(),
+            'pharmacies' => $companies->take(8)->map(fn (Company $company) => [
+                'id' => $company->id,
+                'name' => $company->name,
+                'slug' => $company->slug,
+                'database_name' => $company->database_name,
+                'status' => $company->status,
+                'provision_status' => $company->provision_status,
+            ])->values(),
+            'baseDomain' => config('database.tenant.base_domain'),
             'metrics' => [
                 'pharmacies' => $companies->count(),
                 'active' => $companies->where('status', 'active')->where('provision_status', 'active')->count(),

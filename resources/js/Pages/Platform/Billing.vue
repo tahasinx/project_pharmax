@@ -10,20 +10,39 @@ const filter = reactive({ from: props.from || '', to: props.to || '' });
 <template>
     <Head title="Billing" />
     <Layout>
-        <h1 class="text-2xl font-semibold">Billing report</h1>
-        <form class="mt-4 flex gap-2" @submit.prevent="router.get('/platform/billing', filter)">
-            <input v-model="filter.from" type="date" class="rounded border px-2 py-1">
-            <input v-model="filter.to" type="date" class="rounded border px-2 py-1">
-            <button class="rounded bg-[#1f3d32] px-3 py-1 text-sm text-white">Filter</button>
-        </form>
-        <p class="mt-4 text-sm">Paid {{ paid }} · Unpaid {{ unpaid }}</p>
-        <table class="mt-4 w-full bg-white text-sm">
-            <tr v-for="invoice in invoices" :key="invoice.id" class="border-t">
-                <td class="p-2">{{ invoice.issued_on }}</td>
-                <td class="p-2">{{ invoice.number }}</td>
-                <td class="p-2">{{ invoice.company?.name }}</td>
-                <td class="p-2">{{ invoice.amount }} {{ invoice.status }}</td>
-            </tr>
-        </table>
+        <section class="overflow-hidden rounded-xl border border-[#e4e4e7] bg-white">
+            <div class="flex flex-wrap items-end justify-between gap-4 border-b border-[#f4f4f5] px-5 py-4">
+                <div>
+                    <h1>Billing</h1>
+                    <p class="mt-1 text-sm text-[#71717a]">Paid {{ paid }} · Unpaid {{ unpaid }}</p>
+                </div>
+                <form class="flex flex-wrap items-end gap-3" @submit.prevent="router.get('/platform/billing', filter)">
+                    <label class="text-sm"><span class="mb-1 block text-[#71717a]">From</span><input v-model="filter.from" type="date"></label>
+                    <label class="text-sm"><span class="mb-1 block text-[#71717a]">To</span><input v-model="filter.to" type="date"></label>
+                    <button class="rounded-md bg-[#17342b] px-3 py-2 text-sm font-medium text-white">Filter</button>
+                </form>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Issued</th>
+                        <th>Number</th>
+                        <th>Pharmacy</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-if="!invoices.length">
+                        <td colspan="4" class="py-10 text-center text-sm text-[#71717a]">No invoices in this range.</td>
+                    </tr>
+                    <tr v-for="invoice in invoices" :key="invoice.id">
+                        <td>{{ invoice.issued_on }}</td>
+                        <td class="font-medium">{{ invoice.number }}</td>
+                        <td>{{ invoice.company?.name }}</td>
+                        <td>{{ invoice.amount }} · {{ invoice.status }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
     </Layout>
 </template>

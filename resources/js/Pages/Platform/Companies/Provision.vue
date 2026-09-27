@@ -35,7 +35,7 @@ onUnmounted(() => clearTimeout(timer));
     <Layout>
         <h1 class="text-2xl font-semibold">Provisioning {{ company.name }}</h1>
         <p class="mt-1 text-sm">{{ state.provision_status }} · {{ state.provision_step || 'waiting' }} · host {{ state.vhost_status || '—' }} · certificate {{ state.ssl_status || '—' }}</p>
-        <p v-if="!hostEnabled" class="mt-2 text-sm text-red-700">The hostname helper is not installed on this server.</p>
+        <p v-if="!hostEnabled" class="mt-2 text-sm text-[#71717a]">This machine does not have the host script. The pharmacy database and admin are still created. The hostname and certificate run on the server where that script is installed.</p>
         <p v-if="state.provision_error" class="mt-2 text-sm text-red-700">{{ state.provision_error }}</p>
         <ol class="mt-4 space-y-1 rounded bg-white p-3 text-sm">
             <li v-for="(line, index) in state.log" :key="index"><span class="text-[#5c6b63]">{{ line.at }}</span> {{ line.step }} — {{ line.message }}</li>

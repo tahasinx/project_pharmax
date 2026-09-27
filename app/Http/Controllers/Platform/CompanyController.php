@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Services\Platform\CompanyProvisioner;
 use App\Services\Platform\HostProvisioner;
 use App\Services\Platform\SchemaCompare;
+use App\Services\Platform\TenantBackup;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,10 +23,30 @@ class CompanyController extends Controller
         'admin', 'adminx', 'www', 'staging', 'stagging', 'api', 'app', 'mail', 'platform', 'central',
     ];
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $q = trim((string) $request->query('q', ''));
+        $provision = trim((string) $request->query('provision', ''));
+        $companies = Company::query()
+            ->when($q !== '', function ($query) use ($q) {
+                $like = '%'.$q.'%';
+                $query->where(function ($inner) use ($like) {
+                    $inner->where('name', 'like', $like)
+                        ->orWhere('slug', 'like', $like)
+                        ->orWhere('database_name', 'like', $like)
+                        ->orWhere('email', 'like', $like)
+                        ->orWhere('admin_email', 'like', $like);
+                });
+            })
+            ->when(in_array($provision, ['pending', 'running', 'active', 'degraded', 'failed'], true), fn ($query) => $query->where('provision_status', $provision))
+            ->orderBy('name')
+            ->paginate(25)
+            ->withQueryString();
+
         return Inertia::render('Platform/Companies/Index', [
-            'companies' => Company::query()->orderBy('name')->get(),
+            'companies' => $companies,
+            'q' => $q,
+            'provision' => $provision,
             'baseDomain' => config('database.tenant.base_domain'),
         ]);
     }
@@ -35,7 +56,22 @@ class CompanyController extends Controller
         return Inertia::render('Platform/Companies/Create', [
             'prefix' => config('database.tenant.db_prefix'),
             'baseDomain' => config('database.tenant.base_domain'),
+            'hostEnabled' => app(HostProvisioner::class)->enabled(),
         ]);
+    }
+
+    public function validateDatabase(Request $request, CompanyProvisioner $provisioner): JsonResponse
+    {
+        $slug = (string) $request->input('slug', '');
+        if (! preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $slug)) {
+            return response()->json(['ok' => false, 'database_name' => '', 'message' => 'Enter a slug first, using lowercase letters, numbers, and hyphens.'], 422);
+        }
+
+        try {
+            return response()->json($provisioner->checkDatabase((string) $request->input('database_name', ''), $slug));
+        } catch (RuntimeException $e) {
+            return response()->json(['ok' => false, 'database_name' => '', 'message' => $e->getMessage()], 422);
+        }
     }
 
     public function store(Request $request, CompanyProvisioner $provisioner): RedirectResponse
@@ -43,8 +79,13 @@ class CompanyController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:32|regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
-            'email' => 'nullable|email|max:255',
+            'database_name' => 'nullable|string|max:64',
+            'email' => 'required|email|max:255',
             'phone' => 'nullable|string|max:64',
+            'address' => 'nullable|string|max:2000',
+            'admin_name' => 'required|string|max:255',
+            'admin_email' => 'required|email|max:255',
+            'admin_password' => 'required|string|min:8',
         ]);
 
         if (in_array($data['slug'], $this->reserved, true)) {
@@ -55,17 +96,28 @@ class CompanyController extends Controller
             return back()->withErrors(['slug' => 'That address is already used.'])->withInput();
         }
 
+        $check = $provisioner->checkDatabase((string) ($data['database_name'] ?? ''), $data['slug']);
+        if (! $check['ok']) {
+            return back()->withErrors(['database_name' => $check['message']])->withInput();
+        }
+
         $company = Company::query()->create([
             'name' => $data['name'],
             'slug' => $data['slug'],
-            'email' => $data['email'] ?? null,
+            'email' => $data['email'],
             'phone' => $data['phone'] ?? null,
-            'database_name' => $provisioner->databaseName($data['slug']),
+            'address' => $data['address'] ?? null,
+            'database_name' => $check['database_name'],
             'status' => 'locked',
             'provision_status' => 'pending',
-            'admin_email' => 'admin@pharma.com',
+            'admin_email' => $data['admin_email'],
         ]);
 
+        $provisioner->rememberAdmin($company, [
+            'name' => $data['admin_name'],
+            'email' => $data['admin_email'],
+            'password' => $data['admin_password'],
+        ]);
         $provisioner->startInBackground($company);
 
         return redirect()->route('platform.companies.provision', $company)
@@ -126,13 +178,21 @@ class CompanyController extends Controller
             ->with('success', 'Pharmacy removed.'.($notes === [] ? '' : ' '.implode(' ', $notes)));
     }
 
-    public function show(Company $company, SchemaCompare $schema): Response
+    public function show(Company $company, SchemaCompare $schema, TenantBackup $backups): Response
     {
+        $rows = $schema->companies();
+        $subscription = $company->subscriptions()->with('plan')->latest('id')->first();
+
         return Inertia::render('Platform/Companies/Show', [
             'company' => $company,
             'host' => 'https://'.$company->host(),
-            'subscription' => $company->subscriptions()->with('plan')->latest('id')->first(),
-            'schema' => $schema->companies() ? collect($schema->companies())->firstWhere('company_id', $company->id) : null,
+            'subscription' => $subscription ? [
+                'status' => $subscription->status,
+                'ends_on' => optional($subscription->ends_on)->toDateString(),
+                'plan' => ['name' => $subscription->plan?->name],
+            ] : null,
+            'schema' => collect($rows)->firstWhere('company_id', $company->id),
+            'files' => $company->database_name ? $backups->listFor($company) : [],
         ]);
     }
 

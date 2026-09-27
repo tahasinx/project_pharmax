@@ -15,10 +15,24 @@ use Inertia\Response;
 
 class BillingController extends Controller
 {
-    public function plans(): Response
+    public function plans(Request $request): Response
     {
+        $q = trim((string) $request->query('q', ''));
+        $status = trim((string) $request->query('status', ''));
+
+        $plans = PlatformPlan::query()->withCount('subscriptions')
+            ->when($q !== '', function ($query) use ($q) {
+                $like = '%'.$q.'%';
+                $query->where(fn ($inner) => $inner->where('name', 'like', $like)->orWhere('code', 'like', $like));
+            })
+            ->when(in_array($status, ['active', 'archived'], true), fn ($query) => $query->where('status', $status))
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('Platform/Plans/Index', [
-            'plans' => PlatformPlan::query()->withCount('subscriptions')->orderBy('name')->get(),
+            'plans' => $plans,
+            'q' => $q,
+            'status' => $status,
         ]);
     }
 
@@ -29,8 +43,16 @@ class BillingController extends Controller
             'code' => 'required|string|max:40|regex:/^[a-z0-9-]+$/|unique:platform_plans,code',
             'monthly_amount' => 'required|numeric|min:0',
             'currency' => 'required|string|max:8',
+            'features_text' => 'nullable|string|max:4000',
         ]);
-        PlatformPlan::query()->create($data + ['status' => 'active']);
+        PlatformPlan::query()->create([
+            'name' => $data['name'],
+            'code' => $data['code'],
+            'monthly_amount' => $data['monthly_amount'],
+            'currency' => $data['currency'],
+            'status' => 'active',
+            'features' => $this->features($data['features_text'] ?? ''),
+        ]);
 
         return back()->with('success', 'Plan saved.');
     }
@@ -47,8 +69,15 @@ class BillingController extends Controller
             'monthly_amount' => 'required|numeric|min:0',
             'currency' => 'required|string|max:8',
             'status' => 'required|in:active,archived',
+            'features_text' => 'nullable|string|max:4000',
         ]);
-        $plan->update($data);
+        $plan->update([
+            'name' => $data['name'],
+            'monthly_amount' => $data['monthly_amount'],
+            'currency' => $data['currency'],
+            'status' => $data['status'],
+            'features' => $this->features($data['features_text'] ?? ''),
+        ]);
 
         return redirect()->route('platform.plans')->with('success', 'Plan updated.');
     }
@@ -60,9 +89,10 @@ class BillingController extends Controller
         return back()->with('success', 'Plan updated.');
     }
 
-    public function subscriptions(): Response
+    public function subscriptions(Request $request): Response
     {
         return Inertia::render('Platform/Subscriptions/Index', [
+            'companyId' => $request->query('company') ? (int) $request->query('company') : '',
             'subscriptions' => PlatformSubscription::query()->with(['company:id,name,slug', 'plan:id,name,currency'])->latest('id')->get()->map(fn ($row) => [
                 'id' => $row->id,
                 'amount' => $row->amount,
@@ -180,5 +210,17 @@ class BillingController extends Controller
         $invoice->delete();
 
         return back()->with('success', 'Invoice deleted.');
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function features(string $text): array
+    {
+        return collect(preg_split('/\r\n|\r|\n/', $text) ?: [])
+            ->map(fn ($line) => trim((string) $line))
+            ->filter()
+            ->values()
+            ->all();
     }
 }

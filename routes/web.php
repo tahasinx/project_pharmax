@@ -53,6 +53,7 @@ Route::middleware(['auth', 'central.host', 'platform.admin'])->prefix('platform'
     Route::get('/billing', [PlatformDashboardController::class, 'billing'])->name('billing');
     Route::get('/settings', [PlatformOperationsController::class, 'settings'])->name('settings');
     Route::put('/settings', [PlatformOperationsController::class, 'updateSettings'])->name('settings.update');
+    Route::post('/settings/email-test', [PlatformOperationsController::class, 'testEmail'])->name('settings.email-test');
     Route::get('/commands', [PlatformOperationsController::class, 'commands'])->name('commands');
     Route::post('/commands', [PlatformOperationsController::class, 'runCommand'])->name('commands.run');
     Route::get('/schema', [PlatformOperationsController::class, 'schema'])->name('schema');
@@ -65,6 +66,7 @@ Route::middleware(['auth', 'central.host', 'platform.admin'])->prefix('platform'
     Route::post('/deploy', [PlatformOperationsController::class, 'promote'])->name('deploy.promote');
     Route::get('/companies', [PlatformCompanyController::class, 'index'])->name('companies.index');
     Route::get('/companies/create', [PlatformCompanyController::class, 'create'])->name('companies.create');
+    Route::post('/companies/validate-database', [PlatformCompanyController::class, 'validateDatabase'])->name('companies.validate-database');
     Route::post('/companies', [PlatformCompanyController::class, 'store'])->name('companies.store');
     Route::get('/companies/{company}/edit', [PlatformCompanyController::class, 'edit'])->name('companies.edit');
     Route::put('/companies/{company}', [PlatformCompanyController::class, 'update'])->name('companies.update');

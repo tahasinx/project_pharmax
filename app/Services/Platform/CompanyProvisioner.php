@@ -2,8 +2,14 @@
 
 namespace App\Services\Platform;
 
+use App\Domain\Access\PermissionCatalog;
 use App\Models\Company;
+use App\Models\User;
+use Database\Seeders\MenuSeeder;
+use Database\Seeders\PharmacyFoundationSeeder;
+use Database\Seeders\SettingSeeder;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
@@ -18,6 +24,33 @@ class CompanyProvisioner
         }
 
         return $name;
+    }
+
+    /**
+     * @return array{ok: bool, database_name: string, message: string}
+     */
+    public function checkDatabase(string $database, string $slug): array
+    {
+        $name = trim($database) !== '' ? trim($database) : $this->databaseName($slug);
+        if (! preg_match('/^[A-Za-z0-9_]+$/', $name) || str_ends_with($name, 'central')) {
+            return ['ok' => false, 'database_name' => $name, 'message' => 'Database name is not valid.'];
+        }
+        if (Company::query()->where('database_name', $name)->exists()) {
+            return ['ok' => false, 'database_name' => $name, 'message' => "Database {$name} is already registered."];
+        }
+        if (TenantRuntime::databaseExists($name)) {
+            return ['ok' => false, 'database_name' => $name, 'message' => "Database {$name} already exists on this MySQL server."];
+        }
+
+        return ['ok' => true, 'database_name' => $name, 'message' => "Database {$name} is available."];
+    }
+
+    /**
+     * @param  array{name: string, email: string, password: string}  $admin
+     */
+    public function rememberAdmin(Company $company, array $admin): void
+    {
+        Cache::put($this->adminKey($company), $admin, now()->addHours(6));
     }
 
     public function provision(Company $company, bool $hostOnly = false): Company
@@ -35,18 +68,41 @@ class CompanyProvisioner
                 $company->database_name = $database;
                 $company->save();
 
-                TenantRuntime::runOn($database, function () use ($company) {
+                $admin = Cache::get($this->adminKey($company));
+                TenantRuntime::runOn($database, function () use ($company, $admin) {
                     $this->step($company, 'migrate', 'Running pharmacy migrations.');
                     Artisan::call('migrate', ['--force' => true, '--path' => 'database/migrations']);
                     $this->step($company, 'migrate', trim(Artisan::output()) ?: 'Migrations finished.');
-                    $this->step($company, 'seed', 'Seeding the pharmacy.');
-                    Artisan::call('db:seed', ['--force' => true, '--class' => 'Database\\Seeders\\DatabaseSeeder']);
-                    $this->step($company, 'seed', 'Pharmacy seed finished.');
+                    $this->step($company, 'seed', 'Seeding roles, settings, and menus.');
+                    PermissionCatalog::sync();
+                    if (! Setting::query()->exists()) {
+                        Artisan::call('db:seed', ['--force' => true, '--class' => SettingSeeder::class]);
+                    }
+                    Artisan::call('db:seed', ['--force' => true, '--class' => MenuSeeder::class]);
+                    Artisan::call('db:seed', ['--force' => true, '--class' => PharmacyFoundationSeeder::class]);
+                    $this->installAdmin($company, is_array($admin) ? $admin : null);
                 });
+                Cache::forget($this->adminKey($company));
+            }
+
+            $hosts = app(HostProvisioner::class);
+            if (! $hosts->enabled()) {
+                $this->step($company, 'vhost', 'Host script is not installed on this machine. Database and pharmacy admin are ready.', [
+                    'vhost_status' => 'skipped',
+                    'ssl_status' => 'skipped',
+                ]);
+                $company->update([
+                    'status' => 'active',
+                    'provision_status' => 'active',
+                    'provision_error' => null,
+                    'provisioned_at' => now(),
+                ]);
+
+                return $company->fresh();
             }
 
             $this->step($company, 'vhost', 'Requesting hostname and certificate.');
-            $host = app(HostProvisioner::class)->add($company->slug);
+            $host = $hosts->add($company->slug);
             $this->step($company, 'ssl', $host['output'] ?: 'Host step finished.', [
                 'vhost_status' => $host['vhost'],
                 'ssl_status' => $host['ssl'],
@@ -58,7 +114,6 @@ class CompanyProvisioner
                 'provision_status' => $degraded ? 'degraded' : 'active',
                 'provision_error' => $degraded ? 'Certificate was not issued. The hostname may still be on HTTP.' : null,
                 'provisioned_at' => now(),
-                'admin_email' => $company->admin_email ?: 'admin@pharma.com',
             ]);
         } catch (Throwable $e) {
             $this->step($company, 'failed', $e->getMessage(), [
@@ -78,14 +133,48 @@ class CompanyProvisioner
             'provision_step' => 'queued',
             'provision_error' => null,
         ]);
-        $binary = PHP_BINARY;
-        $artisan = base_path('artisan');
-        $args = [(string) $company->id];
+        $args = [PHP_BINARY, base_path('artisan'), 'platform:provision', (string) $company->id];
         if ($hostOnly) {
             $args[] = '--host-only';
         }
-        $command = 'cd '.escapeshellarg(base_path()).' && nohup '.escapeshellarg($binary).' '.escapeshellarg($artisan).' platform:provision '.implode(' ', array_map('escapeshellarg', $args)).' >/dev/null 2>&1 &';
+        if (PHP_OS_FAMILY === 'Windows') {
+            $command = 'start /B "" '.implode(' ', array_map('escapeshellarg', $args));
+            pclose(popen($command, 'r'));
+
+            return;
+        }
+        $command = 'cd '.escapeshellarg(base_path()).' && nohup '.implode(' ', array_map('escapeshellarg', $args)).' >/dev/null 2>&1 &';
         exec($command);
+    }
+
+    /**
+     * @param  array{name?: string, email?: string, password?: string}|null  $admin
+     */
+    private function installAdmin(Company $company, ?array $admin): void
+    {
+        $email = (string) ($admin['email'] ?? $company->admin_email);
+        $name = (string) ($admin['name'] ?? $company->name.' Admin');
+        $password = (string) ($admin['password'] ?? '');
+        if ($email === '' || $password === '') {
+            throw new RuntimeException('Pharmacy admin login was not supplied. Create the pharmacy again.');
+        }
+
+        $user = User::query()->updateOrCreate(
+            ['email' => $email],
+            [
+                'name' => $name,
+                'password' => $password,
+                'email_verified_at' => now(),
+                'is_platform_admin' => false,
+            ]
+        );
+        $user->syncRoles('admin');
+        $this->step($company, 'admin', 'Pharmacy admin ready: '.$email);
+    }
+
+    private function adminKey(Company $company): string
+    {
+        return 'platform.company-admin.'.$company->id;
     }
 
     /**
