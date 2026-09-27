@@ -23,6 +23,12 @@ jobs:
           node-version: '24'
           cache: npm
 
+      - name: Install PHP dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq composer unzip php-cli php-mbstring php-xml
+          composer install --no-dev --no-interaction --prefer-dist --no-scripts
+
       - name: Build frontend
         run: npm ci && npm run build
 
