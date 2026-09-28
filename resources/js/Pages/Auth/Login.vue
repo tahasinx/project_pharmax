@@ -74,7 +74,7 @@ const submit = async () => {
             <OutlinedField id="email" v-model="form.email" label="E-mail address" type="email" leading="envelope-at" autocomplete="off" required :invalid="Boolean(form.errors.email)" />
 
             <div>
-                <OutlinedField id="password" v-model="form.password" label="Password" leading="shield-lock" :type="showPassword ? 'text' : 'password'" autocomplete="off" required :invalid="Boolean(form.errors.password)">
+                <OutlinedField id="password" v-model="form.password" label="Password" leading="shield-lock" :type="showPassword ? 'text' : 'password'" autocomplete="new-password" required :invalid="Boolean(form.errors.password)">
                     <button type="button" class="text-slate-400" @click="showPassword = !showPassword" aria-label="Show password">
                         <svg v-if="!showPassword" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                             <path d="M3 3l18 18M10.5 10.7A2.5 2.5 0 0013.3 13.5M9.9 5.2A10.8 10.8 0 0112 5c6.5 0 10 7 10 7a18.4 18.4 0 01-3.2 4.2M6.1 6.1C3.7 7.8 2 12 2 12s3.5 6 10 6c1.5 0 2.9-.3 4.1-.8" />
