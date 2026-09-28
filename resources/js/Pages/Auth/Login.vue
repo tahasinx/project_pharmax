@@ -71,7 +71,7 @@ const submit = async () => {
         </div>
 
         <form class="mt-8 space-y-5" autocomplete="off" @submit.prevent="submit">
-            <OutlinedField id="email" v-model="form.email" label="E-mail address" type="email" leading="envelope" autocomplete="off" required :invalid="Boolean(form.errors.email)" />
+            <OutlinedField id="email" v-model="form.email" label="E-mail address" type="email" leading="envelope-at" autocomplete="off" required :invalid="Boolean(form.errors.email)" />
 
             <div>
                 <OutlinedField id="password" v-model="form.password" label="Password" leading="shield-lock" :type="showPassword ? 'text' : 'password'" autocomplete="off" required :invalid="Boolean(form.errors.password)">
