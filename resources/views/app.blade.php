@@ -41,8 +41,6 @@
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="icon" type="image/png" href="/favicon.png">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">

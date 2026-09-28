@@ -39,7 +39,7 @@ const apply = (theme) => {
     }
 };
 
-watch(() => page.props.platform?.theme, apply, { immediate: true, deep: true });
+watch(() => page.props?.platform?.theme, apply, { immediate: true, deep: true });
 </script>
 
 <template><span hidden /></template>
