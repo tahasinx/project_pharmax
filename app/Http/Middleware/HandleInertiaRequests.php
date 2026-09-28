@@ -43,7 +43,7 @@ class HandleInertiaRequests extends Middleware
                 'platform' => [
                     'central' => $isCentral,
                     'deploy' => \App\Support\StagingDeployHost::matches(),
-                    'theme' => $isCentral ? app(\App\Services\Platform\PlatformSettingsStore::class)->theme() : null,
+                    'theme' => $isInstallRoute ? null : $this->appTheme(),
                 ],
                 'branch' => fn () => $request->user() && !$isCentral && !$isInstallRoute ? [
                     'current' => session('branch_id') ?: $request->user()->branch_id,
@@ -87,6 +87,18 @@ class HandleInertiaRequests extends Middleware
                 ];
             }
             throw $e;
+        }
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function appTheme(): ?array
+    {
+        try {
+            return app(\App\Services\Platform\PlatformSettingsStore::class)->theme();
+        } catch (\Throwable) {
+            return null;
         }
     }
 

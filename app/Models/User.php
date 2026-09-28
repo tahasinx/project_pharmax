@@ -38,11 +38,20 @@ class User extends Authenticatable
      *
      * @var array<string, string>
      */
+    protected $appends = [
+        'avatar_url',
+    ];
+
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'is_platform_admin' => 'boolean',
     ];
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return $this->avatar ? asset('storage/'.$this->avatar) : null;
+    }
 
     public function isPlatformAdmin(): bool
     {

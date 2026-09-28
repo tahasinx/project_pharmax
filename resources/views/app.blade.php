@@ -8,6 +8,37 @@
 
     <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
+    @php
+        $brand = [
+            'primary' => '#17342b',
+            'font_family' => 'Inter',
+            'font_href' => '',
+            'font_size' => 16,
+            'font_weight' => 400,
+            'radius' => '10px',
+        ];
+        if (! request()->is('install*')) {
+            try {
+                $brand = app(\App\Services\Platform\PlatformSettingsStore::class)->theme();
+            } catch (\Throwable) {
+            }
+        }
+        $strong = min(900, (int) $brand['font_weight'] + 200);
+    @endphp
+    <style>
+        :root {
+            --pf-accent: {{ $brand['primary'] }};
+            --pf-font: "{{ $brand['font_family'] }}", sans-serif;
+            --pf-size: {{ (int) $brand['font_size'] }}px;
+            --pf-weight: {{ (int) $brand['font_weight'] }};
+            --pf-weight-strong: {{ $strong }};
+            --pf-radius: {{ $brand['radius'] }};
+        }
+    </style>
+    @if ($brand['font_href'] !== '')
+        <link id="epharma-font" rel="stylesheet" href="{{ $brand['font_href'] }}">
+    @endif
+
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/png" href="/favicon.png">

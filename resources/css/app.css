@@ -1,3 +1,131 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+html {
+    font-size: var(--pf-size, 16px);
+}
+
+body,
+body *:not(svg):not(svg *):not(.bi):not([class^="bi-"]):not([class*=" bi-"]):not(code):not(pre):not(kbd):not(samp) {
+    font-family: var(--pf-font, Inter, sans-serif) !important;
+}
+
+body {
+    font-weight: var(--pf-weight, 400);
+}
+
+h1, h2, h3, h4, h5, h6,
+button,
+.font-medium,
+.font-semibold,
+.font-bold {
+    font-weight: var(--pf-weight-strong, 600) !important;
+}
+
+.bi,
+.bi::before,
+[class^="bi-"],
+[class^="bi-"]::before,
+[class*=" bi-"],
+[class*=" bi-"]::before {
+    font-family: bootstrap-icons !important;
+    font-weight: normal !important;
+}
+
+code, pre, kbd, samp {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+}
+
+input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']),
+select {
+    padding-top: 0.55rem !important;
+    padding-bottom: 0.55rem !important;
+    line-height: 1.25rem;
+}
+
+textarea {
+    padding-top: 0.55rem !important;
+    padding-bottom: 0.55rem !important;
+}
+
+button,
+input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']),
+select,
+textarea,
+.rounded-sm,
+.rounded,
+.rounded-md,
+.rounded-lg,
+.rounded-xl,
+.rounded-2xl,
+.rounded-3xl {
+    border-radius: var(--pf-radius, 10px) !important;
+}
+
+.shape-sample--rounded { border-radius: 10px !important; }
+.shape-sample--default { border-radius: 4px !important; }
+.shape-sample--flat { border-radius: 0 !important; }
+
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: var(--pf-accent, #17342b);
+}
+
+input:focus:not(.is-invalid),
+select:focus,
+textarea:focus {
+    border-color: var(--pf-accent, #17342b) !important;
+    outline: none !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    box-shadow: none !important;
+}
+
+::selection {
+    background: color-mix(in srgb, var(--pf-accent, #17342b) 28%, white);
+}
+
+.eph-on,
+.pf-on {
+    background: color-mix(in srgb, var(--pf-accent, #17342b) 14%, white) !important;
+    color: var(--pf-accent, #17342b) !important;
+}
+
+.pf.is-dark .pf-on {
+    background: color-mix(in srgb, var(--pf-accent, #17342b) 32%, #111) !important;
+    color: #fff !important;
+}
+
+.bg-emerald-600,
+.bg-emerald-700,
+.bg-emerald-800,
+.bg-green-500,
+.bg-green-600,
+.bg-green-700,
+.bg-\[\#17342b\],
+.bg-\[\#1f3d32\],
+.bg-\[\#1f2933\],
+.pf-accent {
+    background-color: var(--pf-accent, #17342b) !important;
+    color: #fff;
+}
+
+.hover\:bg-emerald-800:hover,
+.hover\:bg-green-700:hover,
+.hover\:bg-\[\#111827\]:hover {
+    background-color: color-mix(in srgb, var(--pf-accent, #17342b) 82%, black) !important;
+}
+
+.text-indigo-600,
+.text-emerald-700,
+.text-\[\#17342b\],
+.text-\[\#1f3d32\],
+.text-\[\#3c8f6a\],
+.text-\[\#3d8c6e\] {
+    color: var(--pf-accent, #17342b) !important;
+}
+
+.border-indigo-500,
+.ring-indigo-500 {
+    border-color: var(--pf-accent, #17342b) !important;
+}

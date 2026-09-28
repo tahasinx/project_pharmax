@@ -143,7 +143,8 @@ watch(theme, applyTheme);
                 </nav>
                 <div class="border-t border-[#f4f4f5] p-3">
                     <div class="flex items-center gap-2.5 rounded-md px-2 py-2">
-                        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#17342b] text-[11px] font-semibold text-white">{{ initials }}</span>
+                        <img v-if="user?.avatar_url" :src="user.avatar_url" alt="" class="h-8 w-8 shrink-0 rounded-full object-cover">
+                        <span v-else class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#17342b] text-[11px] font-semibold text-white">{{ initials }}</span>
                             <Link href="/profile" class="min-w-0 flex-1">
                                 <span class="block truncate text-[13px] font-medium">{{ user?.name || 'Admin' }}</span>
                                 <span class="text-[12px] text-[#71717a]">Profile</span>
@@ -171,7 +172,8 @@ watch(theme, applyTheme);
                         </div>
                         <div class="relative">
                             <button type="button" class="flex h-9 items-center gap-2 rounded-md px-1.5 hover:bg-[#f4f4f5]" aria-label="Account" @click="openMenu = !openMenu; openTheme = false">
-                                <span class="grid h-7 w-7 place-items-center rounded-full bg-[#17342b] text-[10px] font-semibold text-white">{{ initials }}</span>
+                                <img v-if="user?.avatar_url" :src="user.avatar_url" alt="" class="h-7 w-7 rounded-full object-cover">
+                                <span v-else class="grid h-7 w-7 place-items-center rounded-full bg-[#17342b] text-[10px] font-semibold text-white">{{ initials }}</span>
                             </button>
                             <div v-if="openMenu" class="pf-menu absolute right-0 z-30 mt-1 w-52 rounded-lg border py-1 text-sm shadow-lg">
                                 <p class="truncate px-3 py-2 text-[12px] text-[#71717a]">{{ user?.email }}</p>
@@ -216,7 +218,7 @@ watch(theme, applyTheme);
     letter-spacing: -0.02em;
     color: #18181b;
 }
-.pf :deep(input),
+.pf :deep(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="range"])),
 .pf :deep(select),
 .pf :deep(textarea) {
     border: 1px solid #e4e4e7;
@@ -227,7 +229,7 @@ watch(theme, applyTheme);
     font-size: 0.875rem;
     color: #18181b;
 }
-.pf :deep(input:focus),
+.pf :deep(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="range"]):focus),
 .pf :deep(select:focus),
 .pf :deep(textarea:focus) {
     outline: 2px solid var(--pf-accent);

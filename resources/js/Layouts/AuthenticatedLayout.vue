@@ -80,7 +80,7 @@ const switchBranch = (event) => {
                             :key="menu.id"
                             :href="route(menu.route)"
                             class="flex items-center gap-2 rounded-md px-2 py-2 text-sm"
-                            :class="isActive(menu.route) ? 'bg-gray-100 font-medium text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
+                            :class="isActive(menu.route) ? 'eph-on font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
                             @click="sidebarOpen = false"
                         >
                             <span v-if="menu.icon" class="w-5 text-center">{{ menu.icon }}</span>

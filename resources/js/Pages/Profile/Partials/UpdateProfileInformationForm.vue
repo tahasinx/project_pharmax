@@ -4,6 +4,7 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Link, useForm, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 
 defineProps({
     mustVerifyEmail: {
@@ -19,7 +20,17 @@ const user = usePage().props.auth.user;
 const form = useForm({
     name: user.name,
     email: user.email,
+    avatar: null,
 });
+const picked = ref('');
+const picture = computed(() => picked.value || user.avatar_url || '');
+const initials = computed(() => String(user.name || 'A').split(' ').slice(0, 2).map((part) => part[0]).join('').toUpperCase());
+
+function choosePicture(event) {
+    const file = event.target.files?.[0];
+    form.avatar = file || null;
+    picked.value = file ? URL.createObjectURL(file) : '';
+}
 </script>
 
 <template>
@@ -33,6 +44,16 @@ const form = useForm({
         </header>
 
         <form @submit.prevent="form.patch(route('profile.update'))" class="mt-6 space-y-6">
+            <div class="flex items-center gap-4">
+                <img v-if="picture" :src="picture" alt="" class="h-16 w-16 rounded-full object-cover">
+                <span v-else class="grid h-16 w-16 place-items-center rounded-full bg-[#17342b] text-sm font-semibold text-white">{{ initials }}</span>
+                <label class="text-sm">
+                    <span class="mb-1 block text-gray-700">Profile picture</span>
+                    <input type="file" accept="image/*" class="block w-full text-sm" @change="choosePicture">
+                </label>
+            </div>
+            <InputError :message="form.errors.avatar" />
+
             <div>
                 <InputLabel for="name" value="Name" />
 

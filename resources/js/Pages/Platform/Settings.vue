@@ -29,9 +29,9 @@ const form = useForm({
 });
 const test = useForm({ email_test_to: '' });
 const shapes = [
-    ['rounded', 'Rounded'],
-    ['default', 'Default'],
-    ['flat', 'Flat'],
+    ['rounded', 'Rounded', 'Soft corners'],
+    ['default', 'Default', 'Small corners'],
+    ['flat', 'Flat', 'Square corners'],
 ];
 const hosts = computed(() => (props.tenancy.central_hosts || []).join(', ') || '—');
 </script>
@@ -80,7 +80,7 @@ const hosts = computed(() => (props.tenancy.central_hosts || []).join(', ') || '
             <section class="rounded-xl border border-[#e4e4e7] bg-white">
                 <header class="border-b border-[#f4f4f5] px-5 py-4">
                     <h1>Theme</h1>
-                    <p class="mt-1 text-sm text-[#71717a]">Accent, corner shape, and type for this admin. Saved values apply after you refresh.</p>
+                    <p class="mt-1 text-sm text-[#71717a]">Accent, corner shape, and type for every screen, control, and label. Saved values apply after you refresh.</p>
                 </header>
                 <div class="space-y-4 p-5">
                     <label class="flex items-center gap-3 text-sm">
@@ -89,11 +89,15 @@ const hosts = computed(() => (props.tenancy.central_hosts || []).join(', ') || '
                         <span class="font-mono text-[#71717a]">{{ form.theme_primary }}</span>
                     </label>
                     <div>
-                        <p class="mb-2 text-sm text-[#3f3f46]">Shapes</p>
+                        <p class="mb-2 text-sm text-[#3f3f46]">Corner shape</p>
                         <div class="grid gap-2 sm:grid-cols-3">
-                            <label v-for="[value, label] in shapes" :key="value" class="flex items-center gap-2 rounded-lg border border-[#e4e4e7] px-3 py-2 text-sm">
-                                <input v-model="form.theme_shape" type="radio" :value="value">
-                                {{ label }}
+                            <label v-for="[value, label, hint] in shapes" :key="value" class="shape-choice" :class="{ 'is-on': form.theme_shape === value }">
+                                <input v-model="form.theme_shape" class="sr-only" type="radio" :value="value">
+                                <span class="shape-swatch" :class="`shape-sample--${value}`" aria-hidden="true" />
+                                <span>
+                                    <span class="block text-sm font-medium">{{ label }}</span>
+                                    <span class="block text-xs text-[#71717a]">{{ hint }}</span>
+                                </span>
                             </label>
                         </div>
                     </div>
@@ -194,3 +198,26 @@ const hosts = computed(() => (props.tenancy.central_hosts || []).join(', ') || '
         </dl>
     </Layout>
 </template>
+
+<style scoped>
+.shape-choice {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: 1px solid #e4e4e7;
+    border-radius: 10px;
+    padding: 0.65rem 0.75rem;
+    cursor: pointer;
+}
+.shape-choice.is-on {
+    border-color: var(--pf-accent, #17342b);
+    box-shadow: inset 0 0 0 1px var(--pf-accent, #17342b);
+}
+.shape-swatch {
+    width: 2.75rem;
+    height: 1.75rem;
+    flex-shrink: 0;
+    border: 2px solid #18181b;
+    background: #fff;
+}
+</style>
