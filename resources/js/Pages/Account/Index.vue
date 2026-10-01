@@ -2,183 +2,146 @@
     <Head title="Accounts" />
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Account Management
-                </h2>
-                <div class="flex space-x-2">
-                    <Link :href="route('accounts.create')"
-                          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        Add Account
-                    </Link>
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-xl font-semibold text-[#1c1915]">Accounts</h2>
+                    <p class="mt-0.5 text-[13px] text-[#746d63]">{{ filtered.length }} of {{ accounts.length }}</p>
                 </div>
+                <Link :href="route('accounts.create')" class="rounded-md bg-[#141a17] px-3 py-1.5 text-[13px] font-medium text-white">New account</Link>
             </div>
         </template>
 
         <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <!-- Search and Filter -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                    <div class="p-6">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                                <input v-model="search"
-                                       type="text"
-                                       placeholder="Search accounts..."
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                                <select v-model="typeFilter"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="">All Types</option>
-                                    <option value="asset">Asset</option>
-                                    <option value="liability">Liability</option>
-                                    <option value="equity">Equity</option>
-                                    <option value="revenue">Revenue</option>
-                                    <option value="expense">Expense</option>
-                                </select>
-                            </div>
-                            <div class="flex items-end">
-                                <button @click="clearFilters"
-                                        class="w-full bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                                    Clear Filters
-                                </button>
-                            </div>
-                        </div>
+            <div class="mx-auto max-w-[88rem] px-4 sm:px-7">
+                <section class="mb-3 rounded-lg border border-[#e7e1d6] bg-white px-3 py-2.5">
+                    <div class="grid items-end gap-2 md:grid-cols-[minmax(0,1.4fr)_14rem_8rem_auto]">
+                        <label class="block text-[12px] text-[#746d63]">
+                            Search
+                            <input v-model="search" class="sheet-field mt-1 w-full" placeholder="Name or code">
+                        </label>
+                        <label class="block text-[12px] text-[#746d63]">
+                            Type
+                            <SearchableSelect v-model="typeFilter" class="mt-1" :options="typeOptions" placeholder="All types" />
+                        </label>
+                        <label class="block text-[12px] text-[#746d63]">
+                            Rows
+                            <select v-model.number="pageSize" class="sheet-field mt-1 w-full">
+                                <option :value="25">25</option>
+                                <option :value="50">50</option>
+                                <option :value="100">100</option>
+                            </select>
+                        </label>
+                        <button type="button" class="h-8 rounded-md border border-[#e7e1d6] px-3 text-[12px]" @click="clearFilters">Clear</button>
                     </div>
-                </div>
+                </section>
 
-                <!-- Account List -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div v-if="accounts.length === 0" class="text-center py-8 text-gray-500">
-                            No accounts found
-                        </div>
-                        <div v-else class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Account Name
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Account Code
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Type
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Balance
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Status
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr v-for="account in filteredAccounts" :key="account.id">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900">{{ account.name }}</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900">{{ account.code || 'N/A' }}</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span :class="getTypeColor(account.type)"
-                                                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                                                {{ account.type?.toUpperCase() || 'N/A' }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(account.balance || 0).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span :class="account.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                                                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                                                {{ account.status ? 'Active' : 'Inactive' }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <div class="flex space-x-2">
-                                                <Link :href="route('accounts.show', account.id)"
-                                                      class="text-blue-600 hover:text-blue-900">
-                                                    View
-                                                </Link>
-                                                <Link :href="route('accounts.edit', account.id)"
-                                                      class="text-indigo-600 hover:text-indigo-900">
-                                                    Edit
-                                                </Link>
-                                                <button @click="deleteAccount(account.id)"
-                                                        class="text-red-600 hover:text-red-900">
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                <section class="overflow-hidden rounded-lg border border-[#e7e1d6] bg-white">
+                    <div class="max-h-[68vh] overflow-auto">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th v-for="column in columns" :key="column.key" class="cursor-pointer select-none" @click="sortBy(column.key)">
+                                        {{ column.label }}
+                                        <span v-if="sortKey === column.key">{{ sortDir === 'asc' ? '↑' : '↓' }}</span>
+                                    </th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-if="pageRows.length === 0">
+                                    <td colspan="6" class="py-8 text-center text-[#746d63]">No accounts found</td>
+                                </tr>
+                                <tr v-for="account in pageRows" :key="account.id">
+                                    <td class="font-medium">{{ account.name }}</td>
+                                    <td class="font-mono text-[12px]">{{ account.code || '—' }}</td>
+                                    <td>{{ account.type || '—' }}</td>
+                                    <td class="text-right tabular-nums">{{ money(account.balance) }}</td>
+                                    <td>{{ account.status ? 'Active' : 'Inactive' }}</td>
+                                    <td class="text-right">
+                                        <Link :href="route('accounts.show', account.id)" class="mr-2">View</Link>
+                                        <Link :href="route('accounts.edit', account.id)" class="mr-2">Edit</Link>
+                                        <button type="button" class="text-[#9b2c2c]" @click="deleteAccount(account.id)">Delete</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="flex items-center justify-between border-t border-[#eee8de] px-3 py-2 text-[12px] text-[#746d63]">
+                        <span>{{ rangeLabel }}</span>
+                        <div class="flex gap-2">
+                            <button type="button" class="px-2" :disabled="page === 1" @click="page--">Previous</button>
+                            <button type="button" class="px-2" :disabled="page === pageCount" @click="page++">Next</button>
                         </div>
                     </div>
-                </div>
+                </section>
             </div>
         </div>
     </AuthenticatedLayout>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { Link, router, Head } from '@inertiajs/vue3'
+import { computed, ref, watch } from 'vue'
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import SearchableSelect from '@/Components/SearchableSelect.vue'
 
-const props = defineProps({
-    accounts: Array
-})
-
+const props = defineProps({ accounts: Array })
+const pageStore = usePage()
 const search = ref('')
 const typeFilter = ref('')
+const sortKey = ref('name')
+const sortDir = ref('asc')
+const page = ref(1)
+const pageSize = ref(25)
+const typeOptions = [
+    { value: '', label: 'All types' },
+    { value: 'asset', label: 'Asset' },
+    { value: 'liability', label: 'Liability' },
+    { value: 'equity', label: 'Equity' },
+    { value: 'revenue', label: 'Revenue' },
+    { value: 'expense', label: 'Expense' },
+]
+const columns = [
+    { key: 'name', label: 'Name' },
+    { key: 'code', label: 'Code' },
+    { key: 'type', label: 'Type' },
+    { key: 'balance', label: 'Balance' },
+    { key: 'status', label: 'Status' },
+]
 
-const filteredAccounts = computed(() => {
-    let filtered = props.accounts
-
-    if (search.value) {
-        const searchLower = search.value.toLowerCase()
-        filtered = filtered.filter(account =>
-            account.name.toLowerCase().includes(searchLower) ||
-            (account.code && account.code.toLowerCase().includes(searchLower))
-        )
-    }
-
-    if (typeFilter.value !== '') {
-        filtered = filtered.filter(account => account.type === typeFilter.value)
-    }
-
-    return filtered
+const filtered = computed(() => {
+    const needle = search.value.trim().toLowerCase()
+    const rows = props.accounts.filter((account) => {
+        const matchesText = !needle || account.name.toLowerCase().includes(needle) || String(account.code || '').toLowerCase().includes(needle)
+        const matchesType = typeFilter.value === '' || account.type === typeFilter.value
+        return matchesText && matchesType
+    })
+    const dir = sortDir.value === 'asc' ? 1 : -1
+    return [...rows].sort((a, b) => String(a[sortKey.value] ?? '').localeCompare(String(b[sortKey.value] ?? ''), undefined, { numeric: true }) * dir)
+})
+const pageCount = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize.value)))
+const pageRows = computed(() => filtered.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value))
+const rangeLabel = computed(() => {
+    if (!filtered.value.length) return '0 rows'
+    const start = (page.value - 1) * pageSize.value + 1
+    const end = Math.min(page.value * pageSize.value, filtered.value.length)
+    return `${start}–${end} of ${filtered.value.length}`
 })
 
-const clearFilters = () => {
-    search.value = ''
-    typeFilter.value = ''
-}
+watch([search, typeFilter, pageSize], () => { page.value = 1 })
+watch(pageCount, (count) => { if (page.value > count) page.value = count })
 
-const getTypeColor = (type) => {
-    const colors = {
-        asset: 'bg-blue-100 text-blue-800',
-        liability: 'bg-red-100 text-red-800',
-        equity: 'bg-green-100 text-green-800',
-        revenue: 'bg-yellow-100 text-yellow-800',
-        expense: 'bg-purple-100 text-purple-800'
-    }
-    return colors[type] || 'bg-gray-100 text-gray-800'
+const sortBy = (key) => {
+    if (sortKey.value === key) sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+    else { sortKey.value = key; sortDir.value = 'asc' }
 }
-
+const clearFilters = () => { search.value = ''; typeFilter.value = '' }
+const money = (amount) => {
+    const ui = pageStore.props.ui || {}
+    const value = Number(amount || 0).toFixed(2)
+    return ui.currency_position === 'after' ? `${value}${ui.currency_symbol || ''}` : `${ui.currency_symbol || ''}${value}`
+}
 const deleteAccount = (id) => {
-    if (confirm('Are you sure you want to delete this account?')) {
-        router.delete(route('accounts.destroy', id))
-    }
+    if (confirm('Delete this account?')) router.delete(route('accounts.destroy', id))
 }
 </script>

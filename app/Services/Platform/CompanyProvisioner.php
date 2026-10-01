@@ -4,6 +4,7 @@ namespace App\Services\Platform;
 
 use App\Domain\Access\PermissionCatalog;
 use App\Models\Company;
+use App\Models\Setting;
 use App\Models\User;
 use Database\Seeders\MenuSeeder;
 use Database\Seeders\PharmacyFoundationSeeder;
@@ -11,6 +12,7 @@ use Database\Seeders\SettingSeeder;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use Throwable;
 
@@ -87,8 +89,9 @@ class CompanyProvisioner
 
             $hosts = app(HostProvisioner::class);
             if (! $hosts->enabled()) {
-                $this->step($company, 'vhost', 'Host script is not installed on this machine. Database and pharmacy admin are ready.', [
-                    'vhost_status' => 'skipped',
+                $mapped = app(LocalHostMapper::class)->add($company->slug);
+                $this->step($company, 'vhost', $mapped, [
+                    'vhost_status' => 'local',
                     'ssl_status' => 'skipped',
                 ]);
                 $company->update([
@@ -159,14 +162,18 @@ class CompanyProvisioner
             throw new RuntimeException('Pharmacy admin login was not supplied. Create the pharmacy again.');
         }
 
+        $attributes = [
+            'name' => $name,
+            'password' => $password,
+            'email_verified_at' => now(),
+        ];
+        if (Schema::hasColumn('users', 'is_platform_admin')) {
+            $attributes['is_platform_admin'] = false;
+        }
+
         $user = User::query()->updateOrCreate(
             ['email' => $email],
-            [
-                'name' => $name,
-                'password' => $password,
-                'email_verified_at' => now(),
-                'is_platform_admin' => false,
-            ]
+            $attributes
         );
         $user->syncRoles('admin');
         $this->step($company, 'admin', 'Pharmacy admin ready: '.$email);

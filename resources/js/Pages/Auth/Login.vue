@@ -28,33 +28,79 @@ onMounted(() => {
     }
 });
 
+const fieldValue = (id, fallback) => {
+    const value = document.getElementById(id)?.value;
+    return typeof value === 'string' ? value : fallback;
+};
+
+const csrfHeaders = () => {
+    const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/);
+    if (match) {
+        return { 'X-XSRF-TOKEN': decodeURIComponent(match[1]) };
+    }
+
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    return token ? { 'X-CSRF-TOKEN': token } : {};
+};
+
+const refreshCsrf = async () => {
+    const page = await window.axios.get(route('login'), {
+        headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' },
+        responseType: 'text',
+    });
+    const token = String(page.data).match(/name="csrf-token" content="([^"]+)"/)?.[1];
+    if (token) {
+        document.querySelector('meta[name="csrf-token"]')?.setAttribute('content', token);
+    }
+};
+
 const submit = async () => {
     phase.value = 'loading';
     form.clearErrors();
     clearToasts();
+    form.email = fieldValue('email', form.email);
+    form.password = fieldValue('password', form.password);
+
+    const post = () => window.axios.post(route('login'), {
+        email: form.email,
+        password: form.password,
+        remember: form.remember,
+    }, {
+        headers: {
+            ...csrfHeaders(),
+            Accept: 'application/json',
+        },
+    });
 
     try {
-        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        const response = await window.axios.post(route('login'), {
-            email: form.email,
-            password: form.password,
-            remember: form.remember,
-        }, {
-            headers: {
-                'X-CSRF-TOKEN': token,
-                Accept: 'application/json',
-            },
-        });
+        let response;
+        try {
+            response = await post();
+        } catch (error) {
+            if (error.response?.status !== 419) {
+                throw error;
+            }
+            await refreshCsrf();
+            response = await post();
+        }
 
         phase.value = 'success';
         await new Promise((resolve) => setTimeout(resolve, prefersReducedMotion() ? 120 : 1000));
         window.location.href = response.request?.responseURL || route('dashboard');
     } catch (error) {
         phase.value = 'idle';
-        form.reset('password');
-        const message = error.response?.status === 429
-            ? 'Too many failed login attempts. Please try again later.'
-            : 'Incorrect email or password. Please check and try again';
+        form.password = '';
+        const password = document.getElementById('password');
+        if (password) {
+            password.value = '';
+        }
+        const status = error.response?.status;
+        const serverMessage = error.response?.data?.errors?.email?.[0] || error.response?.data?.message;
+        const message = status === 419
+            ? 'Your session expired. Please try again.'
+            : status === 429
+                ? 'Too many failed login attempts. Please try again later.'
+                : (serverMessage || 'Incorrect email or password. Please check and try again');
         form.setError({ email: message, password: message });
         showError(message);
     }

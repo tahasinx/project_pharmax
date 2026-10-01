@@ -26,6 +26,8 @@ const form = useForm({
     email_password: '',
     email_from_address: props.settings.email_from_address,
     email_from_name: props.settings.email_from_name,
+    logo: null,
+    favicon: null,
 });
 const test = useForm({ email_test_to: '' });
 const shapes = [
@@ -66,6 +68,17 @@ const hosts = computed(() => (props.tenancy.central_hosts || []).join(', ') || '
                         <span class="mb-1 block text-[#3f3f46]">Address</span>
                         <textarea v-model="form.address" class="w-full" rows="2" />
                     </label>
+                    <label class="block text-sm">
+                        <span class="mb-1 block text-[#3f3f46]">Logo</span>
+                        <img v-if="settings.logo_url" :src="settings.logo_url" alt="" class="mb-2 h-10 w-10 object-contain">
+                        <input type="file" accept="image/*" class="w-full" @input="form.logo = $event.target.files[0]">
+                    </label>
+                    <label class="block text-sm">
+                        <span class="mb-1 block text-[#3f3f46]">Favicon</span>
+                        <img v-if="settings.favicon_url" :src="settings.favicon_url" alt="" class="mb-2 h-8 w-8 object-contain">
+                        <input type="file" accept="image/*" class="w-full" @input="form.favicon = $event.target.files[0]">
+                    </label>
+                    <p class="text-xs text-[#71717a] sm:col-span-2">The logo appears in both menus and on the login card. The favicon is the browser-tab icon on every page.</p>
                     <label class="block text-sm">
                         <span class="mb-1 block text-[#3f3f46]">Currency</span>
                         <input v-model="form.default_currency" class="w-full" required maxlength="8">

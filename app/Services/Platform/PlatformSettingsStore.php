@@ -29,6 +29,8 @@ class PlatformSettingsStore
             'theme_font_href' => $this->theme($stored)['font_href'],
             'theme_font_size' => $this->theme($stored)['font_size'],
             'theme_font_weight' => $this->theme($stored)['font_weight'],
+            'logo_url' => $this->publicFile($stored['logo'] ?? ''),
+            'favicon_url' => $this->publicFile($stored['favicon'] ?? ''),
             'email_enabled' => ($stored['email_enabled'] ?? '0') === '1',
             'email_host' => $stored['email_host'] ?? '',
             'email_port' => (int) ($stored['email_port'] ?? 587),
@@ -155,6 +157,29 @@ class PlatformSettingsStore
         }
 
         return $raw;
+    }
+
+    /**
+     * @return array{logo: string, favicon: string}
+     */
+    public function media(): array
+    {
+        $stored = PlatformSetting::query()->whereIn('key', ['logo', 'favicon'])->pluck('value', 'key');
+
+        return [
+            'logo' => $this->publicFile((string) ($stored['logo'] ?? '')),
+            'favicon' => $this->publicFile((string) ($stored['favicon'] ?? '')),
+        ];
+    }
+
+    public function publicFile(string $path): string
+    {
+        $path = trim($path);
+        if ($path === '' || str_contains($path, '..')) {
+            return '';
+        }
+
+        return asset('storage/'.$path);
     }
 
     private function decrypt(string $value): string

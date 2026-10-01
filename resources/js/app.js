@@ -9,10 +9,12 @@ import BsToastHost from './Components/BsToastHost.vue';
 import ThemeHost from './Components/ThemeHost.vue';
 import { useErrorHandler } from './Composables/useErrorHandler';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = () => document.querySelector('meta[name="app-name"]')?.content
+    || import.meta.env.VITE_APP_NAME
+    || 'Epharma';
 
 createInertiaApp({
-    title: (title) => (title ? `${appName} | ${title}` : appName),
+    title: (title) => (title ? `${appName()} | ${title}` : appName()),
     resolve: (name) => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
     setup({ el, App, props, plugin }) {
         const app = createApp({ render: () => [h(ThemeHost), h(App, props), h(BsToastHost)] })

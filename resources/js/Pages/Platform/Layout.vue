@@ -11,6 +11,7 @@ const brand = computed(() => page.props.platform?.theme || {
     font_weight: 400,
     radius: '10px',
 });
+const logo = computed(() => page.props.app?.logo || '');
 const errors = computed(() => page.props.errors || {});
 const user = computed(() => page.props.auth?.user);
 const path = computed(() => (page.url || '').split('?')[0]);
@@ -92,7 +93,7 @@ watch(theme, applyTheme);
 
 <template>
     <div
-        class="pf min-h-screen bg-[#f4f4f5] text-[#18181b]"
+        class="pf admin-shell min-h-screen"
         :class="{ 'is-dark': appearance === 'dark' }"
         :style="{
             '--pf-accent': brand.primary,
@@ -104,24 +105,27 @@ watch(theme, applyTheme);
     >
         <link v-if="brand.font_href" rel="stylesheet" :href="brand.font_href">
         <div class="flex min-h-screen">
-            <aside class="sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-[#e4e4e7] bg-white md:flex">
-                <div class="flex h-16 items-center gap-3 px-4">
-                    <span class="grid h-8 w-8 place-items-center rounded-lg bg-[#17342b] text-sm font-semibold text-white">E</span>
+            <aside class="admin-sidebar sticky top-0 hidden h-screen w-64 shrink-0 flex-col md:flex">
+                <div class="admin-brand flex h-16 items-center gap-3 px-4">
+                    <span class="admin-brand__mark grid h-9 w-9 place-items-center overflow-hidden rounded-lg">
+                        <img v-if="logo" :src="logo" alt="" class="h-7 w-7 object-contain">
+                        <span v-else class="text-sm font-semibold text-white">E</span>
+                    </span>
                     <span>
-                        <span class="block text-sm font-semibold leading-4 tracking-tight">Epharma</span>
-                        <span class="block text-[11px] leading-4 text-[#71717a]">Platform admin</span>
+                        <span class="admin-brand__name block text-sm font-semibold leading-4">{{ page.props.app?.name || 'Epharma' }}</span>
+                        <span class="admin-brand__meta block text-[11px] leading-4">Platform</span>
                     </span>
                 </div>
-                <nav class="flex-1 space-y-5 overflow-y-auto px-3 pb-4">
+                <nav class="admin-navigation flex-1 space-y-5 overflow-y-auto px-3 py-3">
                     <div v-for="group in groups" :key="group.label">
-                        <p class="px-2 pb-1 text-[11px] font-medium text-[#a1a1aa]">{{ group.label }}</p>
+                        <p class="admin-section-label px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em]">{{ group.label }}</p>
                         <div class="space-y-0.5">
                             <Link
                                 v-for="[label, href, icon] in group.items"
                                 :key="href"
                                 :href="href"
-                                class="flex h-9 items-center gap-2.5 rounded-md px-2 text-[13px]"
-                                :class="isActive(href) ? 'pf-on font-medium' : 'text-[#3f3f46] hover:bg-[#f4f4f5]'"
+                                class="admin-nav-link flex h-9 items-center gap-2.5 px-3 text-[13px]"
+                                :class="isActive(href) ? 'is-active' : ''"
                             >
                                 <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                                     <template v-if="icon === 'grid'"><rect x="4" y="4" width="6.5" height="6.5" rx="1.2" /><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.2" /><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.2" /><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.2" /></template>
@@ -141,20 +145,20 @@ watch(theme, applyTheme);
                         </div>
                     </div>
                 </nav>
-                <div class="border-t border-[#f4f4f5] p-3">
-                    <div class="flex items-center gap-2.5 rounded-md px-2 py-2">
+                <div class="border-t border-white/10 p-3">
+                    <div class="flex items-center gap-2.5 px-2 py-2">
                         <img v-if="user?.avatar_url" :src="user.avatar_url" alt="" class="h-8 w-8 shrink-0 rounded-full object-cover">
-                        <span v-else class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#17342b] text-[11px] font-semibold text-white">{{ initials }}</span>
+                        <span v-else class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/10 text-[11px] font-semibold text-white">{{ initials }}</span>
                             <Link href="/profile" class="min-w-0 flex-1">
-                                <span class="block truncate text-[13px] font-medium">{{ user?.name || 'Admin' }}</span>
-                                <span class="text-[12px] text-[#71717a]">Profile</span>
+                                <span class="block truncate text-[13px] font-medium text-[#f7f3ec]">{{ user?.name || 'Admin' }}</span>
+                                <span class="text-[12px] text-[#9aa297]">Profile</span>
                             </Link>
                     </div>
                 </div>
             </aside>
 
             <div class="flex min-w-0 flex-1 flex-col">
-                <header class="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-[#e4e4e7] bg-white px-4 sm:px-6">
+                <header class="admin-topbar sticky top-0 z-20 flex h-14 items-center justify-between px-4 sm:px-6">
                     <p class="text-sm font-semibold tracking-tight">{{ current }}</p>
                     <div ref="menu" class="flex items-center gap-1">
                         <div class="relative">

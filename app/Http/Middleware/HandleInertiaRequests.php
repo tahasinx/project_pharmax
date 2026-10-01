@@ -33,7 +33,7 @@ class HandleInertiaRequests extends Middleware
         // Skip database-dependent operations for install routes
         $isInstallRoute = $request->is('install*');
         $isCentral = $request->attributes->get('tenant.mode') === 'central';
-        
+
         try {
             return [
                 ...parent::share($request),
@@ -51,7 +51,9 @@ class HandleInertiaRequests extends Middleware
                     'canSwitch' => $request->user()->hasRole('admin') || $request->user()->can('view-all-branches') || $request->user()->can('manage-branches'),
                 ] : null,
                 'app' => [
-                    'name' => config('app.name'),
+                    'name' => $isInstallRoute ? config('app.name', 'Epharma') : $this->platformName(),
+                    'logo' => $isInstallRoute ? '' : $this->brandMedia()['logo'],
+                    'favicon' => $isInstallRoute ? '' : $this->brandMedia()['favicon'],
                 ],
                 'ziggy' => $isInstallRoute ? [] : fn() => [
                     ...(new Ziggy)->toArray(),
@@ -99,6 +101,24 @@ class HandleInertiaRequests extends Middleware
             return app(\App\Services\Platform\PlatformSettingsStore::class)->theme();
         } catch (\Throwable) {
             return null;
+        }
+    }
+
+    private function platformName(): string
+    {
+        try {
+            return (string) app(\App\Services\Platform\PlatformSettingsStore::class)->all()['name'];
+        } catch (\Throwable) {
+            return config('app.name', 'Epharma');
+        }
+    }
+
+    private function brandMedia(): array
+    {
+        try {
+            return app(\App\Services\Platform\PlatformSettingsStore::class)->media();
+        } catch (\Throwable) {
+            return ['logo' => '', 'favicon' => ''];
         }
     }
 

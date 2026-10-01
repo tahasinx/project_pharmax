@@ -31,8 +31,8 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
-
         $request->session()->regenerate();
+        $request->session()->put('auth_database', (string) config('database.connections.mysql.database'));
 
         $home = $request->attributes->get('tenant.mode') === 'central'
             ? '/platform'

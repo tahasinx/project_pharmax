@@ -1,6 +1,9 @@
 <script setup>
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
-import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
+
+const logo = computed(() => usePage().props.app?.logo || '');
 </script>
 
 <template>
@@ -18,8 +21,9 @@ import { Link } from '@inertiajs/vue3';
 
             <section class="flex items-center bg-white px-8 py-10 sm:px-12">
                 <div class="w-full">
-                    <Link href="/" class="mb-8 flex justify-center" aria-label="Laravel">
-                        <ApplicationLogo class="h-12 w-12 fill-current text-[#FF2D20]" />
+                    <Link href="/" class="mb-8 flex justify-center" aria-label="Epharma">
+                        <img v-if="logo" :src="logo" alt="" class="h-12 w-12 object-contain">
+                        <ApplicationLogo v-else class="h-12 w-12 fill-current text-[#141a17]" />
                     </Link>
                     <slot />
                 </div>

@@ -6,9 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title inertia>{{ config('app.name', 'Laravel') }}</title>
-
     @php
+        $appName = config('app.name', 'Epharma');
         $brand = [
             'primary' => '#17342b',
             'font_family' => 'Inter',
@@ -17,14 +16,20 @@
             'font_weight' => 400,
             'radius' => '10px',
         ];
+        $favicon = '/favicon.svg';
         if (! request()->is('install*')) {
             try {
-                $brand = app(\App\Services\Platform\PlatformSettingsStore::class)->theme();
+                $settingsStore = app(\App\Services\Platform\PlatformSettingsStore::class);
+                $appName = $settingsStore->all()['name'];
+                $brand = $settingsStore->theme();
+                $favicon = $settingsStore->media()['favicon'] ?: $favicon;
             } catch (\Throwable) {
             }
         }
         $strong = min(900, (int) $brand['font_weight'] + 200);
     @endphp
+    <meta name="app-name" content="{{ $appName }}">
+    <title inertia>{{ $appName }}</title>
     <style>
         :root {
             --pf-accent: {{ $brand['primary'] }};
@@ -40,7 +45,7 @@
     @endif
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" href="{{ $favicon }}">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">

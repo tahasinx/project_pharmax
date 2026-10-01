@@ -56,10 +56,19 @@ class OperationsController extends Controller
             'email_password' => 'nullable|string|max:255',
             'email_from_address' => 'nullable|email|max:255',
             'email_from_name' => 'nullable|string|max:255',
+            'logo' => 'nullable|image|max:2048',
+            'favicon' => 'nullable|image|max:1024',
         ]);
         $data['theme_font_href'] = $settings->stylesheet((string) ($data['theme_font_href'] ?? ''));
         $data['email_enabled'] = $request->boolean('email_enabled');
         $data['email_encryption'] = $data['email_encryption'] ?: 'tls';
+        unset($data['logo'], $data['favicon']);
+        if ($request->hasFile('logo')) {
+            $data['logo'] = $request->file('logo')->store('brand', 'public');
+        }
+        if ($request->hasFile('favicon')) {
+            $data['favicon'] = $request->file('favicon')->store('brand', 'public');
+        }
         $settings->save($data);
 
         return back()->with('success', 'Platform settings saved.');
