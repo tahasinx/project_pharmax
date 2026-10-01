@@ -13,76 +13,35 @@
         </template>
 
         <div class="py-12">
-            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-                <!-- Global Validation Errors -->
+            <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
                 <ValidationErrors :errors="$page.props.errors" />
 
                 <form @submit.prevent="submitForm">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- Basic Information -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div class="space-y-4">
-                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
-
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Medicine Name *</label>
-                                        <input v-model="form.name"
-                                               type="text"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                               required>
+                                        <label class="field-label">Brand Name <span class="req">*</span></label>
+                                        <input v-model="form.name" type="text" class="field" required>
                                     </div>
 
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Generic</label>
-                                        <select v-model="form.generic_id" class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                                            <option value="">None</option>
-                                            <option v-for="g in generics" :key="g.id" :value="g.id">{{ g.name }}</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Brand</label>
-                                        <select v-model="form.brand_id" class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                                            <option value="">None</option>
-                                            <option v-for="b in brands" :key="b.id" :value="b.id">{{ b.name }}</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Dosage form</label>
-                                        <input v-model="form.dosage_form" class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">ATC / SKU</label>
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <input v-model="form.atc_code" placeholder="ATC" class="px-3 py-2 border border-gray-300 rounded-md">
-                                            <input v-model="form.sku" placeholder="SKU" class="px-3 py-2 border border-gray-300 rounded-md">
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="field-label">Generic Name <span class="req">*</span></label>
+                                            <select v-model="form.generic_id" class="field" required>
+                                                <option value="">Select generic</option>
+                                                <option v-for="g in generics" :key="g.id" :value="g.id">{{ g.name }}</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="field-label">Strength <span class="req">*</span></label>
+                                            <input v-model="form.strength" type="text" placeholder="e.g. 500mg" class="field" required>
                                         </div>
                                     </div>
-                                    <div class="text-sm space-y-1">
-                                        <label class="flex gap-2"><input type="checkbox" v-model="form.requires_prescription"> Prescription required</label>
-                                        <label class="flex gap-2"><input type="checkbox" v-model="form.is_controlled"> Controlled</label>
-                                        <label class="flex gap-2"><input type="checkbox" v-model="form.is_antibiotic"> Antibiotic</label>
-                                        <label class="flex gap-2"><input type="checkbox" v-model="form.is_high_risk"> High risk</label>
-                                        <label class="flex gap-2"><input type="checkbox" v-model="form.is_refrigerated"> Refrigerated</label>
-                                        <label class="flex gap-2"><input type="checkbox" v-model="form.is_narcotic"> Narcotic</label>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Generic Name</label>
-                                        <input v-model="form.generic_name"
-                                               type="text"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Strength</label>
-                                        <input v-model="form.strength"
-                                               type="text"
-                                               placeholder="e.g., 500mg, 10ml"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                                        <label class="field-label">Category</label>
                                         <SearchableSelect
                                             v-model="form.category_id"
                                             :options="categoryOptions"
@@ -91,117 +50,112 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Manufacturer *</label>
+                                        <label class="field-label">Medicine Type <span class="req">*</span></label>
+                                        <select v-model="form.medicine_type_id" class="field" required>
+                                            <option value="">Select type</option>
+                                            <option v-for="type in medicineTypes" :key="type.id" :value="type.id">{{ type.name }}</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label class="field-label">Manufacturer / Company</label>
                                         <SearchableSelect
                                             v-model="form.manufacturer_id"
                                             :options="manufacturerOptions"
-                                            placeholder="Select Manufacturer"
+                                            placeholder="Select manufacturer"
                                         />
                                     </div>
-                                </div>
-
-                                <!-- Pricing & Inventory -->
-                                <div class="space-y-4">
-                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Pricing & Inventory</h3>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Selling Price *</label>
-                                        <input v-model.number="form.price"
-                                               type="number"
-                                               step="0.01"
-                                               min="0"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                               required>
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Manufacturer Price *</label>
-                                        <input v-model.number="form.manufacturer_price"
-                                               type="number"
-                                               step="0.01"
-                                               min="0"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                               required>
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Box Size *</label>
-                                        <input v-model.number="form.box_size"
-                                               type="number"
-                                               min="1"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                               required>
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-                                        <input v-model="form.unit"
-                                               type="text"
-                                               placeholder="e.g., tablets, ml, mg"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Product Location</label>
-                                        <input v-model="form.product_location"
-                                               type="text"
-                                               placeholder="e.g., Shelf A1, Refrigerator"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                                        <select v-model="form.status"
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                            <option :value="true">Active</option>
-                                            <option :value="false">Inactive</option>
+                                        <label class="field-label">Unit <span class="req">*</span></label>
+                                        <select v-model="form.unit" class="field" required>
+                                            <option value="">Select unit</option>
+                                            <option v-for="unit in units" :key="unit.id" :value="unit.name">{{ unit.name }}</option>
                                         </select>
                                     </div>
-                                </div>
-                            </div>
 
-                            <!-- Additional Details -->
-                            <div class="mt-6">
-                                <h3 class="text-lg font-medium text-gray-900 mb-4">Additional Details</h3>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                    <textarea v-model="form.details"
-                                              rows="4"
-                                              placeholder="Enter medicine description, usage instructions, side effects, etc."
-                                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                                </div>
-                            </div>
-
-                            <!-- Form Actions -->
-                            <div class="mt-8">
-                                <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-                                    <div class="flex">
-                                        <div class="flex-shrink-0">
-                                            <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                                            </svg>
-                                        </div>
-                                        <div class="ml-3">
-                                            <h3 class="text-sm font-medium text-blue-800">
-                                                Automatic Code Generation
-                                            </h3>
-                                            <div class="mt-2 text-sm text-blue-700">
-                                                <p>QR codes and barcodes will be automatically generated for this medicine using the product ID.</p>
-                                            </div>
-                                        </div>
+                                    <div>
+                                        <label class="field-label">Barcode</label>
+                                        <input v-model="form.barcode" type="text" class="field" placeholder="Leave blank to generate">
                                     </div>
                                 </div>
 
-                                <div class="flex justify-end space-x-4">
-                                    <Link :href="route('medicines.index')"
-                                          class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                                        Cancel
-                                    </Link>
-                                    <button type="submit"
-                                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                        Create Medicine
-                                    </button>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="field-label">Supplier Box Price (TP) <span class="req">*</span></label>
+                                        <input v-model.number="form.manufacturer_price" type="number" step="0.01" min="0" class="field" required>
+                                    </div>
+
+                                    <div>
+                                        <label class="field-label">Box MRP <span class="req">*</span></label>
+                                        <input v-model.number="form.price" type="number" step="0.01" min="0" class="field" required>
+                                    </div>
+
+                                    <div>
+                                        <label class="field-label">Unit Price</label>
+                                        <input :value="unitPrice" type="text" class="field bg-gray-50" readonly>
+                                    </div>
+
+                                    <div>
+                                        <label class="field-label">Discount %</label>
+                                        <div class="flex items-center gap-3">
+                                            <input v-model.number="form.discount_percent" type="number" step="0.01" min="0" max="100" class="field" :disabled="!discountApplied">
+                                            <button type="button" class="switch" :class="{ 'is-on': discountApplied }" role="switch" :aria-checked="discountApplied" aria-label="Apply discount" @click="discountApplied = !discountApplied">
+                                                <span class="switch-knob"></span>
+                                            </button>
+                                            <span class="switch-state" :class="{ 'is-on': discountApplied }">{{ discountApplied ? 'On' : 'Off' }}</span>
+                                        </div>
+                                        <p class="mt-1 text-xs text-gray-500">{{ discountApplied ? 'Discount is applied to the unit price.' : 'Discount is off. Unit price stays the box MRP.' }}</p>
+                                    </div>
+
+                                    <div>
+                                        <label class="field-label">Alert QTY</label>
+                                        <div class="flex items-center gap-3">
+                                            <input v-model.number="form.alert_qty" type="number" min="0" class="field">
+                                            <button type="button" class="switch" :class="{ 'is-on': form.manage_stock }" role="switch" :aria-checked="form.manage_stock" aria-label="Manage stock after save" @click="form.manage_stock = !form.manage_stock">
+                                                <span class="switch-knob"></span>
+                                            </button>
+                                            <span class="switch-state" :class="{ 'is-on': form.manage_stock }">{{ form.manage_stock ? 'On' : 'Off' }}</span>
+                                        </div>
+                                        <p class="mt-1 text-xs text-gray-500">{{ form.manage_stock ? 'After save, the stock page opens for this medicine.' : 'Stock page stays closed. Only the alert quantity is saved.' }}</p>
+                                    </div>
+
+                                    <div>
+                                        <label class="field-label">Rack/Shelf Location</label>
+                                        <input v-model="form.product_location" type="text" class="field" placeholder="e.g. Shelf A1">
+                                    </div>
+
+                                    <div>
+                                        <label class="field-label">Image</label>
+                                        <input type="file" accept="image/*" class="field" @change="onImage">
+                                        <img v-if="imagePreview" :src="imagePreview" alt="Medicine preview" class="mt-2 h-20 w-20 rounded object-cover border">
+                                    </div>
+
+                                    <div>
+                                        <label class="field-label">Status</label>
+                                        <div class="flex items-center gap-3">
+                                            <button type="button" class="switch" :class="{ 'is-on': form.status }" role="switch" :aria-checked="form.status" aria-label="Medicine status" @click="form.status = !form.status">
+                                                <span class="switch-knob"></span>
+                                            </button>
+                                            <span class="switch-state" :class="{ 'is-on': form.status }">{{ form.status ? 'Active' : 'Inactive' }}</span>
+                                        </div>
+                                    </div>
                                 </div>
+                            </div>
+
+                            <div class="mt-6">
+                                <label class="field-label">Description</label>
+                                <textarea v-model="form.details" rows="4" class="field" placeholder="Description"></textarea>
+                            </div>
+
+                            <div class="mt-8 flex justify-end space-x-4">
+                                <Link :href="route('medicines.index')"
+                                      class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                                    Cancel
+                                </Link>
+                                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                    Create Medicine
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -222,62 +176,127 @@ const props = defineProps({
     categories: Array,
     manufacturers: Array,
     generics: { type: Array, default: () => [] },
-    brands: { type: Array, default: () => [] },
-    errors: Object
+    medicineTypes: { type: Array, default: () => [] },
+    units: { type: Array, default: () => [] },
 })
 
-// Formatted categories for SearchableSelect
-const categoryOptions = computed(() => {
-    let categories = [...props.categories]
-    categories.sort((a, b) => a.name.localeCompare(b.name))
-    return categories.map(category => ({
-        value: category.id,
-        label: category.name
-    }))
-})
+const categoryOptions = computed(() => [...props.categories]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(category => ({ value: category.id, label: category.name })))
 
-// Formatted manufacturers for SearchableSelect
-const manufacturerOptions = computed(() => {
-    let manufacturers = [...props.manufacturers]
-    manufacturers.sort((a, b) => a.name.localeCompare(b.name))
-    return manufacturers.map(manufacturer => ({
-        value: manufacturer.id,
-        label: manufacturer.name
-    }))
-})
+const manufacturerOptions = computed(() => [...props.manufacturers]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(manufacturer => ({ value: manufacturer.id, label: manufacturer.name })))
 
 const form = ref({
     name: '',
-    generic_name: '',
     generic_id: '',
-    brand_id: '',
-    dosage_form: '',
-    atc_code: '',
-    sku: '',
-    requires_prescription: false,
-    is_controlled: false,
-    is_antibiotic: false,
-    is_high_risk: false,
-    is_refrigerated: false,
-    is_narcotic: false,
+    strength: '',
+    category_id: '',
+    medicine_type_id: '',
+    manufacturer_id: '',
+    unit: '',
+    barcode: '',
+    manufacturer_price: 0,
+    price: 0,
+    discount_percent: 0,
+    alert_qty: 0,
+    product_location: '',
+    details: '',
+    image: null,
+    box_size: 1,
+    status: true,
+    manage_stock: false,
     units: [
         { name: 'Box', factor_to_base: 100 },
         { name: 'Strip', factor_to_base: 10 },
         { name: 'Piece', factor_to_base: 1 },
     ],
-    strength: '',
-    category_id: '',
-    manufacturer_id: '',
-    price: 0,
-    manufacturer_price: 0,
-    box_size: 1,
-    unit: '',
-    product_location: '',
-    details: '',
-    status: true
 })
 
+const discountApplied = ref(false)
+const imagePreview = ref('')
+
+const unitPrice = computed(() => {
+    const mrp = Number(form.value.price) || 0
+    const size = Number(form.value.box_size) || 1
+    const discount = discountApplied.value ? (Number(form.value.discount_percent) || 0) : 0
+    const value = (mrp / size) * (1 - Math.min(discount, 100) / 100)
+    return value.toFixed(2)
+})
+
+const onImage = (event) => {
+    const file = event.target.files?.[0] || null
+    form.value.image = file
+    imagePreview.value = file ? URL.createObjectURL(file) : ''
+}
+
 const submitForm = () => {
-    router.post(route('medicines.store'), form.value)
+    const payload = { ...form.value, manage_stock: form.value.manage_stock }
+    if (!discountApplied.value) {
+        payload.discount_percent = 0
+    }
+    if (!(payload.image instanceof File)) {
+        delete payload.image
+    }
+    router.post(route('medicines.store'), payload, { forceFormData: true })
 }
 </script>
+
+<style scoped>
+.field-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+}
+.req {
+    color: #dc2626;
+    font-weight: 700;
+}
+.field {
+    width: 100%;
+    border-radius: 0.375rem;
+    border: 1px solid #d1d5db;
+    padding: 0.5rem 0.75rem;
+}
+.field:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #3b82f6;
+}
+.switch {
+    position: relative;
+    height: 1.75rem;
+    width: 3rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: #d1d5db;
+    transition: background 0.15s ease;
+}
+.switch.is-on {
+    background: #16a34a;
+}
+.switch-knob {
+    position: absolute;
+    top: 0.2rem;
+    left: 0.2rem;
+    height: 1.35rem;
+    width: 1.35rem;
+    border-radius: 999px;
+    background: #fff;
+    transition: transform 0.15s ease;
+}
+.switch.is-on .switch-knob {
+    transform: translateX(1.25rem);
+}
+.switch-state {
+    width: 1.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #9ca3af;
+}
+.switch-state.is-on {
+    color: #15803d;
+}
+</style>

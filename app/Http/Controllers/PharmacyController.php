@@ -21,6 +21,9 @@ use App\Models\InvoiceItem;
 use App\Models\JournalLine;
 use App\Models\LedgerAccount;
 use App\Models\Medicine;
+use App\Models\MedicineType;
+use App\Models\MedicineUnit;
+use App\Models\Unit;
 use App\Models\Organization;
 use App\Models\Prescription;
 use App\Models\PurchaseInvoice;
@@ -95,35 +98,108 @@ class PharmacyController extends Controller
 
     public function generics()
     {
-        $this->authorizePermission('manage-medicines');
-
-        return Inertia::render('Catalog/Index', [
-            'title' => 'Generics',
-            'kind' => 'generic',
-            'rows' => Generic::withCount('medicines')->orderBy('name')->get(),
-            'storeRoute' => 'generics.store',
-        ]);
+        return $this->nameCatalog(Generic::class, 'Generic Name', 'generics');
     }
 
     public function storeGeneric(Request $request)
     {
-        $this->authorizePermission('manage-medicines');
-        $data = $request->validate(['name' => 'required|string|max:255|unique:generics,name']);
-        Generic::create($data);
+        return $this->storeName(Generic::class, $request, 'generics', 'Generic');
+    }
 
-        return back()->with('success', 'Generic saved.');
+    public function updateGeneric(Request $request, Generic $generic)
+    {
+        return $this->updateName($generic, $request, 'generics', 'Generic');
+    }
+
+    public function destroyGeneric(Generic $generic)
+    {
+        return $this->destroyName($generic, 'generic');
+    }
+
+    public function medicineTypes()
+    {
+        return $this->nameCatalog(MedicineType::class, 'Medicine Type', 'medicine-types');
+    }
+
+    public function storeMedicineType(Request $request)
+    {
+        return $this->storeName(MedicineType::class, $request, 'medicine_types', 'Medicine type');
+    }
+
+    public function updateMedicineType(Request $request, MedicineType $medicineType)
+    {
+        return $this->updateName($medicineType, $request, 'medicine_types', 'Medicine type');
+    }
+
+    public function destroyMedicineType(MedicineType $medicineType)
+    {
+        return $this->destroyName($medicineType, 'medicine type');
+    }
+
+    public function units()
+    {
+        $this->authorizePermission('manage-medicines');
+        $rows = Unit::orderBy('name')->get()->map(function (Unit $unit) {
+            $unit->medicines_count = Medicine::where('unit', $unit->name)->count()
+                + MedicineUnit::where('name', $unit->name)->distinct()->count('medicine_id');
+
+            return $unit;
+        });
+
+        return Inertia::render('Catalog/Index', [
+            'title' => 'Units',
+            'rows' => $rows,
+            'storeRoute' => 'units.store',
+            'updateRoute' => 'units.update',
+            'destroyRoute' => 'units.destroy',
+        ]);
+    }
+
+    public function storeUnit(Request $request)
+    {
+        return $this->storeName(Unit::class, $request, 'units', 'Unit');
+    }
+
+    public function updateUnit(Request $request, Unit $unit)
+    {
+        $this->authorizePermission('manage-medicines');
+        $data = $request->validate(['name' => 'required|string|max:255|unique:units,name,'.$unit->id]);
+        $previous = $unit->name;
+        $unit->update($data);
+        if ($previous !== $unit->name) {
+            Medicine::where('unit', $previous)->update(['unit' => $unit->name]);
+            MedicineUnit::where('name', $previous)->update(['name' => $unit->name]);
+        }
+
+        return back()->with('success', 'Unit updated.');
+    }
+
+    public function destroyUnit(Unit $unit)
+    {
+        $this->authorizePermission('manage-medicines');
+        $used = Medicine::where('unit', $unit->name)->exists()
+            || MedicineUnit::where('name', $unit->name)->exists();
+        if ($used) {
+            return back()->with('error', 'Cannot delete this unit while medicines use it.');
+        }
+        $unit->delete();
+
+        return back()->with('success', 'Unit deleted.');
     }
 
     public function brands()
     {
-        $this->authorizePermission('manage-medicines');
+        return $this->nameCatalog(Brand::class, 'Brands', 'brands');
+    }
 
-        return Inertia::render('Catalog/Index', [
-            'title' => 'Brands',
-            'kind' => 'brand',
-            'rows' => Brand::withCount('medicines')->orderBy('name')->get(),
-            'storeRoute' => 'brands.store',
-        ]);
+    public function updateBrand(Request $request, Brand $brand)
+    {
+        return $this->updateName($brand, $request, 'brands', 'Brand');
+    }
+
+    public function destroyBrand(Brand $brand)
+    {
+        return $this->destroyName($brand, 'brand');
     }
 
     public function storeBrand(Request $request)
@@ -925,6 +1001,48 @@ class PharmacyController extends Controller
         return Inertia::render('Audit/Index', [
             'logs' => AuditLog::with('user')->latest()->limit(100)->get(),
         ]);
+    }
+
+    private function nameCatalog(string $model, string $title, string $routeName)
+    {
+        $this->authorizePermission('manage-medicines');
+
+        return Inertia::render('Catalog/Index', [
+            'title' => $title,
+            'rows' => $model::withCount('medicines')->orderBy('name')->get(),
+            'storeRoute' => $routeName.'.store',
+            'updateRoute' => $routeName.'.update',
+            'destroyRoute' => $routeName.'.destroy',
+        ]);
+    }
+
+    private function storeName(string $model, Request $request, string $table, string $label)
+    {
+        $this->authorizePermission('manage-medicines');
+        $data = $request->validate(['name' => 'required|string|max:255|unique:'.$table.',name']);
+        $model::create($data);
+
+        return back()->with('success', $label.' saved.');
+    }
+
+    private function updateName($row, Request $request, string $table, string $label)
+    {
+        $this->authorizePermission('manage-medicines');
+        $data = $request->validate(['name' => 'required|string|max:255|unique:'.$table.',name,'.$row->id]);
+        $row->update($data);
+
+        return back()->with('success', $label.' updated.');
+    }
+
+    private function destroyName($row, string $label)
+    {
+        $this->authorizePermission('manage-medicines');
+        if (method_exists($row, 'medicines') && $row->medicines()->exists()) {
+            return back()->with('error', 'Cannot delete this '.$label.' while medicines use it.');
+        }
+        $row->delete();
+
+        return back()->with('success', ucfirst($label).' deleted.');
     }
 
     private function authorizePermission(string $permission): void

@@ -176,11 +176,12 @@ const sectionIcon = (label) => ({
 }[label] || 'circle');
 
 const itemIcon = (name) => ({
-    Medicines: 'bi-capsule',
-    Generics: 'bi-prescription2',
-    Brands: 'bi-bookmark',
-    Categories: 'bi-tags',
-    Manufacturers: 'bi-buildings',
+    'Medicine List': 'bi-capsule',
+    'Generic Name': 'bi-prescription2',
+    'Medicine Type': 'bi-bookmark',
+    Category: 'bi-tags',
+    Manufacturer: 'bi-buildings',
+    Units: 'bi-rulers',
     Stock: 'bi-box-seam',
     Expiry: 'bi-calendar-x',
     Transfers: 'bi-arrow-left-right',

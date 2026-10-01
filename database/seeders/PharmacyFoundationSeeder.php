@@ -34,8 +34,10 @@ class PharmacyFoundationSeeder extends Seeder
         $branchId = Branch::query()->value('id');
         $menus = [
             ['Branches', 'branches.index', '🏢', 15, 'manage-branches'],
-            ['Generics', 'generics.index', '🧪', 16, 'manage-medicines'],
-            ['Brands', 'brands.index', '🏷️', 17, 'manage-medicines'],
+            ['Category', 'categories.index', '🏷️', 16, 'manage-medicines'],
+            ['Generic Name', 'generics.index', '🧪', 17, 'manage-medicines'],
+            ['Medicine Type', 'medicine-types.index', '💊', 28, 'manage-medicines'],
+            ['Units', 'units.index', '📏', 29, 'manage-medicines'],
             ['Suppliers', 'suppliers.index', '🚚', 18, 'manage-suppliers'],
             ['Purchase Orders', 'purchase-orders.index', '📝', 19, 'manage-purchases'],
             ['Expiry', 'stocks.expiry', '⏳', 20, 'manage-inventory'],
@@ -62,6 +64,8 @@ class PharmacyFoundationSeeder extends Seeder
             })->pluck('id');
             $menu->roles()->sync($roleIds->all());
         }
+
+        Menu::where('route', 'brands.index')->update(['is_active' => false]);
 
         if ($branchId) {
             \App\Models\User::whereNull('branch_id')->update(['branch_id' => $branchId]);

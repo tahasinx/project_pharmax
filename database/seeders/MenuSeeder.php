@@ -41,7 +41,7 @@ class MenuSeeder extends Seeder
                 'roles' => ['admin', 'manager', 'cashier', 'pharmacist']
             ],
             [
-                'name' => 'Medicines',
+                'name' => 'Medicine List',
                 'route' => 'medicines.index',
                 'icon' => '💊',
                 'order' => 3,
@@ -50,7 +50,7 @@ class MenuSeeder extends Seeder
                 'roles' => ['admin', 'manager', 'pharmacist']
             ],
             [
-                'name' => 'Manufacturers',
+                'name' => 'Manufacturer',
                 'route' => 'manufacturers.index',
                 'icon' => '🏭',
                 'order' => 4,

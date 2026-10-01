@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Category;
+use App\Models\Generic;
 use App\Models\Manufacturer;
 use App\Models\Medicine;
+use App\Models\MedicineType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
@@ -51,6 +53,8 @@ class MedicineTest extends TestCase
     {
         $medicineData = [
             'name' => 'Test Medicine',
+            'medicine_type_id' => MedicineType::create(['name' => 'Allopathic'])->id,
+            'generic_id' => Generic::create(['name' => 'Paracetamol'])->id,
             'category_id' => $this->category->id,
             'manufacturer_id' => $this->manufacturer->id,
             'generic_name' => 'Test Generic',
@@ -76,7 +80,7 @@ class MedicineTest extends TestCase
     public function test_cannot_create_medicine_without_required_fields()
     {
         $response = $this->actingAs($this->user)->post('/medicines', []);
-        $response->assertSessionHasErrors(['name', 'category_id', 'manufacturer_id', 'price', 'manufacturer_price', 'box_size']);
+        $response->assertSessionHasErrors(['name', 'generic_id', 'strength', 'medicine_type_id', 'unit', 'price', 'manufacturer_price']);
     }
 
     public function test_can_update_medicine()
@@ -90,6 +94,10 @@ class MedicineTest extends TestCase
             'name' => 'Updated Medicine',
             'category_id' => $this->category->id,
             'manufacturer_id' => $this->manufacturer->id,
+            'medicine_type_id' => MedicineType::firstOrCreate(['name' => 'Allopathic'])->id,
+            'generic_id' => Generic::firstOrCreate(['name' => 'Paracetamol'])->id,
+            'strength' => '500mg',
+            'unit' => 'Piece',
             'price' => 30.00,
             'manufacturer_price' => 25.00,
             'box_size' => 15,

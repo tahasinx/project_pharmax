@@ -18,6 +18,7 @@ class Medicine extends Model
         'manufacturer_id',
         'generic_name',
         'generic_id',
+        'medicine_type_id',
         'brand_id',
         'strength',
         'dosage_form',
@@ -32,8 +33,10 @@ class Medicine extends Model
         'box_size',
         'product_location',
         'price',
+        'discount_percent',
         'manufacturer_price',
         'unit',
+        'alert_qty',
         'details',
         'image',
         'medex_id',
@@ -49,7 +52,9 @@ class Medicine extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'discount_percent' => 'decimal:2',
         'manufacturer_price' => 'decimal:2',
+        'alert_qty' => 'integer',
         'box_size' => 'integer',
         'status' => 'boolean',
         'requires_prescription' => 'boolean',
@@ -73,6 +78,11 @@ class Medicine extends Model
     public function generic(): BelongsTo
     {
         return $this->belongsTo(Generic::class);
+    }
+
+    public function medicineType(): BelongsTo
+    {
+        return $this->belongsTo(MedicineType::class);
     }
 
     public function brand(): BelongsTo
