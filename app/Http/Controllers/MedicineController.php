@@ -19,10 +19,22 @@ class MedicineController extends Controller
 {
     use HasSettingsPagination;
 
-    public function index()
+    public function index(Request $request)
     {
         $itemsPerPage = $this->getItemsPerPage();
-        $medicines     = Medicine::with(['category', 'manufacturer'])->paginate($itemsPerPage);
+        $medicines = Medicine::with(['category', 'manufacturer'])
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->search;
+                $query->where(function ($inner) use ($search) {
+                    $inner->where('name', 'like', "%{$search}%")
+                        ->orWhere('generic_name', 'like', "%{$search}%")
+                        ->orWhereHas('category', fn ($category) => $category->where('name', 'like', "%{$search}%"))
+                        ->orWhereHas('manufacturer', fn ($manufacturer) => $manufacturer->where('name', 'like', "%{$search}%"));
+                });
+            })
+            ->orderBy('name')
+            ->paginate($itemsPerPage)
+            ->withQueryString();
         $categories    = Category::where('status', true)->get();
         $manufacturers = Manufacturer::where('status', true)->get();
 

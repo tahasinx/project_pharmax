@@ -115,7 +115,8 @@
                         <div class="p-6">
                             <h3 class="text-lg font-medium text-gray-900 mb-4">Medicines by this Manufacturer</h3>
                             <div class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200">
+                                <LunaTable title="Show">
+<table class="table table-striped table-hover min-w-full divide-y divide-gray-200">
                                     <thead class="bg-gray-50">
                                         <tr>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -164,6 +165,7 @@
                                         </tr>
                                     </tbody>
                                 </table>
+</LunaTable>
                             </div>
                         </div>
                     </div>
@@ -174,6 +176,8 @@
 </template>
 
 <script setup>
+import LunaTable from '@/Components/LunaTable.vue'
+
 import { Link } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 

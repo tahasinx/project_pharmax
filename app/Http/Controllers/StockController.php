@@ -23,7 +23,7 @@ class StockController extends Controller
         $itemsPerPage = $this->getItemsPerPage();
         $stocks = Stock::with('medicine.category', 'medicine.manufacturer', 'warehouse')
             ->orderBy('created_at', 'desc')
-            ->paginate($itemsPerPage);
+            ->paginate($itemsPerPage)->withQueryString();
 
         $weightedCosts = Stock::query()
             ->where('quantity', '>', 0)

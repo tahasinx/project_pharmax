@@ -1,4 +1,6 @@
 <script setup>
+import LunaTable from '@/Components/LunaTable.vue'
+
 import { Head, useForm } from '@inertiajs/vue3';
 import Layout from './Layout.vue';
 
@@ -24,7 +26,8 @@ const form = useForm({ password: '', command_line: '' });
                 <button class="rounded-md bg-[#17342b] px-3 py-2 text-sm font-medium text-white">Run</button>
             </form>
             <pre v-if="output" class="overflow-auto border-b border-[#f4f4f5] bg-[#18181b] p-4 text-xs text-[#e4e4e7]">{{ ran }} ({{ exitCode }}){{ '\n' }}{{ output }}</pre>
-            <table>
+            <LunaTable title="Commands">
+<table class="table table-striped table-hover">
                 <thead>
                     <tr>
                         <th>Command</th>
@@ -38,6 +41,7 @@ const form = useForm({ password: '', command_line: '' });
                     </tr>
                 </tbody>
             </table>
+</LunaTable>
         </section>
     </Layout>
 </template>

@@ -2,70 +2,16 @@
     <Head title="Medicines" />
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Medicines
-                </h2>
-                <div class="flex space-x-2">
-                    <Link :href="route('medicines.create')"
-                          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        Add Medicine
-                    </Link>
-                    <button @click="showImportModal = true"
-                            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                        Import CSV
-                    </button>
-                    <button @click="openApiModal"
-                            class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
-                        Search Medicine [API]
-                    </button>
-                </div>
+            <h4 class="mb-sm-0 font-size-18">Medicines</h4>
+            <div class="page-title-right d-flex flex-wrap align-items-center gap-2">
+                <Link :href="route('medicines.create')" class="btn btn-primary btn-sm">Add Medicine</Link>
+                <button type="button" class="btn btn-success btn-sm" @click="showImportModal = true">Import CSV</button>
+                <button type="button" class="btn btn-primary btn-sm" @click="openApiModal">Search Medicine [API]</button>
             </div>
         </template>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <!-- Search and Filters -->
-                <div class="bg-white shadow-sm sm:rounded-lg mb-6">
-                    <div class="p-6">
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 space-y-4 md:space-y-0">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Search Medicines</label>
-                                <input v-model="search"
-                                       type="text"
-                                       placeholder="Search medicines..."
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div class="mb-4 md:mb-0">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                                <SearchableSelect
-                                    v-model="categoryFilter"
-                                    :options="[{ value: '', label: 'All Categories' }, ...categoryOptions]"
-                                    placeholder="Select Category"
-                                />
-                            </div>
-                            <div class="mb-4 md:mb-0">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Manufacturer</label>
-                                <SearchableSelect
-                                    v-model="manufacturerFilter"
-                                    :options="[{ value: '', label: 'All Manufacturers' }, ...manufacturerOptions]"
-                                    placeholder="Select Manufacturer"
-                                />
-                            </div>
-                            <div class="flex items-end">
-                                <button @click="clearFilters"
-                                        class="w-full bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                                    Clear Filters
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Medicines Table -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
+        <LunaTable title="Medicines" :pagination="medicines">
+<table class="table table-striped table-hover mb-0">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -154,28 +100,7 @@
                                 </tr>
                             </tbody>
                         </table>
-                    </div>
-
-                    <!-- Pagination -->
-                    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                        <div class="flex-1 flex justify-between sm:hidden">
-                            <Link v-if="medicines.prev_page_url"
-                                  :href="medicines.prev_page_url"
-                                  class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                Previous
-                            </Link>
-                            <Link v-if="medicines.next_page_url"
-                                  :href="medicines.next_page_url"
-                                  class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                Next
-                            </Link>
-                        </div>
-                        <!-- Pagination -->
-                        <Pagination :pagination="medicines" />
-                    </div>
-                </div>
-            </div>
-        </div>
+</LunaTable>
 
         <!-- API Modal -->
         <div v-if="showApiModal" class="fixed inset-0 z-[9999]">
@@ -344,6 +269,8 @@
 </template>
 
 <script setup>
+import LunaTable from '@/Components/LunaTable.vue'
+
 import { ref, computed } from 'vue'
 import { Link, router, Head } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'

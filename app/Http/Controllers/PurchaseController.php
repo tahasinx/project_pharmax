@@ -25,7 +25,7 @@ class PurchaseController extends Controller
         $itemsPerPage = $this->getItemsPerPage();
         $purchases = Purchase::with(['manufacturer', 'items.medicine'])
             ->orderBy('created_at', 'desc')
-            ->paginate($itemsPerPage);
+            ->paginate($itemsPerPage)->withQueryString();
 
         return Inertia::render('Purchase/Index', [
             'purchases' => $purchases,

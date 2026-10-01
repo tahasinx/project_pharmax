@@ -28,7 +28,8 @@
           <div class="text-sm text-gray-500">Total Due: {{ currency(totalDue) }}</div>
         </div>
         <div class="overflow-x-auto">
-          <table class="min-w-full">
+          <LunaTable title="CustomerDues">
+<table class="table table-striped table-hover min-w-full">
             <thead>
               <tr class="text-left text-sm text-gray-500">
                 <th class="py-2">Customer</th>
@@ -44,6 +45,7 @@
               </tr>
             </tbody>
           </table>
+</LunaTable>
         </div>
       </div>
     </div>
@@ -51,6 +53,8 @@
 </template>
 
 <script setup>
+import LunaTable from '@/Components/LunaTable.vue'
+
 import { reactive, computed } from 'vue'
 import { router, Head, Link } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'

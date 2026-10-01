@@ -1,4 +1,6 @@
 <script setup>
+import LunaTable from '@/Components/LunaTable.vue'
+
 import { Head, Link } from '@inertiajs/vue3';
 import Layout from './Layout.vue';
 
@@ -13,7 +15,8 @@ defineProps({ rows: Array });
                 <h1>Backups</h1>
                 <p class="mt-1 text-sm text-[#71717a]">Database dumps for each pharmacy. Create one only after a pharmacy exists.</p>
             </div>
-            <table>
+            <LunaTable title="Backups">
+<table class="table table-striped table-hover">
                 <thead>
                     <tr>
                         <th>Pharmacy</th>
@@ -44,6 +47,7 @@ defineProps({ rows: Array });
                     </tr>
                 </tbody>
             </table>
+</LunaTable>
         </section>
     </Layout>
 </template>

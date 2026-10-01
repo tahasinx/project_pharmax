@@ -21,7 +21,7 @@ class UserController extends Controller
     public function index()
     {
         $itemsPerPage = $this->getItemsPerPage();
-        $users = User::with('roles')->paginate($itemsPerPage);
+        $users = User::with('roles')->paginate($itemsPerPage)->withQueryString();
 
         return Inertia::render('User/Index', [
             'users' => $users,

@@ -1,4 +1,6 @@
 <script setup>
+import LunaTable from '@/Components/LunaTable.vue'
+
 import { Head, useForm } from '@inertiajs/vue3';
 import Layout from '../Layout.vue';
 
@@ -26,7 +28,8 @@ const form = useForm({ platform_subscription_id: '', amount: '', issued_on: '', 
                 <label class="text-sm"><span class="mb-1 block text-[#71717a]">Notes</span><input v-model="form.notes" class="w-48"></label>
                 <button class="rounded-md bg-[#17342b] px-3 py-2 text-sm font-medium text-white">Create</button>
             </form>
-            <table>
+            <LunaTable title="Invoices">
+<table class="table table-striped table-hover">
                 <thead>
                     <tr>
                         <th>Number</th>
@@ -52,6 +55,7 @@ const form = useForm({ platform_subscription_id: '', amount: '', issued_on: '', 
                     </tr>
                 </tbody>
             </table>
+</LunaTable>
         </section>
     </Layout>
 </template>

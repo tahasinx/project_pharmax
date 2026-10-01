@@ -1,4 +1,6 @@
 <script setup>
+import LunaTable from '@/Components/LunaTable.vue'
+
 import { Head, Link, router } from '@inertiajs/vue3';
 import { reactive } from 'vue';
 import Layout from '../Layout.vue';
@@ -46,7 +48,8 @@ function apply() {
                 <button class="rounded-md border border-[#e4e4e7] px-3 py-2 text-sm">Filter</button>
                 <button v-if="q || provision" type="button" class="text-sm text-[#71717a]" @click="filters.q = ''; filters.provision = ''; apply()">Clear</button>
             </form>
-            <table>
+            <LunaTable title="Companies">
+<table class="table table-striped table-hover">
                 <thead>
                     <tr>
                         <th>Name</th>
@@ -77,6 +80,7 @@ function apply() {
                     </tr>
                 </tbody>
             </table>
+</LunaTable>
             <div v-if="companies.last_page > 1" class="flex justify-end gap-2 border-t border-[#f4f4f5] px-5 py-3 text-sm">
                 <Link v-if="companies.prev_page_url" :href="companies.prev_page_url">Previous</Link>
                 <span class="text-[#71717a]">{{ companies.current_page }} / {{ companies.last_page }}</span>

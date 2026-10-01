@@ -32,7 +32,7 @@ class InvoiceController extends Controller
         $itemsPerPage = $this->getItemsPerPage();
         $invoices = Invoice::with(['customer', 'user'])
             ->orderBy('created_at', 'desc')
-            ->paginate($itemsPerPage);
+            ->paginate($itemsPerPage)->withQueryString();
 
         return Inertia::render('Invoice/Index', [
             'invoices' => $invoices,

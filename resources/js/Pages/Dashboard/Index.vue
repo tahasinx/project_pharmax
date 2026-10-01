@@ -2,108 +2,154 @@
     <Head title="Dashboard" />
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex flex-wrap items-end justify-between gap-3">
-                <div>
-                    <p class="mb-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-emerald-800/60">Overview</p>
-                    <h2 class="font-semibold text-xl text-gray-800 leading-tight">Executive dashboard</h2>
-                    <p class="mt-1 text-sm text-slate-500">A live view of today’s counter, inventory, and cash position.</p>
-                </div>
-                <span class="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-white/80 px-3 py-1.5 text-xs font-medium text-slate-600">
-                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    {{ new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) }}
-                </span>
-            </div>
+            <h4 class="mb-sm-0 font-size-18">Dashboard</h4>
         </template>
-        <div class="py-8">
-            <div class="mx-auto max-w-[88rem] space-y-5 px-4 sm:px-7 lg:px-9">
-                <form class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-100 bg-white px-4 py-3 shadow-sm" @submit.prevent="saveDeadDays">
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-800">Stock movement window</label>
-                        <span class="text-xs text-slate-500">Set the period used to identify slow and dead stock.</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <input v-model.number="deadDays" type="number" min="1" class="w-24 border rounded px-2 py-1" aria-label="Stock movement window in days">
-                        <span class="text-sm text-slate-500">days</span>
-                        <button class="bg-gray-800 text-white px-3 py-1 rounded">Save</button>
-                    </div>
-                </form>
-                <section aria-label="Key performance indicators">
-                    <div class="mb-3 flex items-center justify-between">
-                        <h3 class="text-sm font-semibold text-slate-800">Key indicators</h3>
-                        <span class="text-xs text-slate-400">Today and current inventory</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
-                        <div v-for="(card, index) in cards" :key="card.label" class="dashboard-metric group relative overflow-hidden rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md">
-                            <span class="absolute inset-y-0 left-0 w-[3px]" :class="index >= 10 ? 'bg-amber-400' : 'bg-emerald-700/70'" />
-                            <div class="text-[11px] font-medium leading-4 text-slate-500">{{ card.label }}</div>
-                            <div class="mt-2 truncate text-xl font-semibold tabular-nums text-slate-900" :title="String(card.value)">{{ card.value }}</div>
-                        </div>
-                    </div>
-                </section>
 
-                <div class="grid grid-cols-1 gap-5 xl:grid-cols-2">
-                    <section class="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm">
-                        <header class="border-b border-slate-100 px-5 py-4">
-                            <h3 class="text-sm font-semibold text-slate-800">Sales and purchases</h3>
-                            <p class="mt-1 text-xs text-slate-500">Monthly totals for the last 12 months</p>
-                        </header>
-                        <div class="overflow-x-auto px-5 pb-4">
-                        <table class="min-w-full text-sm">
-                            <thead><tr class="text-left text-gray-500"><th class="py-3">Month</th><th class="py-3 text-right">Sales</th><th class="py-3 text-right">Purchases</th></tr></thead>
-                            <tbody>
-                                <tr v-for="row in monthlyData" :key="row.month" class="border-t border-slate-100">
-                                    <td class="py-2.5 text-slate-600">{{ row.month }}</td>
-                                    <td class="py-2.5 text-right font-medium tabular-nums text-slate-800">{{ row.sales }}</td>
-                                    <td class="py-2.5 text-right font-medium tabular-nums text-slate-800">{{ row.purchases }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        </div>
-                    </section>
-                    <section class="rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
-                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                            <div>
-                                <h3 class="text-sm font-semibold text-slate-800">Product movement</h3>
-                                <p class="mt-1 text-xs text-slate-500">Sales velocity and inventory exposure</p>
+        <div class="row">
+            <div v-for="card in summary" :key="card.label" class="col-xl-3 col-md-6">
+                <div class="card card-h-100">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-6">
+                                <span class="text-muted mb-3 lh-1 d-block text-truncate">{{ card.label }}</span>
+                                <h4 class="mb-3">{{ card.value }}</h4>
                             </div>
-                            <i class="bi bi-arrow-left-right text-base text-emerald-800/60" aria-hidden="true" />
+                            <div class="col-6">
+                                <apexchart v-if="card.series" type="area" height="46" :options="card.options" :series="card.series" />
+                                <div v-else class="text-end">
+                                    <span class="text-muted d-block font-size-12">{{ card.aside }}</span>
+                                    <h5 class="mb-0">{{ card.asideValue }}</h5>
+                                </div>
+                            </div>
                         </div>
-                        <h4 class="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">Top medicines · 30 days</h4>
-                        <ul class="space-y-1 text-sm">
-                            <li v-for="row in fastMovers" :key="row.name" class="flex justify-between border-b border-slate-100 py-2">
-                                <span class="truncate pr-3 text-slate-700">{{ row.name }}</span><span class="tabular-nums font-medium text-slate-800">{{ row.sold }}</span>
-                            </li>
-                            <li v-if="fastMovers.length === 0" class="py-2 text-slate-500">No sales in the last 30 days.</li>
-                        </ul>
-                        <h4 class="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-slate-500">Slow movers · {{ deadStockDays }} days</h4>
-                        <ul class="space-y-1 text-sm">
-                            <li v-for="row in slowMovers" :key="row.name" class="flex justify-between border-b border-slate-100 py-2">
-                                <span class="truncate pr-3 text-slate-700">{{ row.name }}</span><span class="tabular-nums font-medium text-slate-800">{{ row.sold }}</span>
-                            </li>
-                            <li v-if="!slowMovers?.length" class="py-2 text-slate-500">None.</li>
-                        </ul>
-                        <h4 class="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-slate-500">Dead stock · {{ deadStockDays }} days</h4>
-                        <ul class="space-y-1 text-sm">
-                            <li v-for="row in deadStock" :key="row.id" class="border-b border-slate-100 py-2 text-slate-700">{{ row.name }}</li>
-                            <li v-if="deadStock.length === 0" class="py-2 text-slate-500">None.</li>
-                        </ul>
-                    </section>
+                        <div class="text-nowrap">
+                            <span class="badge bg-soft-primary text-primary">{{ card.note }}</span>
+                            <span class="ms-1 text-muted font-size-13">{{ card.caption }}</span>
+                        </div>
+                    </div>
                 </div>
+            </div>
+        </div>
 
-                <section class="rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
-                    <header class="mb-3 flex items-end justify-between gap-3">
-                        <div>
-                            <h3 class="text-sm font-semibold text-slate-800">Profit by category</h3>
-                            <p class="mt-1 text-xs text-slate-500">Gross contribution across product categories</p>
+        <div class="row">
+            <div class="col-xl-5">
+                <div class="card card-h-100">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">Profit by category</h5>
+                        <div v-if="categoryRows.length" class="row align-items-center">
+                            <div class="col-sm">
+                                <apexchart type="donut" height="230" :options="donutOptions" :series="categorySeries" />
+                            </div>
+                            <div class="col-sm align-self-center">
+                                <div v-for="(row, index) in categoryRows" :key="row.category" class="mt-3">
+                                    <p class="mb-1">
+                                        <i class="mdi mdi-circle align-middle font-size-10 me-2" :style="{ color: palette[index % palette.length] }"></i>
+                                        {{ row.category }}
+                                    </p>
+                                    <h6 class="mb-0">{{ money(row.profit) }}</h6>
+                                </div>
+                            </div>
                         </div>
-                        <i class="bi bi-bar-chart-line text-base text-emerald-800/60" aria-hidden="true" />
-                    </header>
-                    <ul class="grid gap-x-8 text-sm sm:grid-cols-2 xl:grid-cols-3">
-                        <li v-for="row in profitByCategory" :key="row.category" class="flex justify-between gap-3 border-b border-slate-100 py-2.5">
-                            <span class="truncate text-slate-600">{{ row.category }}</span><span class="shrink-0 font-medium tabular-nums text-slate-800">{{ row.profit }}</span>
-                        </li>
-                    </ul>
-                </section>
+                        <p v-else class="text-muted mb-0 dash-fill d-flex align-items-center">No category profit yet. It appears after sales are posted.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-7">
+                <div class="row">
+                    <div class="col-xl-8">
+                        <div class="card card-h-100">
+                            <div class="card-body">
+                                <h5 class="card-title mb-4">Today</h5>
+                                <div class="row align-items-center">
+                                <div class="col-sm-5">
+                                    <div class="dash-meter">
+                                        <apexchart type="radialBar" height="190" :options="radialOptions" :series="marginSeries" />
+                                    </div>
+                                </div>
+                                    <div class="col-sm-7">
+                                        <p class="mb-1">Today's sales</p>
+                                        <h4>{{ money(stats.todays_sales) }}</h4>
+                                        <p class="text-muted mb-4">Average ticket {{ money(stats.basket) }}</p>
+                                        <div class="row g-0">
+                                            <div class="col-6">
+                                                <p class="mb-2 text-muted text-uppercase font-size-11">Purchases</p>
+                                                <h5 class="fw-medium">{{ money(stats.todays_purchases) }}</h5>
+                                            </div>
+                                            <div class="col-6">
+                                                <p class="mb-2 text-muted text-uppercase font-size-11">Gross profit</p>
+                                                <h5 class="fw-medium">{{ money(stats.gross_profit) }}</h5>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <Link :href="route('invoices.index')" class="btn btn-primary btn-sm">View sales <i class="mdi mdi-arrow-right ms-1"></i></Link>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-4">
+                        <div class="card bg-primary text-white shadow-primary card-h-100">
+                            <div class="card-body p-4">
+                                <h4 class="lh-base fw-normal text-white mb-4">Stock to watch</h4>
+                                <div class="row g-3 text-center">
+                                    <div class="col-6" v-for="item in stockWatch" :key="item.label">
+                                        <div class="watch-tile">
+                                            <h4 class="text-white mb-1">{{ item.value }}</h4>
+                                            <span class="text-white-50 font-size-13">{{ item.label }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-4 text-center">
+                                    <Link :href="route('stocks.expiry')" class="btn btn-light btn-sm">Expiry</Link>
+                                    <Link :href="route('stocks.alerts')" class="btn btn-light btn-sm ms-1">Alerts</Link>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-xl-8">
+                <div class="card card-h-100">
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap align-items-center mb-4">
+                            <h5 class="card-title me-2 mb-0">Sales and purchases</h5>
+                            <div class="ms-auto">
+                                <button v-for="option in ranges" :key="option.months" type="button" class="btn btn-sm" :class="range === option.months ? 'btn-soft-primary' : 'btn-soft-secondary'" @click="range = option.months">{{ option.label }}</button>
+                            </div>
+                        </div>
+                        <apexchart type="bar" height="320" :options="barOptions" :series="barSeries" />
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4">
+                <div class="card card-h-100">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">Fast movers</h5>
+                        <div v-if="fastMovers.length">
+                            <div v-for="(item, index) in fastMovers" :key="item.name" class="d-flex align-items-center mb-3">
+                                <div class="avatar-sm">
+                                    <span class="avatar-title rounded-circle bg-soft-primary text-primary font-size-16">{{ index + 1 }}</span>
+                                </div>
+                                <div class="flex-grow-1 ms-3 text-truncate">{{ item.name }}</div>
+                                <div class="flex-shrink-0 text-muted">{{ item.sold }}</div>
+                            </div>
+                        </div>
+                        <p v-else class="text-muted mb-0">No sales in the last 30 days.</p>
+                        <h5 class="card-title mt-4 mb-3">Dead stock</h5>
+                        <div v-if="deadStock.length">
+                            <div v-for="item in deadStock" :key="item.id || item.name" class="d-flex align-items-center mb-2">
+                                <i class="bi bi-box-seam text-muted me-2"></i>
+                                <span class="text-truncate">{{ item.name }}</span>
+                            </div>
+                            <p class="text-muted font-size-12 mb-0">No sales in {{ deadStockDays }} days.</p>
+                        </div>
+                        <p v-else class="text-muted mb-0">Nothing sitting unsold.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </AuthenticatedLayout>
@@ -111,38 +157,118 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { Head, router } from '@inertiajs/vue3'
+import { Head, Link, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import VueApexCharts from 'vue3-apexcharts'
+
+const apexchart = VueApexCharts
+const page = usePage()
 
 const props = defineProps({
-    stats: Object,
-    fastMovers: Array,
-    deadStock: Array,
+    stats: { type: Object, default: () => ({}) },
+    fastMovers: { type: Array, default: () => [] },
+    deadStock: { type: Array, default: () => [] },
     slowMovers: { type: Array, default: () => [] },
     deadStockDays: { type: Number, default: 90 },
-    profitByCategory: Array,
-    monthlyData: Array,
+    profitByCategory: { type: Array, default: () => [] },
+    monthlyData: { type: Array, default: () => [] },
 })
 
-const deadDays = ref(props.deadStockDays)
-const saveDeadDays = () => router.post(route('dashboard.dead-stock-days'), { dead_stock_days: deadDays.value })
-const cards = computed(() => [
-    { label: "Today's sales", value: props.stats.todays_sales },
-    { label: "Today's purchases", value: props.stats.todays_purchases },
-    { label: 'Gross profit', value: props.stats.gross_profit },
-    { label: 'Gross margin %', value: props.stats.gross_margin },
-    { label: 'Profit after cost', value: props.stats.net_profit },
-    { label: 'Cash in hand', value: props.stats.cash_in_hand },
-    { label: 'Customer receivables', value: props.stats.receivables },
-    { label: 'Supplier payable', value: props.stats.payables },
-    { label: 'Inventory at cost', value: props.stats.inventory_value },
-    { label: 'Inventory at MRP', value: props.stats.mrp_value },
-    { label: 'Expiring in 30 days', value: props.stats.expiring },
-    { label: 'Expired batches', value: props.stats.expired },
-    { label: 'Low stock batches', value: props.stats.low_stock },
-    { label: 'Out of stock', value: props.stats.out_of_stock },
-    { label: 'Average basket', value: props.stats.basket },
-    { label: "Today's prescriptions", value: props.stats.prescriptions_today },
-    { label: 'Dispensed today', value: props.stats.dispensed_today },
+const palette = ['#5156be', '#34c38f', '#50a5f1', '#f1b44c', '#f46a6a', '#74788d']
+const ranges = [
+    { label: '1M', months: 1 },
+    { label: '6M', months: 6 },
+    { label: '1Y', months: 12 },
+]
+const range = ref(12)
+
+const money = (value) => {
+    const ui = page.props.ui || {}
+    const amount = Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    return ui.currency_position === 'after' ? `${amount}${ui.currency_symbol || ''}` : `${ui.currency_symbol || ''}${amount}`
+}
+
+const months = computed(() => props.monthlyData || [])
+const salesTrend = computed(() => months.value.map((row) => Number(row.sales || 0)))
+const purchaseTrend = computed(() => months.value.map((row) => Number(row.purchases || 0)))
+const marginTrend = computed(() => months.value.map((row) => {
+    const sales = Number(row.sales || 0)
+    return sales > 0 ? Number((((sales - Number(row.purchases || 0)) / sales) * 100).toFixed(1)) : 0
+}))
+
+const sparkOptions = (color) => ({
+    chart: { sparkline: { enabled: true }, animations: { enabled: false }, fontFamily: 'IBM Plex Sans, sans-serif' },
+    stroke: { width: 2, curve: 'smooth' },
+    fill: { opacity: 0.2 },
+    colors: [color],
+    tooltip: { enabled: false },
+})
+
+const summary = computed(() => [
+    { label: "Today's sales", value: money(props.stats.todays_sales), note: `${props.stats.prescriptions_today || 0} Rx`, caption: 'Dispensed ' + (props.stats.dispensed_today || 0), series: [{ data: salesTrend.value }], options: sparkOptions('#5156be') },
+    { label: "Today's purchases", value: money(props.stats.todays_purchases), note: money(props.stats.payables), caption: 'Payables', series: [{ data: purchaseTrend.value }], options: sparkOptions('#34c38f') },
+    { label: 'Cash in hand', value: money(props.stats.cash_in_hand), note: money(props.stats.receivables), caption: 'Receivables', aside: 'Inventory', asideValue: money(props.stats.inventory_value) },
+    { label: 'Gross margin', value: `${Number(props.stats.gross_margin || 0).toFixed(1)}%`, note: money(props.stats.gross_profit), caption: 'Gross profit', series: [{ data: marginTrend.value }], options: sparkOptions('#f1b44c') },
 ])
+
+const stockWatch = computed(() => [
+    { label: 'Expiring', value: props.stats.expiring || 0 },
+    { label: 'Expired', value: props.stats.expired || 0 },
+    { label: 'Low stock', value: props.stats.low_stock || 0 },
+    { label: 'Out of stock', value: props.stats.out_of_stock || 0 },
+])
+
+const categoryRows = computed(() => (props.profitByCategory || []).filter((row) => Number(row.profit) > 0).slice(0, 6))
+const categorySeries = computed(() => categoryRows.value.map((row) => Number(row.profit)))
+const donutOptions = computed(() => ({
+    labels: categoryRows.value.map((row) => row.category),
+    colors: palette,
+    legend: { show: false },
+    dataLabels: { enabled: false },
+    stroke: { width: 0 },
+    chart: { fontFamily: 'IBM Plex Sans, sans-serif' },
+    plotOptions: { pie: { donut: { size: '72%' } } },
+    tooltip: { y: { formatter: (value) => money(value) } },
+}))
+
+const marginSeries = computed(() => [Math.max(0, Math.min(100, Number(props.stats.gross_margin || 0)))])
+const radialOptions = {
+    chart: { fontFamily: 'IBM Plex Sans, sans-serif' },
+    colors: ['#5156be'],
+    plotOptions: {
+        radialBar: {
+            hollow: { size: '62%' },
+            dataLabels: {
+                name: { show: true, fontSize: '12px', color: '#74788d', offsetY: 18 },
+                value: { fontSize: '20px', fontFamily: 'IBM Plex Sans, sans-serif', offsetY: -12, formatter: (value) => `${Number(value).toFixed(1)}%` },
+            },
+        },
+    },
+    labels: ['Margin'],
+}
+
+const ranged = computed(() => months.value.slice(-range.value))
+const barSeries = computed(() => [
+    { name: 'Sales', data: ranged.value.map((row) => Number(row.sales || 0)) },
+    { name: 'Purchases', data: ranged.value.map((row) => Number(row.purchases || 0)) },
+])
+const barOptions = computed(() => {
+    const peak = Math.max(0, ...ranged.value.flatMap((row) => [Number(row.sales || 0), Number(row.purchases || 0)]))
+    return {
+        chart: { toolbar: { show: false }, fontFamily: 'IBM Plex Sans, sans-serif' },
+        colors: ['#5156be', '#34c38f'],
+        plotOptions: { bar: { columnWidth: '42%', borderRadius: 3 } },
+        dataLabels: { enabled: false },
+        grid: { borderColor: '#f1f1f5', strokeDashArray: 4 },
+        stroke: { show: true, width: 2, colors: ['transparent'] },
+        xaxis: { categories: ranged.value.map((row) => row.month), axisBorder: { show: false }, axisTicks: { show: false } },
+        yaxis: {
+            min: 0,
+            max: peak > 0 ? undefined : 1,
+            labels: { formatter: (value) => Number(value).toLocaleString() },
+        },
+        legend: { position: 'top', fontFamily: 'IBM Plex Sans, sans-serif' },
+        tooltip: { y: { formatter: (value) => money(value) } },
+    }
+})
 </script>

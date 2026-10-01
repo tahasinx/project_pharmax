@@ -1,0 +1,547 @@
+/* Luna compatibility. Real template CSS is loaded first; these rules only
+   keep the pharmacy shell usable and restyle existing page markup. */
+
+body.luna-app {
+    --pf-accent: #f6a821;
+    --pf-radius: 3px;
+    --luna-side: 280px;
+}
+
+body.luna-app,
+body.luna-app *:not(svg):not(svg *):not(.bi):not([class^="bi-"]):not([class*=" bi-"]):not(.fa):not([class^="fa-"]):not([class*=" fa-"]):not([class^="pe-7s-"]):not([class*=" pe-7s-"]):not([class^="stroke-"]):not([class*=" stroke-"]):not(code):not(pre):not(kbd):not(samp) {
+    font-family: Roboto, "Segoe UI", sans-serif !important;
+}
+
+body.luna-app [class^="pe-7s-"],
+body.luna-app [class*=" pe-7s-"] {
+    font-family: "Pe-icon-7-stroke" !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+}
+
+body.luna-app [class^="stroke-"],
+body.luna-app [class*=" stroke-"] {
+    font-family: stroke !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+}
+
+body.luna-app .fa,
+body.luna-app [class^="fa-"],
+body.luna-app [class*=" fa-"] {
+    font-family: FontAwesome !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+}
+
+body.luna-app .navigation,
+body.luna-app .navigation::before {
+    width: var(--luna-side);
+}
+
+body.luna-app .content {
+    margin-left: var(--luna-side);
+}
+
+body.luna-app.nav-toggle .navigation,
+body.luna-app.nav-toggle .navigation::before {
+    left: calc(var(--luna-side) * -1);
+}
+
+body.luna-app .navigation {
+    position: fixed;
+    z-index: 1020;
+    overflow: hidden;
+}
+
+body.luna-app .navigation nav {
+    height: 100%;
+    overflow-y: auto;
+}
+
+body.luna-app .navbar-default .navbar-brand,
+body.luna-app .navbar-default .navbar-brand:focus,
+body.luna-app .navbar-default .navbar-brand:hover {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: var(--luna-side);
+    flex: 0 0 var(--luna-side);
+    letter-spacing: 1px;
+    font-size: 13px;
+}
+
+body.luna-app .luna-nav.nav .sub-nav-icon {
+    float: right;
+    transform: rotate(0deg);
+    transition: transform 0.2s ease;
+}
+
+body.luna-app .luna-nav.nav li.is-open > a .sub-nav-icon {
+    transform: rotate(90deg);
+}
+
+body.luna-app .luna-nav .nav-second {
+    display: none;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+body.luna-app .luna-nav li.is-open > .nav-second {
+    display: flex;
+}
+
+body.luna-app .navbar-brand span {
+    float: none;
+    margin-left: 8px;
+}
+
+body.luna-app .navbar-form {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+body.luna-app .navbar-form .luna-branch {
+    width: 160px;
+    height: 32px;
+    margin-left: 8px;
+    background-color: #ffffff;
+    color: #6a727a;
+}
+
+body.luna-app .luna-avatar {
+    display: inline-grid;
+    width: 40px;
+    height: 40px;
+    margin-left: 10px;
+    place-items: center;
+    border-radius: 50%;
+    background: #2a2d35;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+body.luna-app .profil-link img.rounded-circle {
+    width: 40px;
+    object-fit: cover;
+}
+
+body.luna-app .luna-backdrop {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    body.luna-app .content {
+        margin-left: 0;
+    }
+
+    body.luna-app .navigation,
+    body.luna-app .navigation::before {
+        left: calc(var(--luna-side) * -1);
+    }
+
+    body.luna-app.nav-toggle .navigation,
+    body.luna-app.nav-toggle .navigation::before {
+        left: 0;
+    }
+
+    body.luna-app .navbar-brand {
+        width: auto;
+        flex: 0 1 auto;
+        letter-spacing: 1px;
+        padding-right: 12px;
+        padding-left: 12px;
+    }
+
+    body.luna-app .navbar-brand span,
+    body.luna-app .navbar-form {
+        display: none;
+    }
+
+    body.luna-app .navbar-collapse {
+        display: flex !important;
+        flex: 1;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    body.luna-app .navbar-collapse > .left-nav-toggle {
+        display: none;
+    }
+
+    body.luna-app.nav-toggle .luna-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 1010;
+        background: rgba(0, 0, 0, 0.45);
+    }
+}
+
+body.luna-app .content label.flex,
+body.luna-app .content label.inline-flex {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+body.luna-app .content label.block {
+    display: block;
+}
+
+body.luna-app .navbar-collapse,
+body.luna-app .navbar-collapse * {
+    visibility: visible !important;
+}
+
+body.luna-app .profil-link a,
+body.luna-app .profil-link .profile-address {
+    color: #6a727a;
+    text-decoration: none;
+}
+
+body.luna-app .profil-link a:hover,
+body.luna-app .profil-link a:hover .profile-address {
+    color: #3b3f44;
+}
+
+body.luna-app .content > div,
+body.luna-app.pace-done .content > div {
+    opacity: 1;
+}
+
+body.luna-app .content a[class*="text-red"],
+body.luna-app .content button[class*="text-red"] {
+    color: #db524b !important;
+}
+
+
+
+body.luna-app .view-header {
+    min-height: 50px;
+    margin: 8px 0 18px;
+}
+
+body.luna-app .view-header::after {
+    content: "";
+    display: block;
+    clear: both;
+}
+
+body.luna-app .view-header .header-icon {
+    float: left;
+    width: 68px;
+    margin-top: -6px;
+    color: #f6a821;
+    font-size: 54px;
+    line-height: 1;
+}
+
+body.luna-app .view-header .header-title {
+    margin-left: 68px;
+}
+
+body.luna-app .content hr {
+    margin: 8px 0 20px;
+    border: 0;
+    border-top: 1px solid #3d404c;
+}
+
+body.luna-app .content h1,
+body.luna-app .content h2,
+body.luna-app .content h3,
+body.luna-app .content h4 {
+    color: #ffffff;
+}
+
+body.luna-app .content h1 {
+    font-size: 1.35rem;
+}
+
+body.luna-app .content a:not([class*="bg-"]):not([class*="text-"]) {
+    color: #f6a821;
+    text-decoration: none;
+}
+
+body.luna-app .content a:not([class*="bg-"]):not([class*="text-"]):hover {
+    color: #f8bb52;
+}
+
+body.luna-app .content label {
+    color: #ffffff;
+}
+
+body.luna-app .content :where(
+    .bg-white,
+    .bg-white\/80,
+    .bg-gray-50,
+    .bg-gray-100,
+    .bg-slate-50,
+    .bg-slate-100
+),
+body.luna-app .content :where(
+    .bg-\[\#fafafa\],
+    .bg-\[\#f4f4f5\],
+    .bg-\[\#f4f7f5\],
+    .bg-\[\#fffcf8\],
+    .bg-\[\#fbf8f3\],
+    .bg-\[\#f6f3ec\],
+    .bg-\[\#f7f4ee\]
+) {
+    background-color: rgba(68, 70, 79, 0.55) !important;
+    color: #c8ccd2;
+    box-shadow: none !important;
+}
+
+body.luna-app .content :where(
+    .text-gray-900,
+    .text-gray-800,
+    .text-gray-700,
+    .text-slate-900,
+    .text-slate-800,
+    .text-slate-700,
+    .text-\[\#18181b\],
+    .text-\[\#111827\],
+    .text-\[\#25362d\]
+) {
+    color: #f3f4f6 !important;
+}
+
+body.luna-app .content :where(
+    .text-gray-600,
+    .text-gray-500,
+    .text-gray-400,
+    .text-slate-600,
+    .text-slate-500,
+    .text-slate-400,
+    .text-\[\#71717a\],
+    .text-\[\#3f3f46\],
+    .text-\[\#5c6b63\],
+    .text-\[\#6b7280\],
+    .text-\[\#8a8175\],
+    .text-\[\#746d63\]
+) {
+    color: #949ba2 !important;
+}
+
+body.luna-app .content :where(
+    .text-\[\#17342b\],
+    .text-indigo-600,
+    .text-blue-600,
+    .text-emerald-800
+) {
+    color: #f6a821 !important;
+}
+
+body.luna-app .content :where(
+    .border-gray-100,
+    .border-gray-200,
+    .border-gray-300,
+    .border-slate-100,
+    .border-slate-200,
+    .border-slate-200\/80,
+    .border-emerald-100,
+    .border-\[\#e4e4e7\],
+    .border-\[\#e7e1d6\],
+    .border-\[\#eee8de\],
+    .border-\[\#f4f4f5\],
+    .border-\[\#d4d4d8\]
+) {
+    border-color: #3d404c !important;
+}
+
+body.luna-app .content :where(.divide-gray-100, .divide-gray-200, .divide-slate-100, .divide-slate-200) > :not([hidden]) ~ :not([hidden]) {
+    border-color: #3d404c !important;
+}
+
+body.luna-app .content table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #c8ccd2;
+    font-size: 13px;
+}
+
+body.luna-app .content th {
+    background: #32363f !important;
+    color: #ffffff !important;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+body.luna-app .content tbody tr:nth-of-type(odd) > td {
+    background: #3a3d46;
+}
+
+body.luna-app .content tbody tr:nth-of-type(even) > td {
+    background: #2f323b;
+}
+
+body.luna-app .content th,
+body.luna-app .content td {
+    border-bottom: 1px solid #3d404c;
+    vertical-align: middle;
+}
+
+body.luna-app .content tbody tr:hover > td {
+    background: #494b54;
+}
+
+body.luna-app .content input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not([type="file"]):not([type="hidden"]),
+body.luna-app .content select,
+body.luna-app .content textarea,
+body.luna-app .content .sheet-field {
+    background-color: #494b54 !important;
+    color: #e8eaed !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+body.luna-app .content input::placeholder,
+body.luna-app .content textarea::placeholder {
+    color: #8b939b;
+}
+
+body.luna-app .content input:focus:not(.is-invalid),
+body.luna-app .content select:focus,
+body.luna-app .content textarea:focus {
+    background-color: #52555f !important;
+    border-color: #f6a821 !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+body.luna-app .sheet-select__menu {
+    border-color: #4a4e59;
+    background: #3a3d46;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+body.luna-app .sheet-select__option {
+    color: #e8eaed;
+}
+
+body.luna-app .sheet-select__option:hover,
+body.luna-app .sheet-select__option.is-on {
+    background: #4a4e59;
+}
+
+body.luna-app .content button[class*="bg-blue-"],
+body.luna-app .content a[class*="bg-blue-"],
+body.luna-app .content button[class*="bg-green-5"],
+body.luna-app .content a[class*="bg-green-5"],
+body.luna-app .content button[class*="bg-green-6"],
+body.luna-app .content a[class*="bg-green-6"],
+body.luna-app .content button[class*="bg-green-7"],
+body.luna-app .content a[class*="bg-green-7"],
+body.luna-app .content button[class*="bg-indigo-"],
+body.luna-app .content a[class*="bg-indigo-"],
+body.luna-app .content button[class*="bg-emerald-"],
+body.luna-app .content a[class*="bg-emerald-"],
+body.luna-app .content button[class*="bg-gray-8"],
+body.luna-app .content a[class*="bg-gray-8"],
+body.luna-app .content .bg-\[\#17342b\],
+body.luna-app .content .bg-\[\#1f3d32\],
+body.luna-app .content .pf-accent {
+    border-color: #e39b12 !important;
+    background: #f6a821 !important;
+    color: #2a2d35 !important;
+}
+
+body.luna-app .content button[class*="bg-blue-"]:hover,
+body.luna-app .content a[class*="bg-blue-"]:hover,
+body.luna-app .content button[class*="bg-green-"]:hover,
+body.luna-app .content a[class*="bg-green-"]:hover,
+body.luna-app .content button[class*="bg-indigo-"]:hover,
+body.luna-app .content a[class*="bg-indigo-"]:hover,
+body.luna-app .content button[class*="bg-emerald-"]:hover,
+body.luna-app .content a[class*="bg-emerald-"]:hover,
+body.luna-app .content button[class*="bg-gray-8"]:hover,
+body.luna-app .content a[class*="bg-gray-8"]:hover,
+body.luna-app .content .bg-\[\#17342b\]:hover,
+body.luna-app .content .pf-accent:hover {
+    background: #f5a212 !important;
+    color: #2a2d35 !important;
+}
+
+body.luna-app .content button[class*="bg-gray-5"],
+body.luna-app .content a[class*="bg-gray-5"],
+body.luna-app .content button[class*="bg-gray-6"],
+body.luna-app .content a[class*="bg-gray-6"] {
+    border-color: #4d5160 !important;
+    background: #3d404c !important;
+    color: #e8eaed !important;
+}
+
+body.luna-app .content code {
+    background: #24262d;
+    color: #f6a821;
+}
+
+body.luna-app .content pre {
+    background: #24262d;
+    color: #c8ccd2;
+    border: 0;
+}
+
+.luna-listing {
+    margin-bottom: 18px;
+    border: 1px solid #3d404c;
+    border-radius: 3px;
+    background: rgba(47, 50, 59, 0.72);
+}
+
+.luna-dt-bar,
+.luna-dt-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+}
+
+.luna-dt-note {
+    color: #c8ccd2;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.luna-listing .dt-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.luna-listing .dt-buttons .btn {
+    border: 1px solid #6a6e78 !important;
+    background: transparent !important;
+    color: #e4e6ea !important;
+    border-radius: 2px !important;
+    padding: 4px 12px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+    box-shadow: none !important;
+}
+
+.luna-listing .dt-buttons .btn:hover {
+    border-color: #f6a821 !important;
+    color: #f6a821 !important;
+}
+
+.luna-listing .table {
+    margin-bottom: 0;
+}
+
+.luna-listing tbody td,
+.luna-listing thead th {
+    padding: 0.75rem 0.9rem;
+}

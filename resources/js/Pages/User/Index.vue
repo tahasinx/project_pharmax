@@ -2,21 +2,16 @@
     <Head title="Users" />
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    User Management
-                </h2>
-                <Link :href="route('users.create')"
-                      class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    Add User
-                </Link>
+            <h4 class="mb-sm-0 font-size-18">Users</h4>
+            <div class="page-title-right d-flex flex-wrap align-items-center gap-2">
+                <Link :href="route('users.create')" class="btn btn-primary btn-sm">Add User</Link>
             </div>
         </template>
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <!-- Search -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                <div class="listing-filters bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -39,7 +34,8 @@
                 <!-- Users Table -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
+                        <LunaTable title="Users" :pagination="users">
+<table class="table table-striped table-hover min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -119,24 +115,7 @@
                                 </tr>
                             </tbody>
                         </table>
-                    </div>
-
-                    <!-- Pagination -->
-                    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                        <div class="flex-1 flex justify-between sm:hidden">
-                            <Link v-if="users.prev_page_url"
-                                  :href="users.prev_page_url"
-                                  class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                Previous
-                            </Link>
-                            <Link v-if="users.next_page_url"
-                                  :href="users.next_page_url"
-                                  class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                Next
-                            </Link>
-                        </div>
-                        <!-- Pagination -->
-                        <Pagination :pagination="users" />
+</LunaTable>
                     </div>
                 </div>
             </div>
@@ -145,6 +124,8 @@
 </template>
 
 <script setup>
+import LunaTable from '@/Components/LunaTable.vue'
+
 import { ref, computed } from 'vue'
 import { Link, router, Head } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'

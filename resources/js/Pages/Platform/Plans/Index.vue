@@ -1,4 +1,6 @@
 <script setup>
+import LunaTable from '@/Components/LunaTable.vue'
+
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { reactive } from 'vue';
 import Layout from '../Layout.vue';
@@ -38,7 +40,8 @@ function apply() {
                 <label class="text-sm"><span class="mb-1 block text-[#71717a]">Features</span><textarea v-model="form.features_text" class="w-56" rows="2" placeholder="One feature per line" /></label>
                 <button class="rounded-md bg-[#17342b] px-3 py-2 text-sm font-medium text-white">Save</button>
             </form>
-            <table>
+            <LunaTable title="Plans">
+<table class="table table-striped table-hover">
                 <thead>
                     <tr>
                         <th>Plan</th>
@@ -65,6 +68,7 @@ function apply() {
                     </tr>
                 </tbody>
             </table>
+</LunaTable>
         </section>
     </Layout>
 </template>

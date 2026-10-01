@@ -30,7 +30,7 @@ class ManufacturerController extends Controller
         }
 
         $itemsPerPage = $this->getItemsPerPage();
-        $manufacturers = $query->orderBy('name')->paginate($itemsPerPage);
+        $manufacturers = $query->orderBy('name')->paginate($itemsPerPage)->withQueryString();
 
         return Inertia::render('Manufacturer/Index', [
             'manufacturers' => $manufacturers,

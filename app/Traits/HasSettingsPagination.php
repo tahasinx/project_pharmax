@@ -11,6 +11,11 @@ trait HasSettingsPagination
      */
     protected function getItemsPerPage(): int
     {
+        $requested = (int) request('per_page');
+        if (in_array($requested, [10, 25, 50, 100], true)) {
+            return $requested;
+        }
+
         try {
             $settings = Storage::get('settings.json');
             if ($settings) {
@@ -18,9 +23,8 @@ trait HasSettingsPagination
                 return (int) ($decoded['items_per_page'] ?? 15);
             }
         } catch (\Exception $e) {
-            // Fallback to default if settings file doesn't exist or is invalid
         }
 
-        return 15; // Default fallback
+        return 15;
     }
 }

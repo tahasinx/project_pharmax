@@ -1,4 +1,6 @@
 <script setup>
+import LunaTable from '@/Components/LunaTable.vue'
+
 import { Head, Link } from '@inertiajs/vue3';
 import Layout from './Layout.vue';
 
@@ -49,7 +51,8 @@ const steps = [
                     <p class="text-sm font-medium">No pharmacies yet</p>
                     <p class="mx-auto mt-1 max-w-sm text-sm text-[#71717a]">The first pharmacy you add will show here, with its host, database, and provision status.</p>
                 </div>
-                <table v-else class="mt-5">
+                <LunaTable v-else title="Pharmacies">
+<table class="table table-striped table-hover mt-5">
                     <thead>
                         <tr><th>Pharmacy</th><th>Host</th><th>Status</th></tr>
                     </thead>
@@ -61,6 +64,7 @@ const steps = [
                         </tr>
                     </tbody>
                 </table>
+</LunaTable>
             </section>
             <section class="rounded-xl border border-[#e4e4e7] bg-white p-5 lg:col-span-2">
                 <h2 class="text-sm font-semibold">Start here</h2>

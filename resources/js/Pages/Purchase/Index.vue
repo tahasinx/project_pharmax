@@ -1,23 +1,16 @@
 <template>
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Purchase Management
-                </h2>
-                <div class="flex space-x-2">
-                    <Link :href="route('purchases.create')"
-                          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        New Purchase
-                    </Link>
-                </div>
+            <h4 class="mb-sm-0 font-size-18">Purchases</h4>
+            <div class="page-title-right d-flex flex-wrap align-items-center gap-2">
+                <Link :href="route('purchases.create')" class="btn btn-primary btn-sm">New Purchase</Link>
             </div>
         </template>
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <!-- Search and Filter -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                <div class="listing-filters bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
@@ -56,7 +49,8 @@
                             No purchases found
                         </div>
                         <div v-else class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
+                            <LunaTable title="Purchases" :pagination="purchases">
+<table class="table table-striped table-hover min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -124,26 +118,7 @@
                                     </tr>
                                 </tbody>
                             </table>
-                        </div>
-
-                        <!-- Pagination -->
-                        <div v-if="purchases.links" class="mt-6">
-                            <nav class="flex items-center justify-between">
-                                <div class="flex-1 flex justify-between sm:hidden">
-                                    <Link v-if="purchases.prev_page_url"
-                                          :href="purchases.prev_page_url"
-                                          class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                        Previous
-                                    </Link>
-                                    <Link v-if="purchases.next_page_url"
-                                          :href="purchases.next_page_url"
-                                          class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                        Next
-                                    </Link>
-                                </div>
-                                <!-- Pagination -->
-                                <Pagination :pagination="purchases" />
-                            </nav>
+</LunaTable>
                         </div>
                     </div>
                 </div>
@@ -153,6 +128,8 @@
 </template>
 
 <script setup>
+import LunaTable from '@/Components/LunaTable.vue'
+
 import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'

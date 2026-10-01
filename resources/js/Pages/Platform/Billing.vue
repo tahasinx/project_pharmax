@@ -1,4 +1,6 @@
 <script setup>
+import LunaTable from '@/Components/LunaTable.vue'
+
 import { Head, router } from '@inertiajs/vue3';
 import { reactive } from 'vue';
 import Layout from './Layout.vue';
@@ -22,7 +24,8 @@ const filter = reactive({ from: props.from || '', to: props.to || '' });
                     <button class="rounded-md bg-[#17342b] px-3 py-2 text-sm font-medium text-white">Filter</button>
                 </form>
             </div>
-            <table>
+            <LunaTable title="Billing">
+<table class="table table-striped table-hover">
                 <thead>
                     <tr>
                         <th>Issued</th>
@@ -43,6 +46,7 @@ const filter = reactive({ from: props.from || '', to: props.to || '' });
                     </tr>
                 </tbody>
             </table>
+</LunaTable>
         </section>
     </Layout>
 </template>

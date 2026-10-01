@@ -15,9 +15,14 @@ html {
     font-size: var(--pf-size, 16px);
 }
 
-body,
-body *:not(svg):not(svg *):not(.bi):not([class^="bi-"]):not([class*=" bi-"]):not(code):not(pre):not(kbd):not(samp) {
+body:not(.minia-app),
+body:not(.minia-app) *:not(svg):not(.bi):not([class^="bi-"]):not([class*=" bi-"]):not(.fa):not(.fas):not(.far):not(.fab):not([class^="fa-"]):not([class*=" fa-"]):not(.mdi):not([class^="mdi-"]):not([class*=" mdi-"]):not(.bx):not([class^="bx-"]):not([class*=" bx-"]):not([class*="dripicons"]):not([class^="pe-7s-"]):not([class*=" pe-7s-"]):not([class^="stroke-"]):not([class*=" stroke-"]):not(code):not(pre):not(kbd):not(samp) {
     font-family: var(--pf-font, Inter, sans-serif) !important;
+}
+
+body.minia-app,
+body.minia-app *:not(.bi):not([class^="bi-"]):not([class*=" bi-"]):not(.fa):not(.fas):not(.far):not(.fab):not([class^="fa-"]):not([class*=" fa-"]):not(.mdi):not([class^="mdi-"]):not([class*=" mdi-"]):not(.bx):not([class^="bx-"]):not([class*=" bx-"]):not([class*="dripicons"]) {
+    font-family: "IBM Plex Sans", sans-serif !important;
 }
 
 body {

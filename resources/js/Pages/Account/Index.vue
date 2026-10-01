@@ -37,7 +37,8 @@
 
                 <section class="overflow-hidden rounded-lg border border-[#e7e1d6] bg-white">
                     <div class="max-h-[68vh] overflow-auto">
-                        <table>
+                        <LunaTable title="Account">
+<table class="table table-striped table-hover">
                             <thead>
                                 <tr>
                                     <th v-for="column in columns" :key="column.key" class="cursor-pointer select-none" @click="sortBy(column.key)">
@@ -65,6 +66,7 @@
                                 </tr>
                             </tbody>
                         </table>
+</LunaTable>
                     </div>
                     <div class="flex items-center justify-between border-t border-[#eee8de] px-3 py-2 text-[12px] text-[#746d63]">
                         <span>{{ rangeLabel }}</span>
@@ -80,6 +82,8 @@
 </template>
 
 <script setup>
+import LunaTable from '@/Components/LunaTable.vue'
+
 import { computed, ref, watch } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'

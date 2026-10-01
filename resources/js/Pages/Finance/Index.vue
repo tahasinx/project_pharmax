@@ -32,7 +32,8 @@
                     <button class="bg-gray-800 text-white rounded">Pay supplier</button>
                 </form>
             </div>
-            <table class="bg-white w-full text-sm rounded shadow">
+            <LunaTable title="Finance">
+<table class="table table-striped table-hover bg-white w-full text-sm rounded shadow">
                 <thead><tr class="text-left"><th class="p-2">Code</th><th>Account</th><th>Type</th><th>Balance</th></tr></thead>
                 <tbody>
                     <tr v-for="row in accounts" :key="row.code" class="border-t">
@@ -40,10 +41,13 @@
                     </tr>
                 </tbody>
             </table>
+</LunaTable>
         </div>
     </AuthenticatedLayout>
 </template>
 <script setup>
+import LunaTable from '@/Components/LunaTable.vue'
+
 import { reactive } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'

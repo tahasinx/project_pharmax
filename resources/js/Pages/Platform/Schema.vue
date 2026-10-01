@@ -1,4 +1,6 @@
 <script setup>
+import LunaTable from '@/Components/LunaTable.vue'
+
 import { Head, useForm } from '@inertiajs/vue3';
 import Layout from './Layout.vue';
 
@@ -30,7 +32,8 @@ function run(extra) {
                 </form>
             </div>
             <p class="border-b border-[#f4f4f5] px-5 py-3 text-sm">Central database: {{ central.status }} <span v-if="central.pending?.length" class="text-[#71717a]">{{ central.pending.join(', ') }}</span></p>
-            <table>
+            <LunaTable title="Schema">
+<table class="table table-striped table-hover">
                 <thead>
                     <tr>
                         <th>Pharmacy</th>
@@ -51,6 +54,7 @@ function run(extra) {
                     </tr>
                 </tbody>
             </table>
+</LunaTable>
         </section>
     </Layout>
 </template>

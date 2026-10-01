@@ -17,7 +17,7 @@ class CustomerController extends Controller
     public function index()
     {
         $itemsPerPage = $this->getItemsPerPage();
-        $customers = Customer::orderBy('created_at', 'desc')->paginate($itemsPerPage);
+        $customers = Customer::orderBy('created_at', 'desc')->paginate($itemsPerPage)->withQueryString();
 
         return Inertia::render('Customer/Index', [
             'customers' => $customers,

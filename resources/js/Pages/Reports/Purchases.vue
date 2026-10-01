@@ -38,7 +38,8 @@
 
       <div class="card">
         <h2 class="font-semibold mb-4">By Supplier</h2>
-        <table class="min-w-full">
+        <LunaTable title="Purchases">
+<table class="table table-striped table-hover min-w-full">
           <thead>
             <tr class="text-left text-sm text-gray-500">
               <th class="py-2">Supplier</th>
@@ -54,12 +55,15 @@
             </tr>
           </tbody>
         </table>
+</LunaTable>
       </div>
     </div>
   </AuthenticatedLayout>
 </template>
 
 <script setup>
+import LunaTable from '@/Components/LunaTable.vue'
+
 import { reactive, ref, computed } from 'vue'
 import { router, Head, Link } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
