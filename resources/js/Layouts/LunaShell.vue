@@ -21,6 +21,7 @@ const props = defineProps({
 useLunaApp();
 
 const page = usePage();
+const sidebarKey = 'epharma-sidebar-size';
 
 const loadScript = (src) => new Promise((resolve, reject) => {
     if (document.querySelector(`script[data-minia="${src}"]`)) {
@@ -57,7 +58,9 @@ const bootMinia = async () => {
                 document.body.classList.toggle('sidebar-enable');
                 if (window.innerWidth >= 992) {
                     const size = document.body.getAttribute('data-sidebar-size');
-                    document.body.setAttribute('data-sidebar-size', !size || size === 'lg' ? 'sm' : 'lg');
+                    const nextSize = !size || size === 'lg' ? 'sm' : 'lg';
+                    document.body.setAttribute('data-sidebar-size', nextSize);
+                    localStorage.setItem(sidebarKey, nextSize);
                 }
             });
         }
@@ -70,7 +73,6 @@ const mountPartials = async () => {
 };
 const nav = ref(null);
 const headerPanel = ref(null);
-const darkMode = ref(false);
 const scrollKey = 'epharma-luna-nav-scroll';
 const openKey = 'epharma-luna-open-sections';
 const openSections = ref({});
@@ -256,7 +258,9 @@ const toggleNav = (event) => {
     document.body.classList.toggle('sidebar-enable');
     if (window.innerWidth >= 992) {
         const size = document.body.getAttribute('data-sidebar-size');
-        document.body.setAttribute('data-sidebar-size', size === 'sm' ? 'lg' : 'sm');
+        const nextSize = size === 'sm' ? 'lg' : 'sm';
+        document.body.setAttribute('data-sidebar-size', nextSize);
+        localStorage.setItem(sidebarKey, nextSize);
     }
 };
 
@@ -267,7 +271,7 @@ const closeMobileNav = () => {
 };
 
 const closeHeader = (event) => {
-    if (!event.target.closest('.profile-menu, .apps-menu, .alerts-menu')) {
+    if (!event.target.closest('.profile-menu, .apps-menu, .alerts-menu, .theme-menu')) {
         headerPanel.value = null;
     }
 };
@@ -276,15 +280,46 @@ const togglePanel = (name) => {
     headerPanel.value = headerPanel.value === name ? null : name;
 };
 
-const toggleTheme = () => {
-    darkMode.value = !darkMode.value;
-    const mode = darkMode.value ? 'dark' : 'light';
+const themeKey = 'epharma-theme';
+const theme = ref(localStorage.getItem(themeKey) || 'system');
+const themeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+const resolvedTheme = () => (theme.value === 'system' ? (themeQuery.matches ? 'dark' : 'light') : theme.value);
+
+const themeIcon = computed(() => ({
+    light: 'bi-sun',
+    dark: 'bi-moon',
+    night: 'bi-moon-stars',
+    system: 'bi-laptop',
+}[theme.value] || 'bi-laptop'));
+
+const applyTheme = () => {
+    const appearance = resolvedTheme();
+    const mode = appearance === 'light' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-bs-theme', mode);
+    document.documentElement.setAttribute('data-theme', appearance);
+    document.documentElement.style.colorScheme = mode;
     document.body.setAttribute('data-bs-theme', mode);
+    document.body.setAttribute('data-theme', appearance);
     document.body.setAttribute('data-layout-mode', mode);
     document.body.setAttribute('data-topbar', mode);
     document.body.setAttribute('data-sidebar', mode);
-    nextTick(() => window.feather?.replace());
 };
+
+const setTheme = (value) => {
+    theme.value = value;
+    localStorage.setItem(themeKey, value);
+    headerPanel.value = null;
+    applyTheme();
+};
+
+const onSystemTheme = () => {
+    if (theme.value === 'system') {
+        applyTheme();
+    }
+};
+
+applyTheme();
 
 const logout = () => {
     headerPanel.value = null;
@@ -293,14 +328,18 @@ const logout = () => {
 
 onMounted(() => {
     syncOpen();
-    darkMode.value = document.body.getAttribute('data-bs-theme') === 'dark';
+    applyTheme();
+    if (window.innerWidth >= 992) {
+        document.body.setAttribute('data-sidebar-size', localStorage.getItem(sidebarKey) === 'sm' ? 'sm' : 'lg');
+    }
+    themeQuery.addEventListener('change', onSystemTheme);
     document.addEventListener('click', closeHeader);
     mountPartials();
 });
 onUnmounted(() => {
+    themeQuery.removeEventListener('change', onSystemTheme);
     document.removeEventListener('click', closeHeader);
     document.body.classList.remove('sidebar-enable');
-    document.body.removeAttribute('data-sidebar-size');
 });
 watch(() => page.url, () => {
     closeMobileNav();
@@ -318,7 +357,7 @@ watch(() => page.url, () => {
             <div class="navbar-header">
                 <div class="d-flex align-items-center">
                     <div class="navbar-brand-box">
-                        <Link :href="homeHref" class="logo logo-dark">
+                        <Link :href="homeHref" class="logo shell-logo">
                             <span class="logo-sm">
                                 <span class="logo-mark">
                                     <img v-if="logo" :src="logo" :alt="appName">
@@ -342,9 +381,33 @@ watch(() => page.url, () => {
                     </div>
                 </div>
                 <div class="d-flex align-items-center">
-                    <button type="button" class="btn header-item header-icon d-none d-sm-inline-flex" aria-label="Color mode" @click="toggleTheme">
-                        <i :data-feather="darkMode ? 'sun' : 'moon'" class="icon-lg"></i>
-                    </button>
+                    <div class="dropdown d-none d-sm-inline-block theme-menu">
+                        <button type="button" class="btn header-item header-icon" aria-label="Color mode" :aria-expanded="headerPanel === 'theme'" @click.stop="togglePanel('theme')">
+                            <i class="bi" :class="themeIcon"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end theme-list" :class="{ show: headerPanel === 'theme' }">
+                            <button type="button" class="theme-option" :class="{ 'is-current': theme === 'light' }" @click="setTheme('light')">
+                                <i class="bi bi-sun"></i>
+                                <span>Light</span>
+                                <i v-if="theme === 'light'" class="bi bi-check-lg ms-auto"></i>
+                            </button>
+                            <button type="button" class="theme-option" :class="{ 'is-current': theme === 'dark' }" @click="setTheme('dark')">
+                                <i class="bi bi-moon"></i>
+                                <span>Dark</span>
+                                <i v-if="theme === 'dark'" class="bi bi-check-lg ms-auto"></i>
+                            </button>
+                            <button type="button" class="theme-option" :class="{ 'is-current': theme === 'night' }" @click="setTheme('night')">
+                                <i class="bi bi-moon-stars"></i>
+                                <span>Night</span>
+                                <i v-if="theme === 'night'" class="bi bi-check-lg ms-auto"></i>
+                            </button>
+                            <button type="button" class="theme-option" :class="{ 'is-current': theme === 'system' }" @click="setTheme('system')">
+                                <i class="bi bi-laptop"></i>
+                                <span>System</span>
+                                <i v-if="theme === 'system'" class="bi bi-check-lg ms-auto"></i>
+                            </button>
+                        </div>
+                    </div>
                     <div class="dropdown d-none d-lg-inline-block apps-menu">
                         <button type="button" class="btn header-item header-icon" aria-label="Shortcuts" :aria-expanded="headerPanel === 'apps'" @click.stop="togglePanel('apps')">
                             <i data-feather="grid" class="icon-lg"></i>
@@ -382,16 +445,16 @@ watch(() => page.url, () => {
                             <img v-if="user?.avatar_url" :src="user.avatar_url" alt="" class="rounded-circle header-profile-user">
                             <span v-else class="rounded-circle header-profile-user d-inline-flex align-items-center justify-content-center bg-primary text-white fw-medium">{{ initials }}</span>
                             <span class="d-none d-xl-inline-block ms-1 fw-medium">{{ user?.name }}</span>
-                            <i class="mdi mdi-chevron-down d-none d-xl-inline-block"></i>
+                            <i class="bi bi-chevron-down d-none d-xl-inline-block"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-end" :class="{ show: headerPanel === 'profile' }">
                             <div class="profile-email">{{ email }}</div>
                             <Link class="dropdown-item" :href="route('profile.edit')" @click="headerPanel = null">
-                                <i class="mdi mdi-face-profile font-size-16 align-middle me-1"></i> Profile
+                                <i class="bi bi-person"></i> Profile
                             </Link>
                             <div class="dropdown-divider"></div>
                             <button type="button" class="dropdown-item" @click="logout">
-                                <i class="mdi mdi-logout font-size-16 align-middle me-1"></i> Log out
+                                <i class="bi bi-box-arrow-right"></i> Log out
                             </button>
                         </div>
                     </div>

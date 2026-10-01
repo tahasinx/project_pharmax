@@ -12,7 +12,6 @@ export function useLunaApp() {
         depth = Math.max(0, depth - 1);
         if (depth === 0 && typeof document !== 'undefined') {
             document.body.classList.remove('minia-app', 'sidebar-enable');
-            document.body.removeAttribute('data-sidebar-size');
         }
     });
 }
