@@ -2,18 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Artisan;
-use ZipArchive;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use ZipArchive;
 
 class BackupController extends Controller
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Display backup management page
@@ -33,11 +28,11 @@ class BackupController extends Controller
     public function create(Request $request)
     {
         try {
-            $backupName = 'backup_' . Carbon::now()->format('Y_m_d_H_i_s');
-            $backupPath = storage_path('app/backups/' . $backupName);
+            $backupName = 'backup_'.Carbon::now()->format('Y_m_d_H_i_s');
+            $backupPath = storage_path('app/backups/'.$backupName);
 
             // Create backup directory
-            if (!file_exists($backupPath)) {
+            if (! file_exists($backupPath)) {
                 mkdir($backupPath, 0755, true);
             }
 
@@ -57,15 +52,15 @@ class BackupController extends Controller
             $this->cleanupDirectory($backupPath);
 
             return response()->json([
-                'success' => true,
-                'message' => 'Backup created successfully',
-                'backup_name' => $backupName,
+                'success'      => true,
+                'message'      => 'Backup created successfully',
+                'backup_name'  => $backupName,
                 'download_url' => route('backup.download', $backupName),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create backup: ' . $e->getMessage(),
+                'message' => 'Failed to create backup: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -75,9 +70,9 @@ class BackupController extends Controller
      */
     public function download($backupName)
     {
-        $backupPath = storage_path('app/backups/' . $backupName . '.zip');
+        $backupPath = storage_path('app/backups/'.$backupName.'.zip');
 
-        if (!file_exists($backupPath)) {
+        if (! file_exists($backupPath)) {
             abort(404, 'Backup file not found');
         }
 
@@ -95,7 +90,7 @@ class BackupController extends Controller
 
         try {
             $backupFile = $request->file('backup_file');
-            $tempPath = storage_path('app/temp/restore_' . time());
+            $tempPath   = storage_path('app/temp/restore_'.time());
 
             // Extract backup
             $this->extractBackup($backupFile, $tempPath);
@@ -119,7 +114,7 @@ class BackupController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to restore backup: ' . $e->getMessage(),
+                'message' => 'Failed to restore backup: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -129,7 +124,7 @@ class BackupController extends Controller
      */
     public function destroy($backupName)
     {
-        $backupPath = storage_path('app/backups/' . $backupName . '.zip');
+        $backupPath = storage_path('app/backups/'.$backupName.'.zip');
 
         if (file_exists($backupPath)) {
             unlink($backupPath);
@@ -149,10 +144,10 @@ class BackupController extends Controller
         $database = config('database.connections.mysql.database');
         $username = config('database.connections.mysql.username');
         $password = config('database.connections.mysql.password');
-        $host = config('database.connections.mysql.host');
-        $port = config('database.connections.mysql.port');
+        $host     = config('database.connections.mysql.host');
+        $port     = config('database.connections.mysql.port');
 
-        $sqlFile = $backupPath . '/database.sql';
+        $sqlFile = $backupPath.'/database.sql';
 
         $command = "mysqldump -h {$host} -P {$port} -u {$username} -p{$password} {$database} > {$sqlFile}";
 
@@ -168,17 +163,17 @@ class BackupController extends Controller
      */
     protected function exportSettings($backupPath)
     {
-        $settingsPath = $backupPath . '/settings';
+        $settingsPath = $backupPath.'/settings';
         mkdir($settingsPath, 0755, true);
 
         // Copy settings.json
         if (file_exists(storage_path('app/settings.json'))) {
-            copy(storage_path('app/settings.json'), $settingsPath . '/settings.json');
+            copy(storage_path('app/settings.json'), $settingsPath.'/settings.json');
         }
 
         // Copy .env file
         if (file_exists(base_path('.env'))) {
-            copy(base_path('.env'), $settingsPath . '/.env');
+            copy(base_path('.env'), $settingsPath.'/.env');
         }
     }
 
@@ -187,8 +182,8 @@ class BackupController extends Controller
      */
     protected function exportUploads($backupPath)
     {
-        $uploadsPath = $backupPath . '/uploads';
-        $sourcePath = storage_path('app/public');
+        $uploadsPath = $backupPath.'/uploads';
+        $sourcePath  = storage_path('app/public');
 
         if (is_dir($sourcePath)) {
             $this->copyDirectory($sourcePath, $uploadsPath);
@@ -200,10 +195,10 @@ class BackupController extends Controller
      */
     protected function createZipArchive($backupPath, $backupName)
     {
-        $zipPath = storage_path('app/backups/' . $backupName . '.zip');
+        $zipPath = storage_path('app/backups/'.$backupName.'.zip');
 
-        $zip = new ZipArchive();
-        if ($zip->open($zipPath, ZipArchive::CREATE) !== TRUE) {
+        $zip = new ZipArchive;
+        if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
             throw new \Exception('Cannot create ZIP file');
         }
 
@@ -221,10 +216,12 @@ class BackupController extends Controller
         $files = scandir($dir);
 
         foreach ($files as $file) {
-            if ($file === '.' || $file === '..') continue;
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
 
-            $filePath = $dir . '/' . $file;
-            $zipFilePath = $zipPath . '/' . $file;
+            $filePath    = $dir.'/'.$file;
+            $zipFilePath = $zipPath.'/'.$file;
 
             if (is_dir($filePath)) {
                 $zip->addEmptyDir($zipFilePath);
@@ -242,8 +239,8 @@ class BackupController extends Controller
     {
         mkdir($tempPath, 0755, true);
 
-        $zip = new ZipArchive();
-        if ($zip->open($backupFile->getPathname()) !== TRUE) {
+        $zip = new ZipArchive;
+        if ($zip->open($backupFile->getPathname()) !== true) {
             throw new \Exception('Cannot open backup file');
         }
 
@@ -256,17 +253,17 @@ class BackupController extends Controller
      */
     protected function restoreDatabase($tempPath)
     {
-        $sqlFile = $tempPath . '/database.sql';
+        $sqlFile = $tempPath.'/database.sql';
 
-        if (!file_exists($sqlFile)) {
+        if (! file_exists($sqlFile)) {
             throw new \Exception('Database file not found in backup');
         }
 
         $database = config('database.connections.mysql.database');
         $username = config('database.connections.mysql.username');
         $password = config('database.connections.mysql.password');
-        $host = config('database.connections.mysql.host');
-        $port = config('database.connections.mysql.port');
+        $host     = config('database.connections.mysql.host');
+        $port     = config('database.connections.mysql.port');
 
         $command = "mysql -h {$host} -P {$port} -u {$username} -p{$password} {$database} < {$sqlFile}";
 
@@ -282,17 +279,17 @@ class BackupController extends Controller
      */
     protected function restoreSettings($tempPath)
     {
-        $settingsPath = $tempPath . '/settings';
+        $settingsPath = $tempPath.'/settings';
 
         if (is_dir($settingsPath)) {
             // Restore settings.json
-            if (file_exists($settingsPath . '/settings.json')) {
-                copy($settingsPath . '/settings.json', storage_path('app/settings.json'));
+            if (file_exists($settingsPath.'/settings.json')) {
+                copy($settingsPath.'/settings.json', storage_path('app/settings.json'));
             }
 
             // Restore .env file
-            if (file_exists($settingsPath . '/.env')) {
-                copy($settingsPath . '/.env', base_path('.env'));
+            if (file_exists($settingsPath.'/.env')) {
+                copy($settingsPath.'/.env', base_path('.env'));
             }
         }
     }
@@ -302,8 +299,8 @@ class BackupController extends Controller
      */
     protected function restoreUploads($tempPath)
     {
-        $uploadsPath = $tempPath . '/uploads';
-        $targetPath = storage_path('app/public');
+        $uploadsPath = $tempPath.'/uploads';
+        $targetPath  = storage_path('app/public');
 
         if (is_dir($uploadsPath)) {
             $this->copyDirectory($uploadsPath, $targetPath);
@@ -315,17 +312,19 @@ class BackupController extends Controller
      */
     protected function copyDirectory($source, $destination)
     {
-        if (!is_dir($destination)) {
+        if (! is_dir($destination)) {
             mkdir($destination, 0755, true);
         }
 
         $files = scandir($source);
 
         foreach ($files as $file) {
-            if ($file === '.' || $file === '..') continue;
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
 
-            $sourceFile = $source . '/' . $file;
-            $destFile = $destination . '/' . $file;
+            $sourceFile = $source.'/'.$file;
+            $destFile   = $destination.'/'.$file;
 
             if (is_dir($sourceFile)) {
                 $this->copyDirectory($sourceFile, $destFile);
@@ -344,7 +343,7 @@ class BackupController extends Controller
             $files = array_diff(scandir($path), ['.', '..']);
 
             foreach ($files as $file) {
-                $filePath = $path . '/' . $file;
+                $filePath = $path.'/'.$file;
 
                 if (is_dir($filePath)) {
                     $this->cleanupDirectory($filePath);
@@ -363,18 +362,18 @@ class BackupController extends Controller
     protected function getBackupList()
     {
         $backupDir = storage_path('app/backups');
-        $backups = [];
+        $backups   = [];
 
         if (is_dir($backupDir)) {
             $files = scandir($backupDir);
 
             foreach ($files as $file) {
                 if (pathinfo($file, PATHINFO_EXTENSION) === 'zip') {
-                    $filePath = $backupDir . '/' . $file;
+                    $filePath  = $backupDir.'/'.$file;
                     $backups[] = [
-                        'name' => pathinfo($file, PATHINFO_FILENAME),
-                        'size' => filesize($filePath),
-                        'created_at' => date('Y-m-d H:i:s', filemtime($filePath)),
+                        'name'         => pathinfo($file, PATHINFO_FILENAME),
+                        'size'         => filesize($filePath),
+                        'created_at'   => date('Y-m-d H:i:s', filemtime($filePath)),
                         'download_url' => route('backup.download', pathinfo($file, PATHINFO_FILENAME)),
                     ];
                 }

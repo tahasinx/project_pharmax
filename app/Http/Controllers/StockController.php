@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Stock;
 use App\Models\Medicine;
+use App\Models\Stock;
 use App\Traits\HasSettingsPagination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +21,7 @@ class StockController extends Controller
     public function index()
     {
         $itemsPerPage = $this->getItemsPerPage();
-        $stocks = Stock::with('medicine.category', 'medicine.manufacturer', 'warehouse')
+        $stocks       = Stock::with('medicine.category', 'medicine.manufacturer', 'warehouse')
             ->orderBy('created_at', 'desc')
             ->paginate($itemsPerPage)->withQueryString();
 
@@ -37,8 +37,8 @@ class StockController extends Controller
         $alerts = $this->getStockAlerts();
 
         return Inertia::render('Stock/Index', [
-            'stocks' => $stocks,
-            'alerts' => $alerts,
+            'stocks'        => $stocks,
+            'alerts'        => $alerts,
             'weightedCosts' => $weightedCosts,
         ]);
     }
@@ -51,11 +51,11 @@ class StockController extends Controller
             ->get();
 
         $selected = $request->filled('medicine')
-            ? $medicines->firstWhere('id', (int) $request->medicine)
+            ? Medicine::findByPublicId($request->medicine)
             : null;
 
         return Inertia::render('Stock/Create', [
-            'medicines' => $medicines,
+            'medicines'        => $medicines,
             'selectedMedicine' => $selected,
         ]);
     }
@@ -63,30 +63,30 @@ class StockController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'medicine_id'        => 'required|exists:medicines,id',
-            'batch_number'        => 'nullable|string|max:100',
-            'expiry_date'         => 'required|date|after:today',
-            'quantity'            => 'required|integer|min:0',
-            'min_stock_level'     => 'required|integer|min:0',
-            'max_stock_level'     => 'nullable|integer|min:0',
-            'purchase_price'       => 'nullable|numeric|min:0',
-            'selling_price'       => 'nullable|numeric|min:0',
-            'supplier'            => 'nullable|string|max:255',
-            'notes'               => 'nullable|string',
+            'medicine_id'     => 'required|exists:medicines,medicine_id',
+            'batch_number'    => 'nullable|string|max:100',
+            'expiry_date'     => 'required|date|after:today',
+            'quantity'        => 'required|integer|min:0',
+            'min_stock_level' => 'required|integer|min:0',
+            'max_stock_level' => 'nullable|integer|min:0',
+            'purchase_price'  => 'nullable|numeric|min:0',
+            'selling_price'   => 'nullable|numeric|min:0',
+            'supplier'        => 'nullable|string|max:255',
+            'notes'           => 'nullable|string',
         ]);
 
         Stock::create([
-            'medicine_id'        => $request->medicine_id,
-            'batch_number'        => $request->batch_number,
-            'expiry_date'         => $request->expiry_date,
-            'quantity'            => $request->quantity,
-            'min_stock_level'     => $request->min_stock_level,
-            'max_stock_level'     => $request->max_stock_level,
-            'purchase_price'      => $request->purchase_price,
-            'selling_price'       => $request->selling_price,
-            'supplier'            => $request->supplier,
-            'notes'               => $request->notes,
-            'is_active'           => $request->is_active ?? true,
+            'medicine_id'     => Medicine::localIdOrFail($request->medicine_id),
+            'batch_number'    => $request->batch_number,
+            'expiry_date'     => $request->expiry_date,
+            'quantity'        => $request->quantity,
+            'min_stock_level' => $request->min_stock_level,
+            'max_stock_level' => $request->max_stock_level,
+            'purchase_price'  => $request->purchase_price,
+            'selling_price'   => $request->selling_price,
+            'supplier'        => $request->supplier,
+            'notes'           => $request->notes,
+            'is_active'       => $request->is_active ?? true,
         ]);
 
         return redirect()->route('stocks.index')
@@ -112,7 +112,9 @@ class StockController extends Controller
             ->get();
 
         return Inertia::render('Stock/Edit', [
-            'stock' => $stock,
+            'stock' => array_merge($stock->toArray(), [
+                'medicine_id' => $stock->medicine?->publicId(),
+            ]),
             'medicines' => $medicines,
         ]);
     }
@@ -120,30 +122,30 @@ class StockController extends Controller
     public function update(Request $request, Stock $stock)
     {
         $request->validate([
-            'medicine_id'        => 'required|exists:medicines,id',
-            'batch_number'        => 'nullable|string|max:100',
-            'expiry_date'         => 'required|date|after:today',
-            'quantity'            => 'required|integer|min:0',
-            'min_stock_level'     => 'required|integer|min:0',
-            'max_stock_level'     => 'nullable|integer|min:0',
-            'purchase_price'      => 'nullable|numeric|min:0',
-            'selling_price'       => 'nullable|numeric|min:0',
-            'supplier'            => 'nullable|string|max:255',
-            'notes'               => 'nullable|string',
+            'medicine_id'     => 'required|exists:medicines,medicine_id',
+            'batch_number'    => 'nullable|string|max:100',
+            'expiry_date'     => 'required|date|after:today',
+            'quantity'        => 'required|integer|min:0',
+            'min_stock_level' => 'required|integer|min:0',
+            'max_stock_level' => 'nullable|integer|min:0',
+            'purchase_price'  => 'nullable|numeric|min:0',
+            'selling_price'   => 'nullable|numeric|min:0',
+            'supplier'        => 'nullable|string|max:255',
+            'notes'           => 'nullable|string',
         ]);
 
         $stock->update([
-            'medicine_id'        => $request->medicine_id,
-            'batch_number'        => $request->batch_number,
-            'expiry_date'         => $request->expiry_date,
-            'quantity'            => $request->quantity,
-            'min_stock_level'     => $request->min_stock_level,
-            'max_stock_level'     => $request->max_stock_level,
-            'purchase_price'      => $request->purchase_price,
-            'selling_price'       => $request->selling_price,
-            'supplier'            => $request->supplier,
-            'notes'               => $request->notes,
-            'is_active'           => $request->is_active ?? $stock->is_active,
+            'medicine_id'     => Medicine::localIdOrFail($request->medicine_id),
+            'batch_number'    => $request->batch_number,
+            'expiry_date'     => $request->expiry_date,
+            'quantity'        => $request->quantity,
+            'min_stock_level' => $request->min_stock_level,
+            'max_stock_level' => $request->max_stock_level,
+            'purchase_price'  => $request->purchase_price,
+            'selling_price'   => $request->selling_price,
+            'supplier'        => $request->supplier,
+            'notes'           => $request->notes,
+            'is_active'       => $request->is_active ?? $stock->is_active,
         ]);
 
         return redirect()->route('stocks.index')
@@ -160,12 +162,12 @@ class StockController extends Controller
 
     public function reports()
     {
-        $lowStockCount = Stock::lowStock()->count();
-        $expiredCount = Stock::expired()->count();
+        $lowStockCount     = Stock::lowStock()->count();
+        $expiredCount      = Stock::expired()->count();
         $expiringSoonCount = Stock::expiringSoon()->count();
 
         $totalStockValue = Stock::active()->sum(DB::raw('quantity * purchase_price'));
-        $totalMedicines = Medicine::where('status', true)->count();
+        $totalMedicines  = Medicine::where('status', true)->count();
 
         $stockByCategory = Medicine::with('stocks')
             ->where('status', true)
@@ -184,13 +186,13 @@ class StockController extends Controller
 
         return Inertia::render('Stock/Reports', [
             'stats' => [
-                'low_stock_count' => $lowStockCount,
-                'expired_count' => $expiredCount,
+                'low_stock_count'     => $lowStockCount,
+                'expired_count'       => $expiredCount,
                 'expiring_soon_count' => $expiringSoonCount,
-                'total_stock_value' => $totalStockValue,
-                'total_medicines' => $totalMedicines,
+                'total_stock_value'   => $totalStockValue,
+                'total_medicines'     => $totalMedicines,
             ],
-            'stockByCategory' => $stockByCategory,
+            'stockByCategory'   => $stockByCategory,
             'expiringMedicines' => $expiringMedicines,
         ]);
     }
@@ -211,8 +213,8 @@ class StockController extends Controller
             ->get();
 
         return Inertia::render('Stock/Alerts', [
-            'lowStock' => $lowStock,
-            'expired' => $expired,
+            'lowStock'     => $lowStock,
+            'expired'      => $expired,
             'expiringSoon' => $expiringSoon,
         ]);
     }
@@ -220,8 +222,8 @@ class StockController extends Controller
     private function getStockAlerts()
     {
         return [
-            'low_stock' => Stock::with('medicine')->lowStock()->count(),
-            'expired' => Stock::with('medicine')->expired()->count(),
+            'low_stock'     => Stock::with('medicine')->lowStock()->count(),
+            'expired'       => Stock::with('medicine')->expired()->count(),
             'expiring_soon' => Stock::with('medicine')->expiringSoon(30)->count(),
         ];
     }

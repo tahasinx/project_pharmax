@@ -25,7 +25,7 @@ class CompanyController extends Controller
 
     public function index(Request $request): Response
     {
-        $q = trim((string) $request->query('q', ''));
+        $q         = trim((string) $request->query('q', ''));
         $provision = trim((string) $request->query('provision', ''));
         $companies = Company::query()
             ->when($q !== '', function ($query) use ($q) {
@@ -44,9 +44,9 @@ class CompanyController extends Controller
             ->withQueryString();
 
         return Inertia::render('Platform/Companies/Index', [
-            'companies' => $companies,
-            'q' => $q,
-            'provision' => $provision,
+            'companies'  => $companies,
+            'q'          => $q,
+            'provision'  => $provision,
             'baseDomain' => config('database.tenant.base_domain'),
         ]);
     }
@@ -54,8 +54,8 @@ class CompanyController extends Controller
     public function create(): Response
     {
         return Inertia::render('Platform/Companies/Create', [
-            'prefix' => config('database.tenant.db_prefix'),
-            'baseDomain' => config('database.tenant.base_domain'),
+            'prefix'      => config('database.tenant.db_prefix'),
+            'baseDomain'  => config('database.tenant.base_domain'),
             'hostEnabled' => app(HostProvisioner::class)->enabled(),
         ]);
     }
@@ -77,14 +77,14 @@ class CompanyController extends Controller
     public function store(Request $request, CompanyProvisioner $provisioner): RedirectResponse
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:32|regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
-            'database_name' => 'nullable|string|max:64',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:64',
-            'address' => 'nullable|string|max:2000',
-            'admin_name' => 'required|string|max:255',
-            'admin_email' => 'required|email|max:255',
+            'name'           => 'required|string|max:255',
+            'slug'           => 'required|string|max:32|regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
+            'database_name'  => 'nullable|string|max:64',
+            'email'          => 'required|email|max:255',
+            'phone'          => 'nullable|string|max:64',
+            'address'        => 'nullable|string|max:2000',
+            'admin_name'     => 'required|string|max:255',
+            'admin_email'    => 'required|email|max:255',
             'admin_password' => 'required|string|min:8',
         ]);
 
@@ -102,20 +102,20 @@ class CompanyController extends Controller
         }
 
         $company = Company::query()->create([
-            'name' => $data['name'],
-            'slug' => $data['slug'],
-            'email' => $data['email'],
-            'phone' => $data['phone'] ?? null,
-            'address' => $data['address'] ?? null,
-            'database_name' => $check['database_name'],
-            'status' => 'locked',
+            'name'             => $data['name'],
+            'slug'             => $data['slug'],
+            'email'            => $data['email'],
+            'phone'            => $data['phone'] ?? null,
+            'address'          => $data['address'] ?? null,
+            'database_name'    => $check['database_name'],
+            'status'           => 'locked',
             'provision_status' => 'pending',
-            'admin_email' => $data['admin_email'],
+            'admin_email'      => $data['admin_email'],
         ]);
 
         $provisioner->rememberAdmin($company, [
-            'name' => $data['admin_name'],
-            'email' => $data['admin_email'],
+            'name'     => $data['admin_name'],
+            'email'    => $data['admin_email'],
             'password' => $data['admin_password'],
         ]);
         $provisioner->startInBackground($company);
@@ -132,12 +132,12 @@ class CompanyController extends Controller
     public function update(Request $request, Company $company): RedirectResponse
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
+            'name'        => 'required|string|max:255',
+            'email'       => 'nullable|email|max:255',
             'admin_email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:64',
-            'address' => 'nullable|string|max:2000',
-            'status' => 'required|in:active,locked',
+            'phone'       => 'nullable|string|max:64',
+            'address'     => 'nullable|string|max:2000',
+            'status'      => 'required|in:active,locked',
         ]);
         $company->fill($data)->save();
 
@@ -147,7 +147,7 @@ class CompanyController extends Controller
     public function destroy(Request $request, Company $company, HostProvisioner $hosts, CompanyProvisioner $provisioner): RedirectResponse
     {
         $data = $request->validate([
-            'password' => 'required|string',
+            'password'     => 'required|string',
             'confirm_text' => 'required|in:DELETE',
         ]);
         if (! Hash::check($data['password'], (string) $request->user()?->getAuthPassword())) {
@@ -180,27 +180,27 @@ class CompanyController extends Controller
 
     public function show(Company $company, SchemaCompare $schema, TenantBackup $backups): Response
     {
-        $rows = $schema->companies();
+        $rows         = $schema->companies();
         $subscription = $company->subscriptions()->with('plan')->latest('id')->first();
 
         return Inertia::render('Platform/Companies/Show', [
-            'company' => $company,
-            'host' => 'https://'.$company->host(),
+            'company'      => $company,
+            'host'         => 'https://'.$company->host(),
             'subscription' => $subscription ? [
-                'status' => $subscription->status,
+                'status'  => $subscription->status,
                 'ends_on' => optional($subscription->ends_on)->toDateString(),
-                'plan' => ['name' => $subscription->plan?->name],
+                'plan'    => ['name' => $subscription->plan?->name],
             ] : null,
             'schema' => collect($rows)->firstWhere('company_id', $company->id),
-            'files' => $company->database_name ? $backups->listFor($company) : [],
+            'files'  => $company->database_name ? $backups->listFor($company) : [],
         ]);
     }
 
     public function provisionPage(Company $company, HostProvisioner $hosts): Response
     {
         return Inertia::render('Platform/Companies/Provision', [
-            'company' => $company,
-            'host' => 'https://'.$company->host(),
+            'company'     => $company,
+            'host'        => 'https://'.$company->host(),
             'hostEnabled' => $hosts->enabled(),
         ]);
     }
@@ -211,12 +211,12 @@ class CompanyController extends Controller
 
         return response()->json([
             'provision_status' => $company->provision_status,
-            'provision_step' => $company->provision_step,
-            'provision_error' => $company->provision_error,
-            'vhost_status' => $company->vhost_status,
-            'ssl_status' => $company->ssl_status,
-            'log' => $company->provision_log ?? [],
-            'host' => 'https://'.$company->host(),
+            'provision_step'   => $company->provision_step,
+            'provision_error'  => $company->provision_error,
+            'vhost_status'     => $company->vhost_status,
+            'ssl_status'       => $company->ssl_status,
+            'log'              => $company->provision_log ?? [],
+            'host'             => 'https://'.$company->host(),
         ]);
     }
 

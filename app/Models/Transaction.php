@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Transaction extends Model
 {
-    use HasFactory;
+    use HasFactory, HasPublicId;
 
     protected $fillable = [
         'voucher_no',
@@ -26,11 +27,11 @@ class Transaction extends Model
 
     protected $casts = [
         'voucher_date' => 'date',
-        'debit' => 'decimal:2',
-        'credit' => 'decimal:2',
-        'is_posted' => 'boolean',
-        'is_opening' => 'boolean',
-        'is_approved' => 'boolean',
+        'debit'        => 'decimal:2',
+        'credit'       => 'decimal:2',
+        'is_posted'    => 'boolean',
+        'is_opening'   => 'boolean',
+        'is_approved'  => 'boolean',
     ];
 
     public function account(): BelongsTo

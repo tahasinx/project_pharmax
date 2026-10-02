@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Medicine extends Model
 {
-    use HasFactory;
+    use HasFactory, HasPublicId;
 
     protected $fillable = [
         'product_id',
@@ -51,18 +52,18 @@ class Medicine extends Model
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
-        'discount_percent' => 'decimal:2',
-        'manufacturer_price' => 'decimal:2',
-        'alert_qty' => 'integer',
-        'box_size' => 'integer',
-        'status' => 'boolean',
+        'price'                 => 'decimal:2',
+        'discount_percent'      => 'decimal:2',
+        'manufacturer_price'    => 'decimal:2',
+        'alert_qty'             => 'integer',
+        'box_size'              => 'integer',
+        'status'                => 'boolean',
         'requires_prescription' => 'boolean',
-        'is_controlled' => 'boolean',
-        'is_antibiotic' => 'boolean',
-        'is_high_risk' => 'boolean',
-        'is_refrigerated' => 'boolean',
-        'is_narcotic' => 'boolean',
+        'is_controlled'         => 'boolean',
+        'is_antibiotic'         => 'boolean',
+        'is_high_risk'          => 'boolean',
+        'is_refrigerated'       => 'boolean',
+        'is_narcotic'           => 'boolean',
     ];
 
     public function category(): BelongsTo
@@ -97,7 +98,7 @@ class Medicine extends Model
 
     public function alternatives()
     {
-        if (!$this->generic_id) {
+        if (! $this->generic_id) {
             return collect();
         }
 

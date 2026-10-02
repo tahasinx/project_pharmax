@@ -6,6 +6,7 @@ use App\Domain\Access\PermissionCatalog;
 use App\Models\Branch;
 use App\Models\LedgerAccount;
 use App\Models\Menu;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 
@@ -32,7 +33,7 @@ class PharmacyFoundationSeeder extends Seeder
         }
 
         $branchId = Branch::query()->value('id');
-        $menus = [
+        $menus    = [
             ['Branches', 'branches.index', '🏢', 15, 'manage-branches'],
             ['Category', 'categories.index', '🏷️', 16, 'manage-medicines'],
             ['Generic Name', 'generics.index', '🧪', 17, 'manage-medicines'],
@@ -53,10 +54,10 @@ class PharmacyFoundationSeeder extends Seeder
         $admin = Role::where('name', 'admin')->first();
         foreach ($menus as [$name, $route, $icon, $order, $permission]) {
             $menu = Menu::updateOrCreate(['route' => $route], [
-                'name' => $name,
-                'icon' => $icon,
-                'order' => $order,
-                'is_active' => true,
+                'name'       => $name,
+                'icon'       => $icon,
+                'order'      => $order,
+                'is_active'  => true,
                 'permission' => $permission,
             ]);
             $roleIds = Role::all()->filter(function ($role) use ($permission) {
@@ -68,7 +69,7 @@ class PharmacyFoundationSeeder extends Seeder
         Menu::where('route', 'brands.index')->update(['is_active' => false]);
 
         if ($branchId) {
-            \App\Models\User::whereNull('branch_id')->update(['branch_id' => $branchId]);
+            User::whereNull('branch_id')->update(['branch_id' => $branchId]);
         }
     }
 }

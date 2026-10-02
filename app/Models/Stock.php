@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Carbon\Carbon;
 
 class Stock extends Model
 {
-    use HasFactory;
+    use HasFactory, HasPublicId;
 
     protected $fillable = [
         'medicine_id',
@@ -36,16 +36,16 @@ class Stock extends Model
     ];
 
     protected $casts = [
-        'expiry_date' => 'date',
-        'quantity' => 'integer',
-        'min_stock_level' => 'integer',
-        'max_stock_level' => 'integer',
-        'purchase_price' => 'decimal:2',
-        'selling_price' => 'decimal:2',
-        'is_active' => 'boolean',
+        'expiry_date'        => 'date',
+        'quantity'           => 'integer',
+        'min_stock_level'    => 'integer',
+        'max_stock_level'    => 'integer',
+        'purchase_price'     => 'decimal:2',
+        'selling_price'      => 'decimal:2',
+        'is_active'          => 'boolean',
         'manufacturing_date' => 'date',
-        'mrp' => 'decimal:2',
-        'recalled' => 'boolean',
+        'mrp'                => 'decimal:2',
+        'recalled'           => 'boolean',
     ];
 
     public function medicine(): BelongsTo
@@ -126,7 +126,7 @@ class Stock extends Model
     // Get days until expiry
     public function daysUntilExpiry(): ?int
     {
-        if (!$this->expiry_date) {
+        if (! $this->expiry_date) {
             return null;
         }
 

@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Customer;
 use App\Models\Invoice;
-use App\Models\InvoiceItem;
 use App\Models\Medicine;
 use App\Models\Stock;
 use App\Models\User;
@@ -17,7 +16,9 @@ class InvoiceTest extends TestCase
     use RefreshDatabase;
 
     protected $user;
+
     protected $customer;
+
     protected $medicine;
 
     protected function setUp(): void
@@ -38,8 +39,8 @@ class InvoiceTest extends TestCase
 
         // Create stock for the medicine
         Stock::factory()->create([
-            'medicine_id' => $this->medicine->id,
-            'quantity' => 100,
+            'medicine_id'   => $this->medicine->id,
+            'quantity'      => 100,
             'selling_price' => 25.00,
         ]);
     }
@@ -65,24 +66,24 @@ class InvoiceTest extends TestCase
     public function test_can_create_invoice()
     {
         $invoiceData = [
-            'customer_id' => $this->customer->id,
-            'date' => now()->format('Y-m-d'),
-            'payment_type' => 'cash',
-            'paid_amount' => 50.00,
-            'due_amount' => 0.00,
-            'total_amount' => 50.00,
-            'total_tax' => 5.00,
+            'customer_id'    => $this->customer->getRouteKey(),
+            'date'           => now()->format('Y-m-d'),
+            'payment_type'   => 'cash',
+            'paid_amount'    => 50.00,
+            'due_amount'     => 0.00,
+            'total_amount'   => 50.00,
+            'total_tax'      => 5.00,
             'total_discount' => 0.00,
-            'items' => [
+            'items'          => [
                 [
-                    'medicine_id' => $this->medicine->id,
-                    'quantity' => 2,
-                    'rate' => 25.00,
-                    'discount' => 0,
-                    'batch_id' => 'BATCH001',
-                ]
+                    'medicine_id' => $this->medicine->getRouteKey(),
+                    'quantity'    => 2,
+                    'rate'        => 25.00,
+                    'discount'    => 0,
+                    'batch_id'    => 'BATCH001',
+                ],
             ],
-            'send_sms' => false,
+            'send_sms'   => false,
             'send_email' => false,
         ];
 
@@ -90,7 +91,7 @@ class InvoiceTest extends TestCase
         $response->assertRedirect();
 
         $this->assertDatabaseHas('invoices', [
-            'customer_id' => $this->customer->id,
+            'customer_id'  => $this->customer->id,
             'total_amount' => 50.00,
         ]);
     }
@@ -98,7 +99,7 @@ class InvoiceTest extends TestCase
     public function test_cannot_create_invoice_without_customer()
     {
         $response = $this->actingAs($this->user)->post('/invoices', [
-            'date' => now()->format('Y-m-d'),
+            'date'         => now()->format('Y-m-d'),
             'total_amount' => 50.00,
         ]);
 
@@ -108,8 +109,8 @@ class InvoiceTest extends TestCase
     public function test_cannot_create_invoice_without_items()
     {
         $response = $this->actingAs($this->user)->post('/invoices', [
-            'customer_id' => $this->customer->id,
-            'date' => now()->format('Y-m-d'),
+            'customer_id'  => $this->customer->getRouteKey(),
+            'date'         => now()->format('Y-m-d'),
             'total_amount' => 50.00,
         ]);
 
@@ -119,18 +120,18 @@ class InvoiceTest extends TestCase
     public function test_cannot_create_invoice_with_insufficient_stock()
     {
         $invoiceData = [
-            'customer_id' => $this->customer->id,
-            'date' => now()->format('Y-m-d'),
+            'customer_id'  => $this->customer->getRouteKey(),
+            'date'         => now()->format('Y-m-d'),
             'payment_type' => 'cash',
             'total_amount' => 5000.00,
-            'items' => [
+            'items'        => [
                 [
-                    'medicine_id' => $this->medicine->id,
-                    'quantity' => 1000, // More than available stock
-                    'rate' => 25.00,
-                    'discount' => 0,
-                    'batch_id' => 'BATCH001',
-                ]
+                    'medicine_id' => $this->medicine->getRouteKey(),
+                    'quantity'    => 1000, // More than available stock
+                    'rate'        => 25.00,
+                    'discount'    => 0,
+                    'batch_id'    => 'BATCH001',
+                ],
             ],
         ];
 
@@ -141,31 +142,31 @@ class InvoiceTest extends TestCase
     public function test_can_update_invoice()
     {
         $invoice = Invoice::factory()->create([
-            'customer_id' => $this->customer->id,
+            'customer_id'  => $this->customer->id,
             'total_amount' => 50.00,
         ]);
 
         $updateData = [
-            'customer_id' => $this->customer->id,
-            'date' => now()->format('Y-m-d'),
+            'customer_id'  => $this->customer->getRouteKey(),
+            'date'         => now()->format('Y-m-d'),
             'payment_type' => 'bank',
             'total_amount' => 75.00,
-            'items' => [
+            'items'        => [
                 [
-                    'medicine_id' => $this->medicine->id,
-                    'quantity' => 3,
-                    'rate' => 25.00,
-                    'discount' => 0,
-                    'batch_id' => 'BATCH001',
-                ]
+                    'medicine_id' => $this->medicine->getRouteKey(),
+                    'quantity'    => 3,
+                    'rate'        => 25.00,
+                    'discount'    => 0,
+                    'batch_id'    => 'BATCH001',
+                ],
             ],
         ];
 
-        $response = $this->actingAs($this->user)->put("/invoices/{$invoice->id}", $updateData);
+        $response = $this->actingAs($this->user)->put("/invoices/{$invoice->getRouteKey()}", $updateData);
         $response->assertRedirect();
 
         $this->assertDatabaseHas('invoices', [
-            'id' => $invoice->id,
+            'id'           => $invoice->id,
             'total_amount' => 75.00,
             'payment_type' => 'bank',
         ]);
@@ -177,7 +178,7 @@ class InvoiceTest extends TestCase
             'customer_id' => $this->customer->id,
         ]);
 
-        $response = $this->actingAs($this->user)->delete("/invoices/{$invoice->id}");
+        $response = $this->actingAs($this->user)->delete("/invoices/{$invoice->getRouteKey()}");
         $response->assertRedirect('/invoices');
 
         $this->assertDatabaseMissing('invoices', ['id' => $invoice->id]);
@@ -189,7 +190,7 @@ class InvoiceTest extends TestCase
             'customer_id' => $this->customer->id,
         ]);
 
-        $response = $this->actingAs($this->user)->get("/invoices/{$invoice->id}");
+        $response = $this->actingAs($this->user)->get("/invoices/{$invoice->getRouteKey()}");
         $response->assertStatus(200);
     }
 
@@ -199,7 +200,7 @@ class InvoiceTest extends TestCase
             'customer_id' => $this->customer->id,
         ]);
 
-        $response = $this->actingAs($this->user)->get("/invoices/{$invoice->id}/print");
+        $response = $this->actingAs($this->user)->get("/invoices/{$invoice->getRouteKey()}/print");
         $response->assertStatus(200);
     }
 
@@ -219,29 +220,29 @@ class InvoiceTest extends TestCase
 
     public function test_available_stocks_api()
     {
-        $response = $this->actingAs($this->user)->get("/api/medicines/{$this->medicine->id}/stocks");
+        $response = $this->actingAs($this->user)->get("/api/medicines/{$this->medicine->getRouteKey()}/stocks");
         $response->assertStatus(200);
         $response->assertJsonStructure([]);
     }
 
     public function test_invoice_creation_updates_stock()
     {
-        $initialStock = Stock::where('medicine_id', $this->medicine->id)->first();
+        $initialStock    = Stock::where('medicine_id', $this->medicine->id)->first();
         $initialQuantity = $initialStock->quantity;
 
         $invoiceData = [
-            'customer_id' => $this->customer->id,
-            'date' => now()->format('Y-m-d'),
+            'customer_id'  => $this->customer->getRouteKey(),
+            'date'         => now()->format('Y-m-d'),
             'payment_type' => 'cash',
             'total_amount' => 25.00,
-            'items' => [
+            'items'        => [
                 [
-                    'medicine_id' => $this->medicine->id,
-                    'quantity' => 1,
-                    'rate' => 25.00,
-                    'discount' => 0,
-                    'batch_id' => 'BATCH001',
-                ]
+                    'medicine_id' => $this->medicine->getRouteKey(),
+                    'quantity'    => 1,
+                    'rate'        => 25.00,
+                    'discount'    => 0,
+                    'batch_id'    => 'BATCH001',
+                ],
             ],
         ];
 
@@ -254,18 +255,18 @@ class InvoiceTest extends TestCase
     public function test_invoice_creation_creates_stock_transaction()
     {
         $invoiceData = [
-            'customer_id' => $this->customer->id,
-            'date' => now()->format('Y-m-d'),
+            'customer_id'  => $this->customer->getRouteKey(),
+            'date'         => now()->format('Y-m-d'),
             'payment_type' => 'cash',
             'total_amount' => 25.00,
-            'items' => [
+            'items'        => [
                 [
-                    'medicine_id' => $this->medicine->id,
-                    'quantity' => 1,
-                    'rate' => 25.00,
-                    'discount' => 0,
-                    'batch_id' => 'BATCH001',
-                ]
+                    'medicine_id' => $this->medicine->getRouteKey(),
+                    'quantity'    => 1,
+                    'rate'        => 25.00,
+                    'discount'    => 0,
+                    'batch_id'    => 'BATCH001',
+                ],
             ],
         ];
 
@@ -273,8 +274,8 @@ class InvoiceTest extends TestCase
 
         $this->assertDatabaseHas('stock_transactions', [
             'medicine_id' => $this->medicine->id,
-            'type' => 'sale',
-            'quantity' => -1, // Negative for sale
+            'type'        => 'sale',
+            'quantity'    => -1, // Negative for sale
         ]);
     }
 }

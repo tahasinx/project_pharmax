@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Audit\AuditRecorder;
+use App\Imports\MedicineImport;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Generic;
@@ -15,7 +17,6 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\DomCrawler\Crawler;
-use App\Imports\MedicineImport;
 
 class MedicineController extends Controller
 {
@@ -24,7 +25,7 @@ class MedicineController extends Controller
     public function index(Request $request)
     {
         $itemsPerPage = $this->getItemsPerPage();
-        $medicines = Medicine::with(['category', 'manufacturer', 'medicineType'])
+        $medicines    = Medicine::with(['category', 'manufacturer', 'medicineType'])
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->search;
                 $query->where(function ($inner) use ($search) {
@@ -49,80 +50,82 @@ class MedicineController extends Controller
 
     public function create()
     {
-        $categories = Category::where('status', true)->get();
+        $categories    = Category::where('status', true)->get();
         $manufacturers = Manufacturer::where('status', true)->get();
 
         return Inertia::render('Medicine/Create', [
-            'categories' => $categories,
+            'categories'    => $categories,
             'manufacturers' => $manufacturers,
-            'generics' => Generic::orderBy('name')->get(['id', 'name']),
-            'brands' => Brand::orderBy('name')->get(['id', 'name']),
-            'medicineTypes' => MedicineType::orderBy('name')->get(['id', 'name']),
-            'units' => Unit::orderBy('name')->get(['id', 'name']),
+            'generics'      => Generic::orderBy('name')->get(),
+            'brands'        => Brand::orderBy('name')->get(),
+            'medicineTypes' => MedicineType::orderBy('name')->get(),
+            'units'         => Unit::orderBy('name')->get(),
         ]);
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'category_id' => 'nullable|exists:categories,id',
-            'manufacturer_id' => 'nullable|exists:manufacturers,id',
-            'medicine_type_id' => 'required|exists:medicine_types,id',
-            'price' => 'required|numeric|min:0',
+            'name'               => 'required|string|max:255',
+            'category_id'        => 'nullable|exists:categories,category_id',
+            'manufacturer_id'    => 'nullable|exists:manufacturers,manufacturer_id',
+            'medicine_type_id'   => 'required|exists:medicine_types,medicine_type_id',
+            'price'              => 'required|numeric|min:0',
             'manufacturer_price' => 'required|numeric|min:0',
-            'box_size' => 'nullable|integer|min:1',
-            'discount_percent' => 'nullable|numeric|min:0|max:100',
-            'alert_qty' => 'nullable|integer|min:0',
-            'barcode' => 'nullable|string|max:255',
-            'image' => 'nullable|image|max:2048',
-            'generic_id' => 'required|exists:generics,id',
-            'strength' => 'required|string|max:255',
-            'unit' => 'required|string|max:255',
+            'box_size'           => 'nullable|integer|min:1',
+            'discount_percent'   => 'nullable|numeric|min:0|max:100',
+            'alert_qty'          => 'nullable|integer|min:0',
+            'barcode'            => 'nullable|string|max:255',
+            'image'              => 'nullable|image|max:2048',
+            'generic_id'         => 'required|exists:generics,generic_id',
+            'strength'           => 'required|string|max:255',
+            'unit'               => 'required|string|max:255',
         ]);
 
         $imagePath = $request->hasFile('image')
             ? $request->file('image')->store('medicines', 'public')
             : null;
 
+        $generic = Generic::findByPublicId($request->generic_id);
+
         $medicine = Medicine::create([
-            'product_id'        => $this->generateProductId(),
-            'name'              => $request->name,
-            'category_id'       => $request->category_id ?: null,
-            'manufacturer_id'   => $request->manufacturer_id ?: null,
-            'generic_name'      => $request->generic_id ? Generic::find($request->generic_id)?->name : $request->generic_name,
-            'generic_id'        => $request->generic_id,
-            'medicine_type_id'  => $request->medicine_type_id,
-            'brand_id'          => $request->brand_id,
-            'strength'          => $request->strength,
-            'dosage_form'       => $request->dosage_form,
-            'atc_code'          => $request->atc_code,
-            'sku'               => $request->sku,
+            'product_id'            => $this->generateProductId(),
+            'name'                  => $request->name,
+            'category_id'           => Category::localId($request->category_id),
+            'manufacturer_id'       => Manufacturer::localId($request->manufacturer_id),
+            'generic_name'          => $generic?->name ?? $request->generic_name,
+            'generic_id'            => $generic?->id,
+            'medicine_type_id'      => MedicineType::localIdOrFail($request->medicine_type_id),
+            'brand_id'              => Brand::localId($request->brand_id),
+            'strength'              => $request->strength,
+            'dosage_form'           => $request->dosage_form,
+            'atc_code'              => $request->atc_code,
+            'sku'                   => $request->sku,
             'requires_prescription' => $request->boolean('requires_prescription'),
-            'is_controlled'     => $request->boolean('is_controlled'),
-            'is_antibiotic'     => $request->boolean('is_antibiotic'),
-            'is_high_risk'      => $request->boolean('is_high_risk'),
-            'is_refrigerated'   => $request->boolean('is_refrigerated'),
-            'is_narcotic'       => $request->boolean('is_narcotic'),
-            'box_size'          => $request->input('box_size', 1) ?: 1,
-            'product_location'  => $request->product_location,
-            'price'             => $request->price,
-            'discount_percent'  => $request->input('discount_percent', 0),
-            'manufacturer_price' => $request->manufacturer_price,
-            'unit'              => $request->unit,
-            'alert_qty'         => $request->input('alert_qty', 0),
-            'barcode_data'      => $request->barcode,
-            'barcode_type'      => 'code128',
-            'image'             => $imagePath,
-            'details'           => $request->details,
-            'status'            => $request->has('status') ? $request->boolean('status') : true,
+            'is_controlled'         => $request->boolean('is_controlled'),
+            'is_antibiotic'         => $request->boolean('is_antibiotic'),
+            'is_high_risk'          => $request->boolean('is_high_risk'),
+            'is_refrigerated'       => $request->boolean('is_refrigerated'),
+            'is_narcotic'           => $request->boolean('is_narcotic'),
+            'box_size'              => $request->input('box_size', 1) ?: 1,
+            'product_location'      => $request->product_location,
+            'price'                 => $request->price,
+            'discount_percent'      => $request->input('discount_percent', 0),
+            'manufacturer_price'    => $request->manufacturer_price,
+            'unit'                  => $request->unit,
+            'alert_qty'             => $request->input('alert_qty', 0),
+            'barcode_data'          => $request->barcode,
+            'barcode_type'          => 'code128',
+            'image'                 => $imagePath,
+            'details'               => $request->details,
+            'status'                => $request->has('status') ? $request->boolean('status') : true,
         ]);
 
         $this->generateDefaultCodes($medicine);
         $this->syncUnits($medicine, $request->input('units', []));
 
         if ($request->boolean('manage_stock')) {
-            return redirect()->route('stocks.create', ['medicine' => $medicine->id])
+            return redirect()->route('stocks.create', ['medicine' => $medicine->getRouteKey()])
                 ->with('success', 'Medicine created. Add its stock.');
         }
 
@@ -141,60 +144,68 @@ class MedicineController extends Controller
 
     public function edit(Medicine $medicine)
     {
-        $categories = Category::where('status', true)->get();
+        $categories    = Category::where('status', true)->get();
         $manufacturers = Manufacturer::where('status', true)->get();
 
-        $medicine->load('units');
+        $medicine->load(['units', 'category', 'manufacturer', 'generic', 'medicineType', 'brand']);
+
+        $payload                     = $medicine->toArray();
+        $payload['category_id']      = $medicine->category?->publicId();
+        $payload['manufacturer_id']  = $medicine->manufacturer?->publicId();
+        $payload['generic_id']       = $medicine->generic?->publicId();
+        $payload['medicine_type_id'] = $medicine->medicineType?->publicId();
+        $payload['brand_id']         = $medicine->brand?->publicId();
 
         return Inertia::render('Medicine/Edit', [
-            'medicine' => $medicine,
-            'categories' => $categories,
+            'medicine'      => $payload,
+            'categories'    => $categories,
             'manufacturers' => $manufacturers,
-            'generics' => Generic::orderBy('name')->get(['id', 'name']),
-            'brands' => Brand::orderBy('name')->get(['id', 'name']),
-            'medicineTypes' => MedicineType::orderBy('name')->get(['id', 'name']),
-            'units' => Unit::orderBy('name')->get(['id', 'name']),
+            'generics'      => Generic::orderBy('name')->get(),
+            'brands'        => Brand::orderBy('name')->get(),
+            'medicineTypes' => MedicineType::orderBy('name')->get(),
+            'units'         => Unit::orderBy('name')->get(),
         ]);
     }
 
     public function update(Request $request, Medicine $medicine)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'category_id' => 'nullable|exists:categories,id',
-            'manufacturer_id' => 'nullable|exists:manufacturers,id',
-            'medicine_type_id' => 'required|exists:medicine_types,id',
-            'generic_id' => 'required|exists:generics,id',
-            'strength' => 'required|string|max:255',
-            'unit' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
+            'name'               => 'required|string|max:255',
+            'category_id'        => 'nullable|exists:categories,category_id',
+            'manufacturer_id'    => 'nullable|exists:manufacturers,manufacturer_id',
+            'medicine_type_id'   => 'required|exists:medicine_types,medicine_type_id',
+            'generic_id'         => 'required|exists:generics,generic_id',
+            'strength'           => 'required|string|max:255',
+            'unit'               => 'required|string|max:255',
+            'price'              => 'required|numeric|min:0',
             'manufacturer_price' => 'required|numeric|min:0',
-            'box_size' => 'nullable|integer|min:1',
-            'discount_percent' => 'nullable|numeric|min:0|max:100',
-            'alert_qty' => 'nullable|integer|min:0',
-            'barcode' => 'nullable|string|max:255',
-            'image' => 'nullable|image|max:2048',
+            'box_size'           => 'nullable|integer|min:1',
+            'discount_percent'   => 'nullable|numeric|min:0|max:100',
+            'alert_qty'          => 'nullable|integer|min:0',
+            'barcode'            => 'nullable|string|max:255',
+            'image'              => 'nullable|image|max:2048',
         ]);
 
         $oldPrice = $medicine->price;
-        $data = [
-            'name' => $request->name,
-            'category_id' => $request->category_id ?: null,
-            'manufacturer_id' => $request->manufacturer_id ?: null,
-            'generic_name' => Generic::find($request->generic_id)?->name,
-            'generic_id' => $request->generic_id,
-            'medicine_type_id' => $request->medicine_type_id,
-            'strength' => $request->strength,
-            'price' => $request->price,
-            'discount_percent' => $request->input('discount_percent', 0),
+        $generic  = Generic::findByPublicId($request->generic_id);
+        $data     = [
+            'name'               => $request->name,
+            'category_id'        => Category::localId($request->category_id),
+            'manufacturer_id'    => Manufacturer::localId($request->manufacturer_id),
+            'generic_name'       => $generic?->name,
+            'generic_id'         => $generic?->id,
+            'medicine_type_id'   => MedicineType::localIdOrFail($request->medicine_type_id),
+            'strength'           => $request->strength,
+            'price'              => $request->price,
+            'discount_percent'   => $request->input('discount_percent', 0),
             'manufacturer_price' => $request->manufacturer_price,
-            'box_size' => $request->input('box_size', $medicine->box_size) ?: 1,
-            'unit' => $request->unit,
-            'alert_qty' => $request->input('alert_qty', 0),
-            'product_location' => $request->product_location,
-            'details' => $request->details,
-            'barcode_data' => $request->barcode ?: $medicine->barcode_data,
-            'status' => $request->has('status') ? $request->boolean('status') : $medicine->status,
+            'box_size'           => $request->input('box_size', $medicine->box_size) ?: 1,
+            'unit'               => $request->unit,
+            'alert_qty'          => $request->input('alert_qty', 0),
+            'product_location'   => $request->product_location,
+            'details'            => $request->details,
+            'barcode_data'       => $request->barcode ?: $medicine->barcode_data,
+            'status'             => $request->has('status') ? $request->boolean('status') : $medicine->status,
         ];
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('medicines', 'public');
@@ -204,11 +215,11 @@ class MedicineController extends Controller
             $this->syncUnits($medicine, $request->input('units', []));
         }
         if ((float) $oldPrice !== (float) $medicine->price) {
-            \App\Domain\Audit\AuditRecorder::record('medicine', $medicine, 'price', ['price' => $oldPrice], ['price' => $medicine->price]);
+            AuditRecorder::record('medicine', $medicine, 'price', ['price' => $oldPrice], ['price' => $medicine->price]);
         }
 
         // Auto-generate codes if they don't exist
-        if (!$medicine->qr_code_data || !$medicine->barcode_data) {
+        if (! $medicine->qr_code_data || ! $medicine->barcode_data) {
             $this->generateDefaultCodes($medicine);
         }
 
@@ -236,7 +247,6 @@ class MedicineController extends Controller
             'file' => 'required|file|max:5120|mimetypes:text/csv,text/plain,application/vnd.ms-excel,application/csv',
         ]);
 
-
         try {
             Excel::import(new MedicineImport, $request->file('file'));
 
@@ -244,10 +254,9 @@ class MedicineController extends Controller
                 ->with('success', 'Medicines imported successfully.');
         } catch (\Exception $e) {
             return redirect()->route('medicines.index')
-                ->with('error', 'Error importing medicines: ' . $e->getMessage());
+                ->with('error', 'Error importing medicines: '.$e->getMessage());
         }
     }
-
 
     public function generateCodes(Medicine $medicine)
     {
@@ -258,29 +267,28 @@ class MedicineController extends Controller
         ]);
     }
 
-
     public function saveCodes(Request $request, Medicine $medicine)
     {
         $request->validate([
-            'qr_code_data' => 'nullable|string',
-            'qr_code_type' => 'nullable|string|in:product_id,medicine_info,custom',
+            'qr_code_data'       => 'nullable|string',
+            'qr_code_type'       => 'nullable|string|in:product_id,medicine_info,custom',
             'qr_code_image_path' => 'nullable|string',
-            'barcode_data' => 'nullable|string',
-            'barcode_type' => 'nullable|string|in:code128,code39,ean13,upc',
+            'barcode_data'       => 'nullable|string',
+            'barcode_type'       => 'nullable|string|in:code128,code39,ean13,upc',
             'barcode_image_path' => 'nullable|string',
         ]);
 
         $updateData = [];
 
         if ($request->has('qr_code_data')) {
-            $updateData['qr_code_data'] = $request->qr_code_data;
-            $updateData['qr_code_type'] = $request->qr_code_type;
+            $updateData['qr_code_data']       = $request->qr_code_data;
+            $updateData['qr_code_type']       = $request->qr_code_type;
             $updateData['qr_code_image_path'] = $request->qr_code_image_path;
         }
 
         if ($request->has('barcode_data')) {
-            $updateData['barcode_data'] = $request->barcode_data;
-            $updateData['barcode_type'] = $request->barcode_type;
+            $updateData['barcode_data']       = $request->barcode_data;
+            $updateData['barcode_type']       = $request->barcode_type;
             $updateData['barcode_image_path'] = $request->barcode_image_path;
         }
 
@@ -293,39 +301,44 @@ class MedicineController extends Controller
     public function medexSearch(Request $request)
     {
         $searchKey = $request->query('q');
-        $url = 'https://medex.com.bd/ajax/search?searchtype=search&searchkey=' . urlencode($searchKey);
+        $url       = 'https://medex.com.bd/ajax/search?searchtype=search&searchkey='.urlencode($searchKey);
 
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        $html = curl_exec($ch);
+        $html     = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
-        if ($httpCode != 200 || !$html) {
+        if ($httpCode != 200 || ! $html) {
             return response()->json(['error' => 'Failed to fetch data from MedEx'], $httpCode);
         }
 
         $crawler = new Crawler($html);
-        $abs = function ($maybe) {
-            if (!$maybe) return null;
-            if (str_starts_with($maybe, 'http')) return $maybe;
-            return 'https://medex.com.bd' . $maybe;
+        $abs     = function ($maybe) {
+            if (! $maybe) {
+                return null;
+            }
+            if (str_starts_with($maybe, 'http')) {
+                return $maybe;
+            }
+
+            return 'https://medex.com.bd'.$maybe;
         };
         $results = [];
         $crawler->filter('a.lsri')->each(function (Crawler $node) use (&$results, $abs) {
-            $link = $node->attr('href');
-            $formNode = $node->filter('li');
-            $imgNode = $node->filter('img');
-            $spanNode = $node->filter('span')->first();
+            $link         = $node->attr('href');
+            $formNode     = $node->filter('li');
+            $imgNode      = $node->filter('img');
+            $spanNode     = $node->filter('span')->first();
             $strengthNode = $node->filter('.sr-strength');
-            $results[] = [
-                'link' => $abs($link),
-                'form' => $formNode->count() ? $formNode->attr('title') : null,
-                'name' => $spanNode->count() ? trim($spanNode->text()) : null,
+            $results[]    = [
+                'link'     => $abs($link),
+                'form'     => $formNode->count() ? $formNode->attr('title') : null,
+                'name'     => $spanNode->count() ? trim($spanNode->text()) : null,
                 'strength' => $strengthNode->count() ? trim($strengthNode->text()) : null,
-                'img' => $abs($imgNode->count() ? $imgNode->attr('src') : null),
+                'img'      => $abs($imgNode->count() ? $imgNode->attr('src') : null),
             ];
         });
 
@@ -334,10 +347,10 @@ class MedicineController extends Controller
 
     public function medexBrands(Request $request)
     {
-        $page = max(1, (int) $request->query('page', 1));
+        $page   = max(1, (int) $request->query('page', 1));
         $letter = strtolower((string) $request->query('letter', ''));
-        $query = http_build_query(array_filter([
-            'page' => $page,
+        $query  = http_build_query(array_filter([
+            'page'  => $page,
             'alpha' => preg_match('/^[a-z]$/', $letter) ? $letter : null,
         ]));
         $html = $this->fetchMedex('https://medex.com.bd/brands'.($query ? '?'.$query : ''));
@@ -346,20 +359,20 @@ class MedicineController extends Controller
         }
 
         $crawler = new Crawler($html);
-        $rows = $crawler->filter('a.brand-card')->each(function (Crawler $card) {
-            $name = $card->filter('.brand-card__name');
+        $rows    = $crawler->filter('a.brand-card')->each(function (Crawler $card) {
+            $name     = $card->filter('.brand-card__name');
             $strength = $card->filter('.brand-card__strength');
-            $generic = $card->filter('.brand-card__generic');
-            $company = $card->filter('.brand-card__company');
-            $icon = $card->filter('.dosage-icon');
+            $generic  = $card->filter('.brand-card__generic');
+            $company  = $card->filter('.brand-card__company');
+            $icon     = $card->filter('.dosage-icon');
 
             return [
-                'name' => $name->count() ? trim($name->text()) : null,
-                'strength' => $strength->count() ? trim($strength->text()) : null,
-                'generic' => $generic->count() ? trim($generic->text()) : null,
+                'name'         => $name->count() ? trim($name->text()) : null,
+                'strength'     => $strength->count() ? trim($strength->text()) : null,
+                'generic'      => $generic->count() ? trim($generic->text()) : null,
                 'manufacturer' => $company->count() ? trim($company->text()) : null,
-                'form' => $icon->count() ? ($icon->attr('title') ?: trim($icon->attr('alt') ?? '')) : null,
-                'link' => $card->attr('href'),
+                'form'         => $icon->count() ? ($icon->attr('title') ?: trim($icon->attr('alt') ?? '')) : null,
+                'link'         => $card->attr('href'),
             ];
         });
 
@@ -369,7 +382,7 @@ class MedicineController extends Controller
     public function importMedexBrands(Request $request)
     {
         $request->validate([
-            'rows' => 'required|array|min:1|max:200',
+            'rows'        => 'required|array|min:1|max:200',
             'rows.*.name' => 'required|string|max:255',
         ]);
 
@@ -386,10 +399,10 @@ class MedicineController extends Controller
 
     public function medexCompanies(Request $request)
     {
-        $page = max(1, (int) $request->query('page', 1));
+        $page   = max(1, (int) $request->query('page', 1));
         $letter = strtolower((string) $request->query('letter', ''));
-        $query = http_build_query(array_filter([
-            'page' => $page,
+        $query  = http_build_query(array_filter([
+            'page'  => $page,
             'alpha' => preg_match('/^[a-z]$/', $letter) ? $letter : null,
         ]));
         $html = $this->fetchMedex('https://medex.com.bd/companies'.($query ? '?'.$query : ''));
@@ -398,7 +411,7 @@ class MedicineController extends Controller
         }
 
         $crawler = new Crawler($html);
-        $rows = $crawler->filter('.data-row')->each(function (Crawler $row) {
+        $rows    = $crawler->filter('.data-row')->each(function (Crawler $row) {
             $link = $row->filter('.data-row-top a');
             if (! $link->count()) {
                 return null;
@@ -406,8 +419,8 @@ class MedicineController extends Controller
             $stats = trim(preg_replace('/\s+/', ' ', $row->filter('.col-xs-12')->last()->text()) ?? '');
 
             return [
-                'name' => trim($link->text()),
-                'link' => $link->attr('href'),
+                'name'    => trim($link->text()),
+                'link'    => $link->attr('href'),
                 'details' => $stats,
             ];
         });
@@ -418,15 +431,15 @@ class MedicineController extends Controller
     public function importMedexCompanies(Request $request)
     {
         $request->validate([
-            'rows' => 'required|array|min:1|max:100',
-            'rows.*.name' => 'required|string|max:255',
+            'rows'           => 'required|array|min:1|max:100',
+            'rows.*.name'    => 'required|string|max:255',
             'rows.*.details' => 'nullable|string|max:255',
         ]);
 
         $created = 0;
         foreach ($request->input('rows') as $row) {
             $manufacturer = Manufacturer::firstOrCreate(['name' => $row['name']], [
-                'status' => true,
+                'status'  => true,
                 'details' => $row['details'] ?? null,
             ]);
             if ($manufacturer->wasRecentlyCreated) {
@@ -444,10 +457,10 @@ class MedicineController extends Controller
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_TIMEOUT => 25,
-            CURLOPT_USERAGENT => 'Mozilla/5.0',
+            CURLOPT_TIMEOUT        => 25,
+            CURLOPT_USERAGENT      => 'Mozilla/5.0',
         ]);
-        $html = curl_exec($ch);
+        $html     = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
@@ -457,7 +470,7 @@ class MedicineController extends Controller
     public function medexProduct(Request $request)
     {
         $url = $request->query('url');
-        if (!$url) {
+        if (! $url) {
             return response()->json(['error' => 'Missing required parameter: url'], 422);
         }
 
@@ -465,34 +478,41 @@ class MedicineController extends Controller
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        $html = curl_exec($ch);
+        $html     = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
-        if ($httpCode != 200 || !$html) {
+        if ($httpCode != 200 || ! $html) {
             return response()->json(['error' => 'Failed to fetch product page'], 502);
         }
 
-        $crawler = new Crawler($html);
+        $crawler  = new Crawler($html);
         $safeText = function ($selector) use ($crawler) {
             $nodes = $crawler->filter($selector);
+
             return $nodes->count() ? trim($nodes->first()->text()) : null;
         };
         $safeHtml = function ($selector) use ($crawler) {
             $nodes = $crawler->filter($selector);
+
             return $nodes->count() ? $nodes->first()->html() : null;
         };
         $abs = function ($maybe) {
-            if (!$maybe) return null;
-            if (str_starts_with($maybe, 'http')) return $maybe;
-            return 'https://medex.com.bd' . $maybe;
+            if (! $maybe) {
+                return null;
+            }
+            if (str_starts_with($maybe, 'http')) {
+                return $maybe;
+            }
+
+            return 'https://medex.com.bd'.$maybe;
         };
 
-        $product = [];
-        $product['name'] = $safeText('h1.page-heading-1-l.brand');
-        $product['form'] = $safeText('h1.page-heading-1-l.brand small.h1-subtitle');
-        $product['generic'] = $safeText('div[title="Generic Name"] a');
-        $product['strength'] = $safeText('div[title="Strength"]');
+        $product                 = [];
+        $product['name']         = $safeText('h1.page-heading-1-l.brand');
+        $product['form']         = $safeText('h1.page-heading-1-l.brand small.h1-subtitle');
+        $product['generic']      = $safeText('div[title="Generic Name"] a');
+        $product['strength']     = $safeText('div[title="Strength"]');
         $product['manufacturer'] = $safeText('div[title="Manufactured by"] a');
 
         $prices = [];
@@ -502,51 +522,56 @@ class MedicineController extends Controller
                 $prices[] = $txt;
             }
         });
-        $product['unit_price'] = $prices[0] ?? null;
+        $product['unit_price']  = $prices[0] ?? null;
         $product['strip_price'] = $prices[1] ?? null;
-        $toNumeric = function ($s) {
-            if (!$s) return null;
+        $toNumeric              = function ($s) {
+            if (! $s) {
+                return null;
+            }
             $m = preg_replace('/[^0-9.,]/', '', $s);
             $m = str_replace(',', '', $m);
-            if ($m === '') return null;
+            if ($m === '') {
+                return null;
+            }
             $v = (float) $m;
+
             return is_finite($v) ? $v : null;
         };
-        $product['numeric_unit_price'] = $toNumeric($product['unit_price']);
+        $product['numeric_unit_price']  = $toNumeric($product['unit_price']);
         $product['numeric_strip_price'] = $toNumeric($product['strip_price']);
 
         $product['alternate_forms'] = $crawler->filter('div.margin-tb-10 a.cbtn.btn-sibling-brands')->each(function (Crawler $node) use ($abs) {
             return [
-                'url' => $abs($node->attr('href')),
+                'url'   => $abs($node->attr('href')),
                 'title' => trim($node->attr('title') ?? ''),
-                'text' => trim($node->text() ?? ''),
+                'text'  => trim($node->text() ?? ''),
             ];
         });
         $product['monographs'] = $crawler->filter('div.modal-body a.prsinf-child-btn')->each(function (Crawler $node) use ($abs) {
             return [
                 'title' => trim($node->attr('title') ?? ''),
-                'url' => $abs($node->attr('href')),
-                'text' => trim($node->text() ?? ''),
+                'url'   => $abs($node->attr('href')),
+                'text'  => trim($node->text() ?? ''),
             ];
         });
 
-        $product['indications'] = $safeText('#indications + .ac-body');
-        $product['pharmacology'] = $safeText('#mode_of_action + .ac-body');
-        $product['dosage'] = $safeHtml('#dosage + .ac-body');
-        $product['interaction'] = $safeText('#interaction + .ac-body');
-        $product['contraindications'] = $safeText('#contraindications + .ac-body');
-        $product['side_effects'] = $safeText('#side_effects + .ac-body');
+        $product['indications']         = $safeText('#indications + .ac-body');
+        $product['pharmacology']        = $safeText('#mode_of_action + .ac-body');
+        $product['dosage']              = $safeHtml('#dosage + .ac-body');
+        $product['interaction']         = $safeText('#interaction + .ac-body');
+        $product['contraindications']   = $safeText('#contraindications + .ac-body');
+        $product['side_effects']        = $safeText('#side_effects + .ac-body');
         $product['pregnancy_lactation'] = $safeText('#pregnancy_cat + .ac-body');
-        $product['precautions'] = $safeText('#precautions + .ac-body');
+        $product['precautions']         = $safeText('#precautions + .ac-body');
         $product['special_populations'] = $safeText('#pediatric_uses + .ac-body');
-        $product['overdose'] = $safeText('#overdose_effects + .ac-body');
-        $product['therapeutic_class'] = $safeText('#drug_classes + .ac-body');
+        $product['overdose']            = $safeText('#overdose_effects + .ac-body');
+        $product['therapeutic_class']   = $safeText('#drug_classes + .ac-body');
         // Pack size may appear with different structures; attempt multiple selectors
         $packSize = $safeText('div.packages-wrapper span.pack-size-info');
-        if (!$packSize) {
+        if (! $packSize) {
             $packSize = $safeText('.pack-size-info');
         }
-        if (!$packSize) {
+        if (! $packSize) {
             // Sometimes appears near packages-wrapper spans
             $nodes = $crawler->filter('div.packages-wrapper span');
             if ($nodes->count()) {
@@ -560,38 +585,38 @@ class MedicineController extends Controller
             }
         }
         $product['pack_size'] = $packSize;
-        $product['storage'] = $safeText('#storage_conditions + .ac-body');
+        $product['storage']   = $safeText('#storage_conditions + .ac-body');
 
         // Derive MedEx identifiers from URL
-        $medexId = null;
+        $medexId   = null;
         $medexName = null;
         try {
-            $u = new \Illuminate\Support\Str(); // placeholder to avoid import
+            $u = new Str; // placeholder to avoid import
         } catch (\Throwable $e) {
         }
         try {
             $parsed = parse_url($url);
-            $path = $parsed['path'] ?? '';
-            $parts = array_values(array_filter(explode('/', $path)));
-            $idx = array_search('brands', $parts);
+            $path   = $parsed['path'] ?? '';
+            $parts  = array_values(array_filter(explode('/', $path)));
+            $idx    = array_search('brands', $parts);
             if ($idx !== false && isset($parts[$idx + 1])) {
-                $medexId = $parts[$idx + 1];
+                $medexId   = $parts[$idx + 1];
                 $medexName = $parts[$idx + 2] ?? null;
             }
         } catch (\Throwable $e) {
         }
-        $product['medex_id'] = $medexId;
+        $product['medex_id']   = $medexId;
         $product['medex_name'] = $medexName;
 
         // Existence check in DB: single query using ORs and subquery join to manufacturers
-        $product['exists'] = \App\Models\Medicine::where(function ($q) use ($medexId, $medexName, $product) {
+        $product['exists'] = Medicine::where(function ($q) use ($medexId, $medexName, $product) {
             if ($medexId) {
                 $q->orWhere('medex_id', $medexId);
             }
             if ($medexName) {
                 $q->orWhere('medex_name', $medexName);
             }
-            if (!empty($product['name']) && !empty($product['manufacturer'])) {
+            if (! empty($product['name']) && ! empty($product['manufacturer'])) {
                 $q->orWhere(function ($q2) use ($product) {
                     $q2->where('name', $product['name'])
                         ->whereExists(function ($sub) use ($product) {
@@ -610,16 +635,16 @@ class MedicineController extends Controller
     public function storeExternal(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name'         => 'required|string|max:255',
             'manufacturer' => 'required|string|max:255',
-            'category' => 'nullable|string|max:255',
+            'category'     => 'nullable|string|max:255',
             'generic_name' => 'nullable|string|max:255',
-            'strength' => 'nullable|string|max:255',
-            'dosage_form' => 'nullable|string|max:255',
-            'price' => 'nullable|numeric|min:0',
-            'medex_id' => 'nullable|string|max:255',
-            'medex_name' => 'nullable|string|max:255',
-            'details' => 'nullable|array',
+            'strength'     => 'nullable|string|max:255',
+            'dosage_form'  => 'nullable|string|max:255',
+            'price'        => 'nullable|numeric|min:0',
+            'medex_id'     => 'nullable|string|max:255',
+            'medex_name'   => 'nullable|string|max:255',
+            'details'      => 'nullable|array',
         ]);
 
         $manufacturer = Manufacturer::firstOrCreate(['name' => $request->manufacturer], [
@@ -657,10 +682,10 @@ class MedicineController extends Controller
             ->first();
         if ($existing) {
             $existing->fill([
-                'generic_id' => $existing->generic_id ?: $generic?->id,
-                'brand_id' => $existing->brand_id ?: $brand->id,
-                'category_id' => $existing->category_id ?: $category?->id,
-                'dosage_form' => $existing->dosage_form ?: $request->dosage_form,
+                'generic_id'   => $existing->generic_id ?: $generic?->id,
+                'brand_id'     => $existing->brand_id ?: $brand->id,
+                'category_id'  => $existing->category_id ?: $category?->id,
+                'dosage_form'  => $existing->dosage_form ?: $request->dosage_form,
                 'generic_name' => $existing->generic_name ?: $request->generic_name,
             ]);
             $existing->save();
@@ -673,22 +698,22 @@ class MedicineController extends Controller
         } while (Medicine::where('product_id', $productId)->exists());
 
         $medicine = Medicine::create([
-            'product_id' => $productId,
-            'name' => $request->name,
-            'category_id' => $category?->id,
-            'manufacturer_id' => $manufacturer->id,
-            'generic_id' => $generic?->id,
-            'brand_id' => $brand->id,
-            'generic_name' => $request->generic_name,
-            'strength' => $request->strength,
-            'dosage_form' => $request->dosage_form,
-            'price' => $request->price ?? 0,
+            'product_id'         => $productId,
+            'name'               => $request->name,
+            'category_id'        => $category?->id,
+            'manufacturer_id'    => $manufacturer->id,
+            'generic_id'         => $generic?->id,
+            'brand_id'           => $brand->id,
+            'generic_name'       => $request->generic_name,
+            'strength'           => $request->strength,
+            'dosage_form'        => $request->dosage_form,
+            'price'              => $request->price ?? 0,
             'manufacturer_price' => 0,
-            'box_size' => 1,
-            'status' => true,
-            'details' => $request->filled('details') ? json_encode($request->input('details')) : null,
-            'medex_id' => $request->medex_id,
-            'medex_name' => $request->medex_name,
+            'box_size'           => 1,
+            'status'             => true,
+            'details'            => $request->filled('details') ? json_encode($request->input('details')) : null,
+            'medex_id'           => $request->medex_id,
+            'medex_name'         => $request->medex_name,
         ]);
 
         $this->generateDefaultCodes($medicine);
@@ -735,9 +760,9 @@ class MedicineController extends Controller
                 continue;
             }
             $medicine->units()->create([
-                'name' => $unit['name'],
+                'name'           => $unit['name'],
                 'factor_to_base' => max(1, (int) ($unit['factor_to_base'] ?? 1)),
-                'sort' => $index,
+                'sort'           => $index,
             ]);
         }
     }

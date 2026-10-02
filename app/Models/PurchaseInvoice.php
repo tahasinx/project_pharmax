@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PurchaseInvoice extends Model
 {
+    use HasPublicId;
+
     protected $guarded = [];
 
     protected $casts = [
         'invoice_date' => 'date',
-        'total' => 'decimal:2',
+        'total'        => 'decimal:2',
     ];
 
     public function receipt(): BelongsTo

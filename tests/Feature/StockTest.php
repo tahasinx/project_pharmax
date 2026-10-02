@@ -15,6 +15,7 @@ class StockTest extends TestCase
     use RefreshDatabase;
 
     protected $user;
+
     protected $medicine;
 
     protected function setUp(): void
@@ -48,25 +49,25 @@ class StockTest extends TestCase
     public function test_can_create_stock()
     {
         $stockData = [
-            'medicine_id' => $this->medicine->id,
-            'batch_number' => 'BATCH001',
-            'expiry_date' => now()->addMonths(12)->format('Y-m-d'),
-            'quantity' => 100,
+            'medicine_id'     => $this->medicine->getRouteKey(),
+            'batch_number'    => 'BATCH001',
+            'expiry_date'     => now()->addMonths(12)->format('Y-m-d'),
+            'quantity'        => 100,
             'min_stock_level' => 10,
             'max_stock_level' => 500,
-            'purchase_price' => 20.00,
-            'selling_price' => 25.00,
-            'supplier' => 'Test Supplier',
-            'notes' => 'Test stock entry',
+            'purchase_price'  => 20.00,
+            'selling_price'   => 25.00,
+            'supplier'        => 'Test Supplier',
+            'notes'           => 'Test stock entry',
         ];
 
         $response = $this->actingAs($this->user)->post('/stocks', $stockData);
         $response->assertRedirect('/stocks');
 
         $this->assertDatabaseHas('stocks', [
-            'medicine_id' => $this->medicine->id,
+            'medicine_id'  => $this->medicine->id,
             'batch_number' => 'BATCH001',
-            'quantity' => 100,
+            'quantity'     => 100,
         ]);
     }
 
@@ -79,9 +80,9 @@ class StockTest extends TestCase
     public function test_cannot_create_stock_with_past_expiry_date()
     {
         $stockData = [
-            'medicine_id' => $this->medicine->id,
-            'expiry_date' => now()->subDays(1)->format('Y-m-d'), // Past date
-            'quantity' => 100,
+            'medicine_id'     => $this->medicine->getRouteKey(),
+            'expiry_date'     => now()->subDays(1)->format('Y-m-d'), // Past date
+            'quantity'        => 100,
             'min_stock_level' => 10,
         ];
 
@@ -93,28 +94,28 @@ class StockTest extends TestCase
     {
         $stock = Stock::factory()->create([
             'medicine_id' => $this->medicine->id,
-            'quantity' => 100,
+            'quantity'    => 100,
         ]);
 
         $updateData = [
-            'medicine_id' => $this->medicine->id,
-            'batch_number' => 'BATCH002',
-            'expiry_date' => now()->addMonths(12)->format('Y-m-d'),
-            'quantity' => 150,
+            'medicine_id'     => $this->medicine->getRouteKey(),
+            'batch_number'    => 'BATCH002',
+            'expiry_date'     => now()->addMonths(12)->format('Y-m-d'),
+            'quantity'        => 150,
             'min_stock_level' => 15,
             'max_stock_level' => 600,
-            'purchase_price' => 22.00,
-            'selling_price' => 27.00,
-            'supplier' => 'Updated Supplier',
-            'notes' => 'Updated stock entry',
+            'purchase_price'  => 22.00,
+            'selling_price'   => 27.00,
+            'supplier'        => 'Updated Supplier',
+            'notes'           => 'Updated stock entry',
         ];
 
-        $response = $this->actingAs($this->user)->put("/stocks/{$stock->id}", $updateData);
+        $response = $this->actingAs($this->user)->put("/stocks/{$stock->getRouteKey()}", $updateData);
         $response->assertRedirect('/stocks');
 
         $this->assertDatabaseHas('stocks', [
-            'id' => $stock->id,
-            'quantity' => 150,
+            'id'           => $stock->id,
+            'quantity'     => 150,
             'batch_number' => 'BATCH002',
         ]);
     }
@@ -123,14 +124,14 @@ class StockTest extends TestCase
     {
         $stock = Stock::factory()->create([
             'medicine_id' => $this->medicine->id,
-            'is_active' => true,
+            'is_active'   => true,
         ]);
 
-        $response = $this->actingAs($this->user)->delete("/stocks/{$stock->id}");
+        $response = $this->actingAs($this->user)->delete("/stocks/{$stock->getRouteKey()}");
         $response->assertRedirect('/stocks');
 
         $this->assertDatabaseHas('stocks', [
-            'id' => $stock->id,
+            'id'        => $stock->id,
             'is_active' => false,
         ]);
     }
@@ -141,7 +142,7 @@ class StockTest extends TestCase
             'medicine_id' => $this->medicine->id,
         ]);
 
-        $response = $this->actingAs($this->user)->get("/stocks/{$stock->id}");
+        $response = $this->actingAs($this->user)->get("/stocks/{$stock->getRouteKey()}");
         $response->assertStatus(200);
     }
 
@@ -151,7 +152,7 @@ class StockTest extends TestCase
             'medicine_id' => $this->medicine->id,
         ]);
 
-        $response = $this->actingAs($this->user)->get("/stocks/{$stock->id}/edit");
+        $response = $this->actingAs($this->user)->get("/stocks/{$stock->getRouteKey()}/edit");
         $response->assertStatus(200);
     }
 
@@ -171,10 +172,10 @@ class StockTest extends TestCase
     {
         // Create stock with low quantity
         $stock = Stock::factory()->create([
-            'medicine_id' => $this->medicine->id,
-            'quantity' => 5,
+            'medicine_id'     => $this->medicine->id,
+            'quantity'        => 5,
             'min_stock_level' => 10,
-            'is_active' => true,
+            'is_active'       => true,
         ]);
 
         $response = $this->actingAs($this->user)->get('/stocks/alerts');
@@ -190,7 +191,7 @@ class StockTest extends TestCase
         $stock = Stock::factory()->create([
             'medicine_id' => $this->medicine->id,
             'expiry_date' => now()->subDays(1),
-            'is_active' => true,
+            'is_active'   => true,
         ]);
 
         $response = $this->actingAs($this->user)->get('/stocks/alerts');
@@ -206,7 +207,7 @@ class StockTest extends TestCase
         $stock = Stock::factory()->create([
             'medicine_id' => $this->medicine->id,
             'expiry_date' => now()->addDays(15),
-            'is_active' => true,
+            'is_active'   => true,
         ]);
 
         $response = $this->actingAs($this->user)->get('/stocks/alerts');
@@ -223,24 +224,24 @@ class StockTest extends TestCase
         ]);
 
         $transactionData = [
-            'stock_id' => $stock->id,
-            'medicine_id' => $this->medicine->id,
-            'type' => 'purchase',
-            'quantity' => 50,
-            'unit_price' => 20.00,
+            'stock_id'     => $stock->id,
+            'medicine_id'  => $this->medicine->id,
+            'type'         => 'purchase',
+            'quantity'     => 50,
+            'unit_price'   => 20.00,
             'total_amount' => 1000.00,
             'batch_number' => 'BATCH001',
-            'expiry_date' => now()->addMonths(12),
-            'notes' => 'Test transaction',
-            'user_id' => $this->user->id,
+            'expiry_date'  => now()->addMonths(12),
+            'notes'        => 'Test transaction',
+            'user_id'      => $this->user->id,
         ];
 
         $transaction = StockTransaction::create($transactionData);
 
         $this->assertDatabaseHas('stock_transactions', [
-            'id' => $transaction->id,
+            'id'       => $transaction->id,
             'stock_id' => $stock->id,
-            'type' => 'purchase',
+            'type'     => 'purchase',
             'quantity' => 50,
         ]);
     }
@@ -250,14 +251,14 @@ class StockTest extends TestCase
         // Create multiple stock entries for same medicine
         Stock::factory()->create([
             'medicine_id' => $this->medicine->id,
-            'quantity' => 50,
-            'is_active' => true,
+            'quantity'    => 50,
+            'is_active'   => true,
         ]);
 
         Stock::factory()->create([
             'medicine_id' => $this->medicine->id,
-            'quantity' => 30,
-            'is_active' => true,
+            'quantity'    => 30,
+            'is_active'   => true,
         ]);
 
         $totalStock = $this->medicine->stocks()->active()->sum('quantity');

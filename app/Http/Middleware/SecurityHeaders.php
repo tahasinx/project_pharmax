@@ -11,7 +11,7 @@ class SecurityHeaders
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -25,12 +25,12 @@ class SecurityHeaders
         $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
         // Content Security Policy
-        $csp = "default-src 'self'; " .
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdn.skypack.dev; " .
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net; " .
-            "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net; " .
-            "img-src 'self' data: https:; " .
-            "connect-src 'self' https://medex.com.bd; " .
+        $csp = "default-src 'self'; ".
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdn.skypack.dev; ".
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net; ".
+            "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net; ".
+            "img-src 'self' data: https:; ".
+            "connect-src 'self' https://medex.com.bd; ".
             "frame-ancestors 'none';";
 
         $response->headers->set('Content-Security-Policy', $csp);

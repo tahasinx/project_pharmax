@@ -28,39 +28,39 @@ class OperationsController extends Controller
     {
         return Inertia::render('Platform/Settings', [
             'settings' => $settings->all(),
-            'tenancy' => $settings->tenancySnapshot(),
+            'tenancy'  => $settings->tenancySnapshot(),
         ]);
     }
 
     public function updateSettings(Request $request, PlatformSettingsStore $settings): RedirectResponse
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'tagline' => 'nullable|string|max:255',
-            'support_email' => 'nullable|email|max:255',
-            'support_phone' => 'nullable|string|max:64',
-            'address' => 'nullable|string|max:2000',
-            'default_currency' => 'required|string|max:8',
-            'invoice_footer' => 'nullable|string|max:2000',
-            'theme_primary' => 'required|regex:/^#[0-9A-Fa-f]{6}$/',
-            'theme_shape' => 'required|in:default,rounded,flat',
-            'theme_font_family' => 'required|string|max:60',
-            'theme_font_href' => 'nullable|string|max:500',
-            'theme_font_size' => 'required|integer|min:12|max:22',
-            'theme_font_weight' => 'required|integer|in:300,400,500,600,700,800,900',
-            'email_enabled' => 'nullable|boolean',
-            'email_host' => 'nullable|string|max:255',
-            'email_port' => 'nullable|integer|min:1|max:65535',
-            'email_encryption' => 'nullable|in:tls,ssl,',
-            'email_username' => 'nullable|string|max:255',
-            'email_password' => 'nullable|string|max:255',
+            'name'               => 'required|string|max:255',
+            'tagline'            => 'nullable|string|max:255',
+            'support_email'      => 'nullable|email|max:255',
+            'support_phone'      => 'nullable|string|max:64',
+            'address'            => 'nullable|string|max:2000',
+            'default_currency'   => 'required|string|max:8',
+            'invoice_footer'     => 'nullable|string|max:2000',
+            'theme_primary'      => 'required|regex:/^#[0-9A-Fa-f]{6}$/',
+            'theme_shape'        => 'required|in:default,rounded,flat',
+            'theme_font_family'  => 'required|string|max:60',
+            'theme_font_href'    => 'nullable|string|max:500',
+            'theme_font_size'    => 'required|integer|min:12|max:22',
+            'theme_font_weight'  => 'required|integer|in:300,400,500,600,700,800,900',
+            'email_enabled'      => 'nullable|boolean',
+            'email_host'         => 'nullable|string|max:255',
+            'email_port'         => 'nullable|integer|min:1|max:65535',
+            'email_encryption'   => 'nullable|in:tls,ssl,',
+            'email_username'     => 'nullable|string|max:255',
+            'email_password'     => 'nullable|string|max:255',
             'email_from_address' => 'nullable|email|max:255',
-            'email_from_name' => 'nullable|string|max:255',
-            'logo' => 'nullable|image|max:2048',
-            'favicon' => 'nullable|image|max:1024',
+            'email_from_name'    => 'nullable|string|max:255',
+            'logo'               => 'nullable|image|max:2048',
+            'favicon'            => 'nullable|image|max:1024',
         ]);
-        $data['theme_font_href'] = $settings->stylesheet((string) ($data['theme_font_href'] ?? ''));
-        $data['email_enabled'] = $request->boolean('email_enabled');
+        $data['theme_font_href']  = $settings->stylesheet((string) ($data['theme_font_href'] ?? ''));
+        $data['email_enabled']    = $request->boolean('email_enabled');
         $data['email_encryption'] = $data['email_encryption'] ?: 'tls';
         unset($data['logo'], $data['favicon']);
         if ($request->hasFile('logo')) {
@@ -85,15 +85,15 @@ class OperationsController extends Controller
         }
 
         config([
-            'mail.default' => 'smtp',
-            'mail.mailers.smtp.transport' => 'smtp',
-            'mail.mailers.smtp.host' => $mail['host'],
-            'mail.mailers.smtp.port' => $mail['port'] ?: 587,
+            'mail.default'                 => 'smtp',
+            'mail.mailers.smtp.transport'  => 'smtp',
+            'mail.mailers.smtp.host'       => $mail['host'],
+            'mail.mailers.smtp.port'       => $mail['port'] ?: 587,
             'mail.mailers.smtp.encryption' => $mail['encryption'] ?: null,
-            'mail.mailers.smtp.username' => $mail['username'],
-            'mail.mailers.smtp.password' => $mail['password'],
-            'mail.from.address' => $mail['from_address'],
-            'mail.from.name' => $mail['from_name'] ?: $settings->all()['name'],
+            'mail.mailers.smtp.username'   => $mail['username'],
+            'mail.mailers.smtp.password'   => $mail['password'],
+            'mail.from.address'            => $mail['from_address'],
+            'mail.from.name'               => $mail['from_name'] ?: $settings->all()['name'],
         ]);
 
         try {
@@ -112,16 +112,16 @@ class OperationsController extends Controller
     {
         $catalog = collect(Artisan::all())
             ->map(fn ($command, $name) => [
-                'name' => (string) $name,
+                'name'        => (string) $name,
                 'description' => trim((string) $command->getDescription()) ?: 'No description.',
             ])
             ->sortBy('name')
             ->values();
 
         return Inertia::render('Platform/Commands', [
-            'catalog' => $catalog,
-            'output' => session('artisan_output'),
-            'ran' => session('artisan_command'),
+            'catalog'  => $catalog,
+            'output'   => session('artisan_output'),
+            'ran'      => session('artisan_command'),
             'exitCode' => session('artisan_exit'),
         ]);
     }
@@ -129,7 +129,7 @@ class OperationsController extends Controller
     public function runCommand(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'password' => 'required|string',
+            'password'     => 'required|string',
             'command_line' => 'required|string|max:500',
         ]);
         if (! Hash::check($data['password'], (string) $request->user()?->getAuthPassword())) {
@@ -139,7 +139,7 @@ class OperationsController extends Controller
         try {
             [$name, $parameters] = $this->parse($data['command_line']);
             @set_time_limit(180);
-            $code = Artisan::call($name, $parameters);
+            $code   = Artisan::call($name, $parameters);
             $output = trim(Artisan::output()) ?: ($code === 0 ? 'Command finished with no output.' : 'Command failed with no output.');
         } catch (InvalidArgumentException|CommandNotFoundException $e) {
             return back()->withInput()->withErrors(['command_line' => $e->getMessage()]);
@@ -161,13 +161,13 @@ class OperationsController extends Controller
         $rows = $compare->companies();
 
         return Inertia::render('Platform/Schema', [
-            'rows' => $rows,
+            'rows'    => $rows,
             'central' => $compare->central(),
             'summary' => [
-                'total' => count($rows),
-                'in_sync' => collect($rows)->where('status', 'in_sync')->count(),
+                'total'        => count($rows),
+                'in_sync'      => collect($rows)->where('status', 'in_sync')->count(),
                 'needs_update' => collect($rows)->where('status', 'needs_update')->count(),
-                'db_missing' => collect($rows)->where('status', 'db_missing')->count(),
+                'db_missing'   => collect($rows)->where('status', 'db_missing')->count(),
             ],
         ]);
     }
@@ -175,10 +175,10 @@ class OperationsController extends Controller
     public function upgradeSchema(Request $request, SchemaCompare $compare): RedirectResponse
     {
         $request->validate([
-            'password' => 'required|string',
+            'password'   => 'required|string',
             'company_id' => 'nullable|integer',
-            'central' => 'nullable|boolean',
-            'all' => 'nullable|boolean',
+            'central'    => 'nullable|boolean',
+            'all'        => 'nullable|boolean',
         ]);
         if (! Hash::check((string) $request->input('password'), (string) $request->user()?->getAuthPassword())) {
             return back()->withErrors(['password' => 'Password did not match.']);
@@ -199,7 +199,7 @@ class OperationsController extends Controller
 
                 return back()->with('success', 'Every pharmacy database was migrated.');
             }
-            $company = Company::query()->findOrFail($request->input('company_id'));
+            $company = Company::findByPublicIdOrFail($request->input('company_id'));
             $compare->upgradeCompany($company);
         } catch (Throwable $e) {
             return back()->with('error', $e->getMessage());
@@ -214,8 +214,8 @@ class OperationsController extends Controller
             $files = $company->database_name ? $backups->listFor($company) : [];
 
             return [
-                'id' => $company->id,
-                'name' => $company->name,
+                'id'    => $company->id,
+                'name'  => $company->name,
                 'files' => $files,
             ];
         });
@@ -269,7 +269,7 @@ class OperationsController extends Controller
         }
 
         return Inertia::render('Platform/Deploy', [
-            'status' => $status,
+            'status'   => $status,
             'settings' => $github->settings(),
         ]);
     }
@@ -278,9 +278,9 @@ class OperationsController extends Controller
     {
         abort_unless(StagingDeployHost::matches(), 404);
         $data = $request->validate([
-            'password' => 'required|string',
-            'reason' => 'nullable|string|max:200',
-            'confirm_text' => 'required|in:DEPLOY',
+            'password'       => 'required|string',
+            'reason'         => 'nullable|string|max:200',
+            'confirm_text'   => 'required|in:DEPLOY',
             'allow_redeploy' => 'nullable|boolean',
         ]);
         if (! Hash::check($data['password'], (string) $request->user()?->getAuthPassword())) {
@@ -306,7 +306,7 @@ class OperationsController extends Controller
             throw new InvalidArgumentException('Enter one Artisan command. Shell operators are not allowed.');
         }
         $tokens = preg_split('/\s+/', $line) ?: [];
-        $name = array_shift($tokens) ?? '';
+        $name   = array_shift($tokens) ?? '';
         if ($name === '' || ! preg_match('/^[A-Za-z0-9:_-]+$/', $name)) {
             throw new InvalidArgumentException('Command name is not valid.');
         }
@@ -314,20 +314,21 @@ class OperationsController extends Controller
             throw new InvalidArgumentException($name.' stays running and cannot be used from this page.');
         }
         $parameters = [];
-        $position = 0;
-        $count = count($tokens);
+        $position   = 0;
+        $count      = count($tokens);
         for ($i = 0; $i < $count; $i++) {
             $token = $tokens[$i];
             if (str_starts_with($token, '--')) {
                 $body = substr($token, 2);
                 if (str_contains($body, '=')) {
-                    [$key, $value] = explode('=', $body, 2);
+                    [$key, $value]         = explode('=', $body, 2);
                     $parameters['--'.$key] = $value;
                 } elseif (isset($tokens[$i + 1]) && ! str_starts_with($tokens[$i + 1], '-')) {
                     $parameters['--'.$body] = $tokens[++$i];
                 } else {
                     $parameters['--'.$body] = true;
                 }
+
                 continue;
             }
             $parameters[$position++] = $token;

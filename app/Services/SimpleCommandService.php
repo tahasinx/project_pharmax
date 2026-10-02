@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
+use Symfony\Component\Process\Process;
 
 class SimpleCommandService
 {
@@ -24,11 +24,11 @@ class SimpleCommandService
     private function getDynamicCommandPaths(): array
     {
         // Cache command paths to avoid repeated lookups
-        $cacheKey = 'terminal_command_paths_' . PHP_OS;
+        $cacheKey = 'terminal_command_paths_'.PHP_OS;
 
         return cache()->remember($cacheKey, 3600, function () {
-            $paths     = [];
-            $commands  = ['composer', 'php', 'node', 'npm', 'git'];
+            $paths    = [];
+            $commands = ['composer', 'php', 'node', 'npm', 'git'];
 
             foreach ($commands as $cmd) {
                 $path = $this->findCommandPath($cmd);
@@ -38,11 +38,11 @@ class SimpleCommandService
             }
 
             // Add OS-specific commands
-            $isWindows     = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
-            $paths['ls']   = $isWindows ? 'dir' : 'ls';
-            $paths['pwd']  = $isWindows ? 'cd' : 'pwd';
+            $isWindows       = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+            $paths['ls']     = $isWindows ? 'dir' : 'ls';
+            $paths['pwd']    = $isWindows ? 'cd' : 'pwd';
             $paths['whoami'] = 'whoami';
-            $paths['date'] = 'date';
+            $paths['date']   = 'date';
 
             return $paths;
         });
@@ -64,6 +64,7 @@ class SimpleCommandService
                 if ($process->isSuccessful()) {
                     $output = trim($process->getOutput());
                     $lines  = explode("\n", $output);
+
                     return trim($lines[0]); // Return first match
                 }
             } else {
@@ -104,10 +105,11 @@ class SimpleCommandService
                 'node'     => '/usr/local/bin/node',
                 'npm'      => '/usr/local/bin/npm',
                 'git'      => '/usr/bin/git',
-            ]
+            ],
         ];
 
         $osKey = $isWindows ? 'windows' : 'unix';
+
         return $fallbackPaths[$osKey][$command] ?? null;
     }
 
@@ -124,7 +126,7 @@ class SimpleCommandService
             'aws'            => isset($_SERVER['AWS_EXECUTION_ENV']),
             'heroku'         => isset($_SERVER['DYNO']),
             'digital_ocean'  => isset($_SERVER['DIGITALOCEAN']),
-            'path_check'     => strpos(__DIR__, '/home/') === 0 || strpos(__DIR__, '/var/www/') === 0
+            'path_check'     => strpos(__DIR__, '/home/') === 0 || strpos(__DIR__, '/var/www/') === 0,
         ];
 
         return in_array(true, $indicators);
@@ -153,21 +155,21 @@ class SimpleCommandService
             $process->run();
 
             return [
-                'success'          => $process->isSuccessful(),
-                'output'           => $process->getOutput(),
-                'error'            => $process->getErrorOutput(),
-                'exit_code'        => $process->getExitCode(),
-                'command'          => implode(' ', $fullCommand),
-                'working_directory' => $workingDir
+                'success'           => $process->isSuccessful(),
+                'output'            => $process->getOutput(),
+                'error'             => $process->getErrorOutput(),
+                'exit_code'         => $process->getExitCode(),
+                'command'           => implode(' ', $fullCommand),
+                'working_directory' => $workingDir,
             ];
         } catch (ProcessFailedException $e) {
             return [
-                'success'          => false,
-                'error'            => $e->getMessage(),
-                'output'           => $process->getOutput(),
-                'exit_code'        => $process->getExitCode(),
-                'command'          => implode(' ', $fullCommand),
-                'working_directory' => $workingDir
+                'success'           => false,
+                'error'             => $e->getMessage(),
+                'output'            => $process->getOutput(),
+                'exit_code'         => $process->getExitCode(),
+                'command'           => implode(' ', $fullCommand),
+                'working_directory' => $workingDir,
             ];
         }
     }
@@ -189,7 +191,7 @@ class SimpleCommandService
             'pwd'      => [],
             'cd'       => [],
             'whoami'   => [],
-            'date'     => []
+            'date'     => [],
         ];
     }
 
@@ -198,9 +200,9 @@ class SimpleCommandService
      */
     public function getEnvironmentInfo(): array
     {
-        $isWindows     = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
-        $isCloud       = $this->isCloudEnvironment();
-        $commandPaths  = $this->getDynamicCommandPaths();
+        $isWindows    = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+        $isCloud      = $this->isCloudEnvironment();
+        $commandPaths = $this->getDynamicCommandPaths();
 
         return [
             'os'                     => PHP_OS,
@@ -214,7 +216,7 @@ class SimpleCommandService
             'document_root'          => $_SERVER['DOCUMENT_ROOT'] ?? 'Unknown',
             'detected_command_paths' => $commandPaths,
             'php_binary'             => PHP_BINARY,
-            'path_separator'         => PATH_SEPARATOR
+            'path_separator'         => PATH_SEPARATOR,
         ];
     }
 
@@ -223,7 +225,7 @@ class SimpleCommandService
      */
     public function clearCommandPathCache(): void
     {
-        $cacheKey = 'terminal_command_paths_' . PHP_OS;
+        $cacheKey = 'terminal_command_paths_'.PHP_OS;
         cache()->forget($cacheKey);
     }
 
@@ -233,6 +235,7 @@ class SimpleCommandService
     public function refreshCommandPaths(): array
     {
         $this->clearCommandPathCache();
+
         return $this->getDynamicCommandPaths();
     }
 }

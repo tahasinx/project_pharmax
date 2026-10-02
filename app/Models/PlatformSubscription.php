@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PlatformSubscription extends Model
 {
+    use HasPublicId;
+
     protected $connection = 'mysql_central';
 
     protected $fillable = [
@@ -20,8 +23,8 @@ class PlatformSubscription extends Model
 
     protected $casts = [
         'starts_on' => 'date',
-        'ends_on' => 'date',
-        'amount' => 'decimal:2',
+        'ends_on'   => 'date',
+        'amount'    => 'decimal:2',
     ];
 
     public function company(): BelongsTo

@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class StockTransaction extends Model
 {
-    use HasFactory;
+    use HasFactory, HasPublicId;
 
     protected $fillable = [
         'stock_id',
@@ -26,10 +27,10 @@ class StockTransaction extends Model
     ];
 
     protected $casts = [
-        'quantity' => 'integer',
-        'unit_price' => 'decimal:2',
+        'quantity'     => 'integer',
+        'unit_price'   => 'decimal:2',
         'total_amount' => 'decimal:2',
-        'expiry_date' => 'date',
+        'expiry_date'  => 'date',
     ];
 
     public function stock(): BelongsTo

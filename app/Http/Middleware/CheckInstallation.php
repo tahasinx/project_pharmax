@@ -12,15 +12,11 @@ use Symfony\Component\HttpFoundation\Response;
  * Manages installation state:
  * - If not installed: Redirects to /install, allows access to install routes
  * - If installed: Prevents access to /install routes, allows access to app
- *
- * @package App\Http\Middleware
  */
 class CheckInstallation
 {
     /**
      * Check if application is installed.
-     *
-     * @return bool
      */
     private function isInstalled(): bool
     {
@@ -28,7 +24,7 @@ class CheckInstallation
 
         // Primary check: lock file must exist
         // If no lock file, application is definitely not installed
-        if (!file_exists($lockFile)) {
+        if (! file_exists($lockFile)) {
             return false;
         }
 
@@ -40,7 +36,7 @@ class CheckInstallation
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -59,9 +55,10 @@ class CheckInstallation
         // If application is installed
         if ($isInstalled) {
             // Prevent access to installation routes (except complete page for display)
-            if ($isInstallRoute && !$request->is('install/complete')) {
+            if ($isInstallRoute && ! $request->is('install/complete')) {
                 // Redirect to login page using absolute path to avoid URL duplication
                 $loginPath = '/login';
+
                 return redirect($loginPath)->with('info', 'Application is already installed.');
             }
 

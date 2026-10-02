@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Supplier extends Model
 {
+    use HasPublicId;
+
     protected $guarded = [];
 
     protected $casts = [
         'credit_limit' => 'decimal:2',
-        'is_active' => 'boolean',
+        'is_active'    => 'boolean',
     ];
 
     public function purchaseOrders(): HasMany

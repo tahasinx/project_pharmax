@@ -1327,6 +1327,18 @@ body.minia-app .page-content .listing-filters {
     display: none !important;
 }
 
+/* Old listing pages wrap LunaTable in overflow-x-auto; Bootstrap leftovers
+   (row gutters / padded cards) only need a few px and create a fake x-scroll. */
+body.minia-app .page-content .overflow-x-auto:has(.dt-card),
+body.minia-app .page-content .overflow-x-auto:has(.dataTables_wrapper) {
+    overflow-x: visible !important;
+}
+
+body.minia-app .dt-card {
+    max-width: 100%;
+    overflow: hidden;
+}
+
 body.minia-app[data-bs-theme="dark"] {
     background: var(--bs-body-bg) !important;
     color: var(--bs-body-color);

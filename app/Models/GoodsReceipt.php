@@ -2,17 +2,20 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class GoodsReceipt extends Model
 {
+    use HasPublicId;
+
     protected $guarded = [];
 
     protected $casts = [
         'received_date' => 'date',
-        'invoiced_at' => 'datetime',
+        'invoiced_at'   => 'datetime',
     ];
 
     public function order(): BelongsTo

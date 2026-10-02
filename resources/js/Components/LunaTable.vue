@@ -136,13 +136,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div ref="root" class="row">
-        <div class="col-12">
-            <div class="card dt-card">
-                <div class="card-body">
-                    <slot />
-                </div>
-            </div>
+    <div ref="root" class="card dt-card">
+        <div class="card-body">
+            <slot />
         </div>
     </div>
 </template>

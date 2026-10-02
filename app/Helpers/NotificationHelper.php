@@ -9,39 +9,41 @@ class NotificationHelper
     /**
      * Send email notification
      *
-     * @param string $to Email address
-     * @param string $subject Email subject
-     * @param string $message Email message
-     * @param array $options Additional options
+     * @param  string  $to  Email address
+     * @param  string  $subject  Email subject
+     * @param  string  $message  Email message
+     * @param  array  $options  Additional options
      * @return array Result array with success status and message
      */
     public static function sendEmail(string $to, string $subject, string $message, array $options = []): array
     {
-        $service = new NotificationService();
+        $service = new NotificationService;
+
         return $service->sendEmail($to, $subject, $message, $options);
     }
 
     /**
      * Send SMS notification
      *
-     * @param string $phone Phone number
-     * @param string $message SMS message
-     * @param array $options Additional options
+     * @param  string  $phone  Phone number
+     * @param  string  $message  SMS message
+     * @param  array  $options  Additional options
      * @return array Result array with success status and message
      */
     public static function sendSms(string $phone, string $message, array $options = []): array
     {
-        $service = new NotificationService();
+        $service = new NotificationService;
+
         return $service->sendSms($phone, $message, $options);
     }
 
     /**
      * Send email with template (future enhancement)
      *
-     * @param string $to Email address
-     * @param string $template Template name
-     * @param array $data Template data
-     * @param array $options Additional options
+     * @param  string  $to  Email address
+     * @param  string  $template  Template name
+     * @param  array  $data  Template data
+     * @param  array  $options  Additional options
      * @return array Result array with success status and message
      */
     public static function sendEmailTemplate(string $to, string $template, array $data = [], array $options = []): array
@@ -57,10 +59,10 @@ class NotificationHelper
     /**
      * Send SMS with template (future enhancement)
      *
-     * @param string $phone Phone number
-     * @param string $template Template name
-     * @param array $data Template data
-     * @param array $options Additional options
+     * @param  string  $phone  Phone number
+     * @param  string  $template  Template name
+     * @param  array  $data  Template data
+     * @param  array  $options  Additional options
      * @return array Result array with success status and message
      */
     public static function sendSmsTemplate(string $phone, string $template, array $data = [], array $options = []): array

@@ -4,13 +4,14 @@ namespace App\Exports;
 
 use App\Models\Stock;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class StocksExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths
+class StocksExport implements FromCollection, WithColumnWidths, WithHeadings, WithMapping, WithStyles
 {
     protected $filters;
 
@@ -24,13 +25,13 @@ class StocksExport implements FromCollection, WithHeadings, WithMapping, WithSty
         $query = Stock::with(['medicine.category', 'medicine.manufacturer']);
 
         // Apply filters
-        if (isset($this->filters['search']) && !empty($this->filters['search'])) {
+        if (isset($this->filters['search']) && ! empty($this->filters['search'])) {
             $query->whereHas('medicine', function ($q) {
-                $q->where('name', 'like', '%' . $this->filters['search'] . '%');
+                $q->where('name', 'like', '%'.$this->filters['search'].'%');
             });
         }
 
-        if (isset($this->filters['medicine_id']) && !empty($this->filters['medicine_id'])) {
+        if (isset($this->filters['medicine_id']) && ! empty($this->filters['medicine_id'])) {
             $query->where('medicine_id', $this->filters['medicine_id']);
         }
 
@@ -38,11 +39,11 @@ class StocksExport implements FromCollection, WithHeadings, WithMapping, WithSty
             $query->where('is_active', $this->filters['is_active']);
         }
 
-        if (isset($this->filters['expiry_from']) && !empty($this->filters['expiry_from'])) {
+        if (isset($this->filters['expiry_from']) && ! empty($this->filters['expiry_from'])) {
             $query->whereDate('expiry_date', '>=', $this->filters['expiry_from']);
         }
 
-        if (isset($this->filters['expiry_to']) && !empty($this->filters['expiry_to'])) {
+        if (isset($this->filters['expiry_to']) && ! empty($this->filters['expiry_to'])) {
             $query->whereDate('expiry_date', '<=', $this->filters['expiry_to']);
         }
 
@@ -92,11 +93,11 @@ class StocksExport implements FromCollection, WithHeadings, WithMapping, WithSty
         return [
             1 => [
                 'font' => [
-                    'bold' => true,
+                    'bold'  => true,
                     'color' => ['rgb' => 'FFFFFF'],
                 ],
                 'fill' => [
-                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'fillType'   => Fill::FILL_SOLID,
                     'startColor' => ['rgb' => '3B82F6'],
                 ],
             ],

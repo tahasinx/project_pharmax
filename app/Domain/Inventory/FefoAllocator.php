@@ -35,18 +35,18 @@ class FefoAllocator
         }
 
         /** @var Collection<int, Stock> $stocks */
-        $stocks = $query->lockForUpdate()->get();
+        $stocks    = $query->lockForUpdate()->get();
         $remaining = $baseQuantity;
-        $lines = [];
-        $cost = 0.0;
+        $lines     = [];
+        $cost      = 0.0;
 
         foreach ($stocks as $stock) {
             if ($remaining <= 0) {
                 break;
             }
-            $take = min($remaining, (int) $stock->quantity);
+            $take     = min($remaining, (int) $stock->quantity);
             $unitCost = (float) ($stock->purchase_price ?? 0);
-            $lines[] = ['stock' => $stock, 'quantity' => $take, 'cost' => $take * $unitCost];
+            $lines[]  = ['stock' => $stock, 'quantity' => $take, 'cost' => $take * $unitCost];
             $cost += $take * $unitCost;
             $remaining -= $take;
         }

@@ -1,31 +1,32 @@
 <?php
 
 use App\Http\Controllers\AccountController;
-use App\Http\Controllers\InstallController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\DataExportController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DataExportController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ManufacturerController;
 use App\Http\Controllers\MedicineController;
 use App\Http\Controllers\MenuController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\PurchaseController;
-use App\Http\Controllers\SettingController;
-use App\Http\Controllers\StockController;
 use App\Http\Controllers\PharmacyController;
 use App\Http\Controllers\Platform\BillingController as PlatformBillingController;
 use App\Http\Controllers\Platform\CompanyController as PlatformCompanyController;
 use App\Http\Controllers\Platform\CompanyLoginController;
 use App\Http\Controllers\Platform\DashboardController as PlatformDashboardController;
 use App\Http\Controllers\Platform\OperationsController as PlatformOperationsController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SettingController;
+use App\Http\Controllers\StockController;
+use App\Http\Controllers\TerminalController;
 use App\Http\Controllers\UserController;
+use App\Models\Setting;
 use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
@@ -103,12 +104,12 @@ Route::get('/test-500', function () {
     abort(500);
 });
 
-    Route::get('/dashboard', [DashboardController::class, 'index'])
+Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
-Route::post('/dashboard/dead-stock-days', function (\Illuminate\Http\Request $request) {
-    $data = $request->validate(['dead_stock_days' => 'required|integer|min:1|max:3650']);
-    $setting = \App\Models\Setting::query()->first();
+Route::post('/dashboard/dead-stock-days', function (Request $request) {
+    $data    = $request->validate(['dead_stock_days' => 'required|integer|min:1|max:3650']);
+    $setting = Setting::query()->first();
     if ($setting) {
         $setting->update(['dead_stock_days' => $data['dead_stock_days']]);
     }
@@ -149,7 +150,6 @@ Route::middleware('auth')->group(function () {
 
     // Manufacturer Routes
     Route::resource('manufacturers', ManufacturerController::class);
-
 
     // Account Routes
     Route::resource('accounts', AccountController::class);
@@ -244,11 +244,11 @@ Route::middleware('auth')->group(function () {
     Route::get('reports/customer-dues', [ReportController::class, 'customerDues'])->name('reports.customer-dues');
 
     // Terminal Routes
-    Route::get('/terminal', [App\Http\Controllers\TerminalController::class, 'index'])->name('terminal');
-    Route::post('/terminal/execute', [App\Http\Controllers\TerminalController::class, 'execute'])->name('terminal.execute');
-    Route::get('/terminal/commands', [App\Http\Controllers\TerminalController::class, 'getAvailableCommands'])->name('terminal.commands');
-    Route::get('/terminal/system-info', [App\Http\Controllers\TerminalController::class, 'getSystemInfo'])->name('terminal.system-info');
-    Route::post('/terminal/refresh-paths', [App\Http\Controllers\TerminalController::class, 'refreshCommandPaths'])->name('terminal.refresh-paths');
+    Route::get('/terminal', [TerminalController::class, 'index'])->name('terminal');
+    Route::post('/terminal/execute', [TerminalController::class, 'execute'])->name('terminal.execute');
+    Route::get('/terminal/commands', [TerminalController::class, 'getAvailableCommands'])->name('terminal.commands');
+    Route::get('/terminal/system-info', [TerminalController::class, 'getSystemInfo'])->name('terminal.system-info');
+    Route::post('/terminal/refresh-paths', [TerminalController::class, 'refreshCommandPaths'])->name('terminal.refresh-paths');
 
     // Backup routes
     Route::resource('backup', BackupController::class)->only(['index', 'create', 'destroy']);
@@ -269,6 +269,6 @@ Route::middleware('auth')->group(function () {
 });
 
 // Installation routes (should be before auth middleware)
-require __DIR__ . '/install.php';
+require __DIR__.'/install.php';
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

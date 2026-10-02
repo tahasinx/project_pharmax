@@ -16,36 +16,36 @@ class JournalPoster
     {
         return DB::transaction(function () use ($branchId, $date, $sourceType, $sourceId, $memo, $lines) {
             $entry = JournalEntry::create([
-                'branch_id' => $branchId,
-                'entry_date' => $date,
+                'branch_id'   => $branchId,
+                'entry_date'  => $date,
                 'source_type' => $sourceType,
-                'source_id' => $sourceId,
-                'memo' => $memo,
-                'user_id' => auth()->id(),
+                'source_id'   => $sourceId,
+                'memo'        => $memo,
+                'user_id'     => auth()->id(),
             ]);
 
             foreach ($lines as $line) {
                 $account = LedgerAccount::where('code', $line['code'])->first();
-                if (!$account) {
+                if (! $account) {
                     continue;
                 }
-                $debit = round((float) ($line['debit'] ?? 0), 2);
+                $debit  = round((float) ($line['debit'] ?? 0), 2);
                 $credit = round((float) ($line['credit'] ?? 0), 2);
                 if ($debit == 0.0 && $credit == 0.0) {
                     continue;
                 }
                 $entry->lines()->create([
                     'ledger_account_id' => $account->id,
-                    'branch_id' => $branchId,
-                    'debit' => $debit,
-                    'credit' => $credit,
+                    'branch_id'         => $branchId,
+                    'debit'             => $debit,
+                    'credit'            => $credit,
                 ]);
             }
 
             AuditRecorder::record('finance', $entry, 'posted', null, [
-                'memo' => $memo,
+                'memo'   => $memo,
                 'source' => $sourceType,
-                'lines' => $lines,
+                'lines'  => $lines,
             ]);
 
             return $entry;

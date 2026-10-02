@@ -2,21 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
-use App\Models\Manufacturer;
 use App\Models\Medicine;
 use App\Models\Purchase;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class ReportController extends Controller
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function index()
     {
@@ -25,8 +20,8 @@ class ReportController extends Controller
 
     public function sales(Request $request)
     {
-        $from = $request->date('from');
-        $to = $request->date('to');
+        $from       = $request->date('from');
+        $to         = $request->date('to');
         $medicineId = $request->integer('medicine_id');
         $customerId = $request->integer('customer_id');
 
@@ -57,41 +52,42 @@ class ReportController extends Controller
 
         $summary = [
             'total_quantity' => (int) $items->sum('quantity'),
-            'total_sales' => (float) $items->sum('total_amount'),
+            'total_sales'    => (float) $items->sum('total_amount'),
         ];
 
-        $daily = $items->groupBy(fn($i) => optional($i->invoice)->date?->toDateString())
-            ->map(fn($g) => [
+        $daily = $items->groupBy(fn ($i) => optional($i->invoice)->date?->toDateString())
+            ->map(fn ($g) => [
                 'quantity' => (int) $g->sum('quantity'),
-                'sales' => (float) $g->sum('total_amount'),
+                'sales'    => (float) $g->sum('total_amount'),
             ])
-            ->filter(fn($v, $k) => !is_null($k));
+            ->filter(fn ($v, $k) => ! is_null($k));
 
         $monthly = $items->groupBy(function ($i) {
             $d = optional($i->invoice)->date;
+
             return $d ? $d->format('Y-m') : null;
-        })->map(fn($g) => [
+        })->map(fn ($g) => [
             'quantity' => (int) $g->sum('quantity'),
-            'sales' => (float) $g->sum('total_amount'),
-        ])->filter(fn($v, $k) => !is_null($k));
+            'sales'    => (float) $g->sum('total_amount'),
+        ])->filter(fn ($v, $k) => ! is_null($k));
 
         return Inertia::render('Reports/Sales', [
             'filters' => [
-                'from' => $from?->toDateString(),
-                'to' => $to?->toDateString(),
+                'from'        => $from?->toDateString(),
+                'to'          => $to?->toDateString(),
                 'medicine_id' => $medicineId ?: null,
                 'customer_id' => $customerId ?: null,
             ],
             'summary' => $summary,
-            'daily' => $daily->toArray(),
+            'daily'   => $daily->toArray(),
             'monthly' => $monthly->toArray(),
         ]);
     }
 
     public function purchases(Request $request)
     {
-        $from = $request->date('from');
-        $to = $request->date('to');
+        $from           = $request->date('from');
+        $to             = $request->date('to');
         $manufacturerId = $request->integer('manufacturer_id');
 
         $query = Purchase::query();
@@ -111,26 +107,26 @@ class ReportController extends Controller
             ->get();
 
         $summary = [
-            'count' => $purchases->count(),
-            'total' => (float) $purchases->sum('grand_total'),
-            'tax' => (float) $purchases->sum('total_tax'),
+            'count'    => $purchases->count(),
+            'total'    => (float) $purchases->sum('grand_total'),
+            'tax'      => (float) $purchases->sum('total_tax'),
             'discount' => (float) $purchases->sum('total_discount'),
         ];
 
-        $bySupplier = $purchases->groupBy(fn($p) => optional($p->manufacturer)->name ?? 'Unknown')
-            ->map(fn($g, $name) => [
-                'name' => $name,
+        $bySupplier = $purchases->groupBy(fn ($p) => optional($p->manufacturer)->name ?? 'Unknown')
+            ->map(fn ($g, $name) => [
+                'name'  => $name,
                 'count' => $g->count(),
                 'total' => (float) $g->sum('grand_total'),
             ])->values();
 
         return Inertia::render('Reports/Purchases', [
             'filters' => [
-                'from' => $from?->toDateString(),
-                'to' => $to?->toDateString(),
+                'from'            => $from?->toDateString(),
+                'to'              => $to?->toDateString(),
                 'manufacturer_id' => $manufacturerId ?: null,
             ],
-            'summary' => $summary,
+            'summary'    => $summary,
             'bySupplier' => $bySupplier->toArray(),
         ]);
     }
@@ -138,7 +134,7 @@ class ReportController extends Controller
     public function profitLoss(Request $request)
     {
         $from = $request->date('from');
-        $to = $request->date('to');
+        $to   = $request->date('to');
 
         $itemsQuery = InvoiceItem::query()
             ->select(['invoice_items.*', 'invoices.date'])
@@ -173,11 +169,11 @@ class ReportController extends Controller
         return Inertia::render('Reports/ProfitLoss', [
             'filters' => [
                 'from' => $from?->toDateString(),
-                'to' => $to?->toDateString(),
+                'to'   => $to?->toDateString(),
             ],
             'metrics' => [
-                'revenue' => $revenue,
-                'cogs' => $cogs,
+                'revenue'      => $revenue,
+                'cogs'         => $cogs,
                 'gross_profit' => $grossProfit,
             ],
         ]);
@@ -186,20 +182,20 @@ class ReportController extends Controller
     public function customerDues(Request $request)
     {
         $from = $request->date('from');
-        $to = $request->date('to');
+        $to   = $request->date('to');
 
         $invoices = Invoice::query()
             ->with('customer:id,name')
-            ->when($from, fn($q) => $q->whereDate('date', '>=', $from))
-            ->when($to, fn($q) => $q->whereDate('date', '<=', $to))
+            ->when($from, fn ($q) => $q->whereDate('date', '>=', $from))
+            ->when($to, fn ($q) => $q->whereDate('date', '<=', $to))
             ->where('due_amount', '>', 0)
             ->get(['id', 'customer_id', 'date', 'due_amount']);
 
-        $byCustomer = $invoices->groupBy(fn($i) => optional($i->customer)->name ?? 'Unknown')
-            ->map(fn($g, $name) => [
-                'name' => $name,
+        $byCustomer = $invoices->groupBy(fn ($i) => optional($i->customer)->name ?? 'Unknown')
+            ->map(fn ($g, $name) => [
+                'name'     => $name,
                 'invoices' => $g->count(),
-                'due' => (float) $g->sum('due_amount'),
+                'due'      => (float) $g->sum('due_amount'),
             ])
             ->sortByDesc('due')
             ->values();
@@ -207,7 +203,7 @@ class ReportController extends Controller
         return Inertia::render('Reports/CustomerDues', [
             'filters' => [
                 'from' => $from?->toDateString(),
-                'to' => $to?->toDateString(),
+                'to'   => $to?->toDateString(),
             ],
             'byCustomer' => $byCustomer,
         ]);

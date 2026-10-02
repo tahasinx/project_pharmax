@@ -40,7 +40,7 @@ class CompanyLoginController extends Controller
         $token = Str::random(64);
         Cache::store('file')->put('company_login_as:'.$token, [
             'database' => $company->database_name,
-            'user_id' => $adminId,
+            'user_id'  => $adminId,
         ], now()->addMinutes(2));
 
         return redirect()->away('https://'.$company->host().'/company-login/'.$token);

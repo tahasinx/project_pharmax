@@ -11,13 +11,12 @@ class CustomerController extends Controller
 {
     use HasSettingsPagination;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
+
     public function index()
     {
         $itemsPerPage = $this->getItemsPerPage();
-        $customers = Customer::orderBy('created_at', 'desc')->paginate($itemsPerPage)->withQueryString();
+        $customers    = Customer::orderBy('created_at', 'desc')->paginate($itemsPerPage)->withQueryString();
 
         return Inertia::render('Customer/Index', [
             'customers' => $customers,
@@ -44,19 +43,19 @@ class CustomerController extends Controller
         ]);
 
         Customer::create([
-            'name'    => $request->name,
-            'mobile'  => $request->mobile,
-            'email'   => $request->email,
-            'phone'   => $request->phone,
-            'address' => $request->address,
-            'city'    => $request->city,
-            'state'   => $request->state,
-            'zip'     => $request->zip,
-            'country' => $request->country,
-            'status'  => $request->status ?? true,
-            'date_of_birth' => $request->date_of_birth,
-            'gender' => $request->gender,
-            'allergies' => $request->allergies,
+            'name'              => $request->name,
+            'mobile'            => $request->mobile,
+            'email'             => $request->email,
+            'phone'             => $request->phone,
+            'address'           => $request->address,
+            'city'              => $request->city,
+            'state'             => $request->state,
+            'zip'               => $request->zip,
+            'country'           => $request->country,
+            'status'            => $request->status ?? true,
+            'date_of_birth'     => $request->date_of_birth,
+            'gender'            => $request->gender,
+            'allergies'         => $request->allergies,
             'chronic_medicines' => $request->chronic_medicines,
         ]);
 

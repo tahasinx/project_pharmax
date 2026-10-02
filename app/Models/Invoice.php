@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Invoice extends Model
 {
-    use HasFactory;
+    use HasFactory, HasPublicId;
 
     protected $fillable = [
         'invoice_id',
@@ -33,15 +34,15 @@ class Invoice extends Model
     ];
 
     protected $casts = [
-        'date' => 'date',
-        'total_amount' => 'decimal:2',
-        'total_tax' => 'decimal:2',
-        'previous_due' => 'decimal:2',
-        'paid_amount' => 'decimal:2',
-        'due_amount' => 'decimal:2',
-        'total_discount' => 'decimal:2',
+        'date'             => 'date',
+        'total_amount'     => 'decimal:2',
+        'total_tax'        => 'decimal:2',
+        'previous_due'     => 'decimal:2',
+        'paid_amount'      => 'decimal:2',
+        'due_amount'       => 'decimal:2',
+        'total_discount'   => 'decimal:2',
         'invoice_discount' => 'decimal:2',
-        'status' => 'boolean',
+        'status'           => 'boolean',
     ];
 
     public function customer(): BelongsTo

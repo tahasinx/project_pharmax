@@ -59,7 +59,7 @@
     <link href="{{ asset('minia/assets/css/icons.scoped.css') }}" rel="stylesheet">
     <link href="{{ asset('minia/assets/css/app.scoped.css') }}" rel="stylesheet">
     <link href="{{ asset('minia/assets/libs/datatables.net-bs4/css/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('minia/assets/css/shell.css') }}?v=theme-shell-v34" rel="stylesheet">
+    <link href="{{ asset('minia/assets/css/shell.css') }}?v=theme-shell-v35" rel="stylesheet">
     <link href="{{ asset('minia/assets/css/preloader.min.css') }}" rel="stylesheet">
     <script src="{{ asset('minia/assets/libs/pace-js/pace.min.js') }}"></script>
     @inertiaHead

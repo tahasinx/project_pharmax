@@ -10,6 +10,7 @@ use Inertia\Inertia;
 class ManufacturerController extends Controller
 {
     use HasSettingsPagination;
+
     public function index(Request $request)
     {
         $query = Manufacturer::withCount('medicines');
@@ -29,12 +30,12 @@ class ManufacturerController extends Controller
             $query->where('status', $request->status);
         }
 
-        $itemsPerPage = $this->getItemsPerPage();
+        $itemsPerPage  = $this->getItemsPerPage();
         $manufacturers = $query->orderBy('name')->paginate($itemsPerPage)->withQueryString();
 
         return Inertia::render('Manufacturer/Index', [
             'manufacturers' => $manufacturers,
-            'filters' => $request->only(['search', 'status']),
+            'filters'       => $request->only(['search', 'status']),
         ]);
     }
 

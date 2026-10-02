@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\Platform\SchemaCompare;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
@@ -10,8 +11,6 @@ use Illuminate\Support\Facades\File;
  *
  * Resets the application to initial installation state.
  * Removes installation lock and optionally clears configuration.
- *
- * @package App\Console\Commands
  */
 class InstallReset extends Command
 {
@@ -37,9 +36,10 @@ class InstallReset extends Command
      */
     public function handle(): int
     {
-        if (!$this->option('force')) {
-            if (!$this->confirm('This will reset the installation state. Continue?', false)) {
+        if (! $this->option('force')) {
+            if (! $this->confirm('This will reset the installation state. Continue?', false)) {
                 $this->info('Reset cancelled.');
+
                 return Command::FAILURE;
             }
         }
@@ -90,7 +90,7 @@ class InstallReset extends Command
         // Clear bootstrap cache
         $bootstrapCache = base_path('bootstrap/cache');
         if (File::isDirectory($bootstrapCache)) {
-            $cacheFiles = File::glob($bootstrapCache . '/*.php');
+            $cacheFiles = File::glob($bootstrapCache.'/*.php');
             foreach ($cacheFiles as $file) {
                 if (basename($file) !== '.gitignore') {
                     File::delete($file);
@@ -101,16 +101,22 @@ class InstallReset extends Command
 
         // Reset database if requested
         if ($this->option('db')) {
-            if (!$this->option('force')) {
-                if (!$this->confirm('This will drop all database tables. Continue?', false)) {
+            if (! $this->option('force')) {
+                if (! $this->confirm('This will drop all database tables. Continue?', false)) {
                     $this->warn('Database reset cancelled.');
                 } else {
-                    $this->call('migrate:fresh');
-                    $this->info('✓ Database reset (migrate:fresh completed)');
+                    $this->call('migrate:fresh', [
+                        '--path'  => SchemaCompare::TENANT_PATH,
+                        '--force' => true,
+                    ]);
+                    $this->info('✓ Database reset (tenant migrate:fresh completed)');
                 }
             } else {
-                $this->call('migrate:fresh');
-                $this->info('✓ Database reset (migrate:fresh completed)');
+                $this->call('migrate:fresh', [
+                    '--path'  => SchemaCompare::TENANT_PATH,
+                    '--force' => true,
+                ]);
+                $this->info('✓ Database reset (tenant migrate:fresh completed)');
             }
         }
 
@@ -125,4 +131,3 @@ class InstallReset extends Command
         return Command::SUCCESS;
     }
 }
-

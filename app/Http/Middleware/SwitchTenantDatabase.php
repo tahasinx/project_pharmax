@@ -25,7 +25,7 @@ class SwitchTenantDatabase
             return $next($request);
         }
 
-        $central = (array) config('database.tenant.central_subdomains', ['admin']);
+        $central   = (array) config('database.tenant.central_subdomains', ['admin']);
         $centralDb = (string) config('database.central_database');
 
         if (in_array($subdomain, $central, true)) {

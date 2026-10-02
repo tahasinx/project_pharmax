@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MedicineType extends Model
 {
+    use HasPublicId;
+
     protected $guarded = [];
 
     public function medicines(): HasMany

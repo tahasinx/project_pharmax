@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Account extends Model
 {
-    use HasFactory;
+    use HasFactory, HasPublicId;
 
     protected $fillable = [
         'name',
@@ -23,7 +24,7 @@ class Account extends Model
 
     protected $casts = [
         'balance' => 'decimal:2',
-        'status' => 'boolean',
+        'status'  => 'boolean',
     ];
 
     protected static function booted(): void
@@ -40,21 +41,21 @@ class Account extends Model
             // Map modern type to legacy head_type (A, L, E, I)
             if (isset($account->type)) {
                 $map = [
-                    'asset' => 'A',
+                    'asset'     => 'A',
                     'liability' => 'L',
-                    'expense' => 'E',
-                    'revenue' => 'I', // Income
-                    'equity' => 'L',  // closest legacy bucket; adjust if needed
+                    'expense'   => 'E',
+                    'revenue'   => 'I', // Income
+                    'equity'    => 'L',  // closest legacy bucket; adjust if needed
                 ];
-                $key = strtolower((string) $account->type);
+                $key                = strtolower((string) $account->type);
                 $account->head_type = $map[$key] ?? strtoupper(substr($key, 0, 1));
             }
 
             // Sensible defaults for legacy flags if not set
-            $account->is_active = $account->is_active ?? true;
+            $account->is_active      = $account->is_active ?? true;
             $account->is_transaction = $account->is_transaction ?? false;
-            $account->is_gl = $account->is_gl ?? false;
-            $account->head_level = $account->head_level ?? 1;
+            $account->is_gl          = $account->is_gl ?? false;
+            $account->head_level     = $account->head_level ?? 1;
         });
     }
 

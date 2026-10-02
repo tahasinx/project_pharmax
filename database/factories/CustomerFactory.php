@@ -2,10 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\Customer;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Customer>
+ * @extends Factory<Customer>
  */
 class CustomerFactory extends Factory
 {
@@ -17,16 +18,16 @@ class CustomerFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->name(),
-            'mobile' => $this->faker->optional()->phoneNumber(),
-            'email' => $this->faker->optional()->safeEmail(),
-            'phone' => $this->faker->optional()->phoneNumber(),
+            'name'    => $this->faker->name(),
+            'mobile'  => $this->faker->unique()->numerify('01#########'),
+            'email'   => $this->faker->optional()->safeEmail(),
+            'phone'   => $this->faker->optional()->phoneNumber(),
             'address' => $this->faker->optional()->address(),
-            'city' => $this->faker->optional()->city(),
-            'state' => $this->faker->optional()->state(),
-            'zip' => $this->faker->optional()->postcode(),
+            'city'    => $this->faker->optional()->city(),
+            'state'   => $this->faker->optional()->state(),
+            'zip'     => $this->faker->optional()->postcode(),
             'country' => $this->faker->optional()->country(),
-            'status' => true,
+            'status'  => true,
         ];
     }
 
@@ -35,7 +36,7 @@ class CustomerFactory extends Factory
      */
     public function inactive(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'status' => false,
         ]);
     }
@@ -45,10 +46,10 @@ class CustomerFactory extends Factory
      */
     public function noContact(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'mobile' => null,
-            'email' => null,
-            'phone' => null,
+            'email'  => null,
+            'phone'  => null,
         ]);
     }
 }

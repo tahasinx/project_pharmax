@@ -2,17 +2,17 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
 use App\Models\Category;
-use App\Models\Manufacturer;
-use App\Models\Medicine;
 use App\Models\Customer;
-use App\Models\Stock;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
-use Spatie\Permission\Models\Role;
+use App\Models\Manufacturer;
+use App\Models\Medicine;
+use App\Models\Stock;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class DemoDataSeeder extends Seeder
 {
@@ -81,7 +81,7 @@ class DemoDataSeeder extends Seeder
         }
 
         // Create roles
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $adminRole   = Role::firstOrCreate(['name' => 'admin']);
         $managerRole = Role::firstOrCreate(['name' => 'manager']);
         $cashierRole = Role::firstOrCreate(['name' => 'cashier']);
 
@@ -121,22 +121,22 @@ class DemoDataSeeder extends Seeder
     {
         $users = [
             [
-                'name' => 'Admin User',
-                'email' => 'admin@pharmacare.com',
+                'name'     => 'Admin User',
+                'email'    => 'admin@pharmacare.com',
                 'password' => bcrypt('password'),
-                'role' => 'admin',
+                'role'     => 'admin',
             ],
             [
-                'name' => 'Manager User',
-                'email' => 'manager@pharmacare.com',
+                'name'     => 'Manager User',
+                'email'    => 'manager@pharmacare.com',
                 'password' => bcrypt('password'),
-                'role' => 'manager',
+                'role'     => 'manager',
             ],
             [
-                'name' => 'Cashier User',
-                'email' => 'cashier@pharmacare.com',
+                'name'     => 'Cashier User',
+                'email'    => 'cashier@pharmacare.com',
                 'password' => bcrypt('password'),
-                'role' => 'cashier',
+                'role'     => 'cashier',
             ],
         ];
 
@@ -144,7 +144,7 @@ class DemoDataSeeder extends Seeder
             $user = User::firstOrCreate(
                 ['email' => $userData['email']],
                 [
-                    'name' => $userData['name'],
+                    'name'     => $userData['name'],
                     'password' => $userData['password'],
                 ]
             );
@@ -176,59 +176,59 @@ class DemoDataSeeder extends Seeder
     {
         $manufacturers = [
             [
-                'name' => 'Pfizer',
+                'name'    => 'Pfizer',
                 'address' => '235 East 42nd Street, New York, NY 10017',
-                'mobile' => '+1-555-0123',
-                'email' => 'contact@pfizer.com',
+                'mobile'  => '+1-555-0123',
+                'email'   => 'contact@pfizer.com',
                 'details' => 'Primary contact: John Smith',
             ],
             [
-                'name' => 'Johnson & Johnson',
+                'name'    => 'Johnson & Johnson',
                 'address' => '1 Johnson & Johnson Plaza, New Brunswick, NJ 08933',
-                'mobile' => '+1-555-0124',
-                'email' => 'contact@jnj.com',
+                'mobile'  => '+1-555-0124',
+                'email'   => 'contact@jnj.com',
                 'details' => 'Primary contact: Sarah Johnson',
             ],
             [
-                'name' => 'Novartis',
+                'name'    => 'Novartis',
                 'address' => 'Lichtstrasse 35, 4056 Basel, Switzerland',
-                'mobile' => '+1-555-0125',
-                'email' => 'contact@novartis.com',
+                'mobile'  => '+1-555-0125',
+                'email'   => 'contact@novartis.com',
                 'details' => 'Primary contact: Michael Brown',
             ],
             [
-                'name' => 'Roche',
+                'name'    => 'Roche',
                 'address' => 'Grenzacherstrasse 124, 4070 Basel, Switzerland',
-                'mobile' => '+1-555-0126',
-                'email' => 'contact@roche.com',
+                'mobile'  => '+1-555-0126',
+                'email'   => 'contact@roche.com',
                 'details' => 'Primary contact: Emily Davis',
             ],
             [
-                'name' => 'Merck & Co.',
+                'name'    => 'Merck & Co.',
                 'address' => '126 E Lincoln Ave, Rahway, NJ 07065',
-                'mobile' => '+1-555-0127',
-                'email' => 'contact@merck.com',
+                'mobile'  => '+1-555-0127',
+                'email'   => 'contact@merck.com',
                 'details' => 'Primary contact: David Wilson',
             ],
             [
-                'name' => 'GlaxoSmithKline',
+                'name'    => 'GlaxoSmithKline',
                 'address' => '980 Great West Road, Brentford TW8 9GS, UK',
-                'mobile' => '+1-555-0128',
-                'email' => 'contact@gsk.com',
+                'mobile'  => '+1-555-0128',
+                'email'   => 'contact@gsk.com',
                 'details' => 'Primary contact: Lisa Anderson',
             ],
             [
-                'name' => 'Sanofi',
+                'name'    => 'Sanofi',
                 'address' => '54 Rue La Boétie, 75008 Paris, France',
-                'mobile' => '+1-555-0129',
-                'email' => 'contact@sanofi.com',
+                'mobile'  => '+1-555-0129',
+                'email'   => 'contact@sanofi.com',
                 'details' => 'Primary contact: Robert Taylor',
             ],
             [
-                'name' => 'AbbVie',
+                'name'    => 'AbbVie',
                 'address' => '1 N Waukegan Rd, North Chicago, IL 60064',
-                'mobile' => '+1-555-0130',
-                'email' => 'contact@abbvie.com',
+                'mobile'  => '+1-555-0130',
+                'email'   => 'contact@abbvie.com',
                 'details' => 'Primary contact: Jennifer Martinez',
             ],
         ];
@@ -245,112 +245,112 @@ class DemoDataSeeder extends Seeder
     {
         $medicines = [
             [
-                'name' => 'Paracetamol',
-                'generic_name' => 'Acetaminophen',
-                'strength' => '500mg',
-                'box_size' => 10,
-                'price' => 25.50,
+                'name'               => 'Paracetamol',
+                'generic_name'       => 'Acetaminophen',
+                'strength'           => '500mg',
+                'box_size'           => 10,
+                'price'              => 25.50,
                 'manufacturer_price' => 20.00,
-                'unit' => 'tablet',
-                'category' => 'Pain Relief',
-                'manufacturer' => 'Pfizer',
+                'unit'               => 'tablet',
+                'category'           => 'Pain Relief',
+                'manufacturer'       => 'Pfizer',
             ],
             [
-                'name' => 'Ibuprofen',
-                'generic_name' => 'Ibuprofen',
-                'strength' => '400mg',
-                'box_size' => 20,
-                'price' => 45.00,
+                'name'               => 'Ibuprofen',
+                'generic_name'       => 'Ibuprofen',
+                'strength'           => '400mg',
+                'box_size'           => 20,
+                'price'              => 45.00,
                 'manufacturer_price' => 35.00,
-                'unit' => 'tablet',
-                'category' => 'Pain Relief',
-                'manufacturer' => 'Johnson & Johnson',
+                'unit'               => 'tablet',
+                'category'           => 'Pain Relief',
+                'manufacturer'       => 'Johnson & Johnson',
             ],
             [
-                'name' => 'Amoxicillin',
-                'generic_name' => 'Amoxicillin',
-                'strength' => '500mg',
-                'box_size' => 21,
-                'price' => 120.00,
+                'name'               => 'Amoxicillin',
+                'generic_name'       => 'Amoxicillin',
+                'strength'           => '500mg',
+                'box_size'           => 21,
+                'price'              => 120.00,
                 'manufacturer_price' => 95.00,
-                'unit' => 'capsule',
-                'category' => 'Antibiotics',
-                'manufacturer' => 'Novartis',
+                'unit'               => 'capsule',
+                'category'           => 'Antibiotics',
+                'manufacturer'       => 'Novartis',
             ],
             [
-                'name' => 'Metformin',
-                'generic_name' => 'Metformin',
-                'strength' => '500mg',
-                'box_size' => 30,
-                'price' => 85.00,
+                'name'               => 'Metformin',
+                'generic_name'       => 'Metformin',
+                'strength'           => '500mg',
+                'box_size'           => 30,
+                'price'              => 85.00,
                 'manufacturer_price' => 65.00,
-                'unit' => 'tablet',
-                'category' => 'Diabetes',
-                'manufacturer' => 'Roche',
+                'unit'               => 'tablet',
+                'category'           => 'Diabetes',
+                'manufacturer'       => 'Roche',
             ],
             [
-                'name' => 'Lisinopril',
-                'generic_name' => 'Lisinopril',
-                'strength' => '10mg',
-                'box_size' => 30,
-                'price' => 95.00,
+                'name'               => 'Lisinopril',
+                'generic_name'       => 'Lisinopril',
+                'strength'           => '10mg',
+                'box_size'           => 30,
+                'price'              => 95.00,
                 'manufacturer_price' => 75.00,
-                'unit' => 'tablet',
-                'category' => 'Cardiovascular',
-                'manufacturer' => 'Merck & Co.',
+                'unit'               => 'tablet',
+                'category'           => 'Cardiovascular',
+                'manufacturer'       => 'Merck & Co.',
             ],
             [
-                'name' => 'Vitamin D3',
-                'generic_name' => 'Cholecalciferol',
-                'strength' => '1000 IU',
-                'box_size' => 60,
-                'price' => 35.00,
+                'name'               => 'Vitamin D3',
+                'generic_name'       => 'Cholecalciferol',
+                'strength'           => '1000 IU',
+                'box_size'           => 60,
+                'price'              => 35.00,
                 'manufacturer_price' => 25.00,
-                'unit' => 'tablet',
-                'category' => 'Vitamins',
-                'manufacturer' => 'GlaxoSmithKline',
+                'unit'               => 'tablet',
+                'category'           => 'Vitamins',
+                'manufacturer'       => 'GlaxoSmithKline',
             ],
             [
-                'name' => 'Omeprazole',
-                'generic_name' => 'Omeprazole',
-                'strength' => '20mg',
-                'box_size' => 14,
-                'price' => 65.00,
+                'name'               => 'Omeprazole',
+                'generic_name'       => 'Omeprazole',
+                'strength'           => '20mg',
+                'box_size'           => 14,
+                'price'              => 65.00,
                 'manufacturer_price' => 50.00,
-                'unit' => 'capsule',
-                'category' => 'Gastrointestinal',
-                'manufacturer' => 'Sanofi',
+                'unit'               => 'capsule',
+                'category'           => 'Gastrointestinal',
+                'manufacturer'       => 'Sanofi',
             ],
             [
-                'name' => 'Cetirizine',
-                'generic_name' => 'Cetirizine',
-                'strength' => '10mg',
-                'box_size' => 30,
-                'price' => 40.00,
+                'name'               => 'Cetirizine',
+                'generic_name'       => 'Cetirizine',
+                'strength'           => '10mg',
+                'box_size'           => 30,
+                'price'              => 40.00,
                 'manufacturer_price' => 30.00,
-                'unit' => 'tablet',
-                'category' => 'Respiratory',
-                'manufacturer' => 'AbbVie',
+                'unit'               => 'tablet',
+                'category'           => 'Respiratory',
+                'manufacturer'       => 'AbbVie',
             ],
         ];
 
         foreach ($medicines as $medicineData) {
-            $category = Category::where('name', $medicineData['category'])->first();
+            $category     = Category::where('name', $medicineData['category'])->first();
             $manufacturer = Manufacturer::where('name', $medicineData['manufacturer'])->first();
 
             Medicine::firstOrCreate(
                 ['name' => $medicineData['name']],
                 [
-                    'product_id' => 'MED' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
-                    'generic_name' => $medicineData['generic_name'],
-                    'strength' => $medicineData['strength'],
-                    'box_size' => $medicineData['box_size'],
-                    'price' => $medicineData['price'],
+                    'product_id'         => 'MED'.str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
+                    'generic_name'       => $medicineData['generic_name'],
+                    'strength'           => $medicineData['strength'],
+                    'box_size'           => $medicineData['box_size'],
+                    'price'              => $medicineData['price'],
                     'manufacturer_price' => $medicineData['manufacturer_price'],
-                    'unit' => $medicineData['unit'],
-                    'category_id' => $category->id,
-                    'manufacturer_id' => $manufacturer->id,
-                    'status' => true,
+                    'unit'               => $medicineData['unit'],
+                    'category_id'        => $category->id,
+                    'manufacturer_id'    => $manufacturer->id,
+                    'status'             => true,
                 ]
             );
         }
@@ -360,53 +360,53 @@ class DemoDataSeeder extends Seeder
     {
         $customers = [
             [
-                'name' => 'John Doe',
-                'mobile' => '1234567890',
-                'email' => 'john.doe@email.com',
+                'name'    => 'John Doe',
+                'mobile'  => '1234567890',
+                'email'   => 'john.doe@email.com',
                 'address' => '123 Main Street',
-                'city' => 'New York',
-                'state' => 'NY',
-                'zip' => '10001',
+                'city'    => 'New York',
+                'state'   => 'NY',
+                'zip'     => '10001',
                 'country' => 'USA',
             ],
             [
-                'name' => 'Jane Smith',
-                'mobile' => '2345678901',
-                'email' => 'jane.smith@email.com',
+                'name'    => 'Jane Smith',
+                'mobile'  => '2345678901',
+                'email'   => 'jane.smith@email.com',
                 'address' => '456 Oak Avenue',
-                'city' => 'Los Angeles',
-                'state' => 'CA',
-                'zip' => '90210',
+                'city'    => 'Los Angeles',
+                'state'   => 'CA',
+                'zip'     => '90210',
                 'country' => 'USA',
             ],
             [
-                'name' => 'Mike Johnson',
-                'mobile' => '3456789012',
-                'email' => 'mike.johnson@email.com',
+                'name'    => 'Mike Johnson',
+                'mobile'  => '3456789012',
+                'email'   => 'mike.johnson@email.com',
                 'address' => '789 Pine Road',
-                'city' => 'Chicago',
-                'state' => 'IL',
-                'zip' => '60601',
+                'city'    => 'Chicago',
+                'state'   => 'IL',
+                'zip'     => '60601',
                 'country' => 'USA',
             ],
             [
-                'name' => 'Sarah Williams',
-                'mobile' => '4567890123',
-                'email' => 'sarah.williams@email.com',
+                'name'    => 'Sarah Williams',
+                'mobile'  => '4567890123',
+                'email'   => 'sarah.williams@email.com',
                 'address' => '321 Elm Street',
-                'city' => 'Houston',
-                'state' => 'TX',
-                'zip' => '77001',
+                'city'    => 'Houston',
+                'state'   => 'TX',
+                'zip'     => '77001',
                 'country' => 'USA',
             ],
             [
-                'name' => 'David Brown',
-                'mobile' => '5678901234',
-                'email' => 'david.brown@email.com',
+                'name'    => 'David Brown',
+                'mobile'  => '5678901234',
+                'email'   => 'david.brown@email.com',
                 'address' => '654 Maple Drive',
-                'city' => 'Phoenix',
-                'state' => 'AZ',
-                'zip' => '85001',
+                'city'    => 'Phoenix',
+                'state'   => 'AZ',
+                'zip'     => '85001',
                 'country' => 'USA',
             ],
         ];
@@ -426,17 +426,17 @@ class DemoDataSeeder extends Seeder
 
             for ($i = 0; $i < $stockCount; $i++) {
                 Stock::create([
-                    'medicine_id' => $medicine->id,
-                    'batch_number' => 'BATCH' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT),
-                    'expiry_date' => now()->addMonths(rand(6, 24)),
-                    'quantity' => rand(50, 500),
+                    'medicine_id'     => $medicine->id,
+                    'batch_number'    => 'BATCH'.str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT),
+                    'expiry_date'     => now()->addMonths(rand(6, 24)),
+                    'quantity'        => rand(50, 500),
                     'min_stock_level' => rand(10, 50),
                     'max_stock_level' => rand(500, 1000),
-                    'purchase_price' => $medicine->manufacturer_price + rand(0, 5),
-                    'selling_price' => $medicine->price,
-                    'supplier' => $medicine->manufacturer->name,
-                    'notes' => 'Demo stock entry',
-                    'is_active' => true,
+                    'purchase_price'  => $medicine->manufacturer_price + rand(0, 5),
+                    'selling_price'   => $medicine->price,
+                    'supplier'        => $medicine->manufacturer->name,
+                    'notes'           => 'Demo stock entry',
+                    'is_active'       => true,
                 ]);
             }
         }
@@ -446,48 +446,48 @@ class DemoDataSeeder extends Seeder
     {
         $customers = Customer::all();
         $medicines = Medicine::all();
-        $user = User::where('email', 'admin@pharmacare.com')->first();
+        $user      = User::where('email', 'admin@pharmacare.com')->first();
 
         // Create 10 sample invoices
         for ($i = 0; $i < 10; $i++) {
-            $customer = $customers->random();
+            $customer    = $customers->random();
             $invoiceDate = now()->subDays(rand(1, 30));
 
             $invoice = Invoice::create([
-                'invoice_id' => 'INV' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
-                'customer_id' => $customer->id,
-                'date' => $invoiceDate,
-                'invoice_no' => rand(1000, 9999),
-                'total_amount' => 0, // Will be calculated
-                'total_tax' => 0,
-                'previous_due' => 0,
-                'paid_amount' => 0,
-                'due_amount' => 0,
-                'total_discount' => 0,
+                'invoice_id'       => 'INV'.str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
+                'customer_id'      => $customer->id,
+                'date'             => $invoiceDate,
+                'invoice_no'       => rand(1000, 9999),
+                'total_amount'     => 0, // Will be calculated
+                'total_tax'        => 0,
+                'previous_due'     => 0,
+                'paid_amount'      => 0,
+                'due_amount'       => 0,
+                'total_discount'   => 0,
                 'invoice_discount' => 0,
-                'user_id' => $user->id,
-                'payment_type' => ['cash', 'bank', 'credit'][rand(0, 2)],
-                'status' => true,
+                'user_id'          => $user->id,
+                'payment_type'     => ['cash', 'bank', 'credit'][rand(0, 2)],
+                'status'           => true,
             ]);
 
             // Create 2-5 items per invoice
-            $itemCount = rand(2, 5);
+            $itemCount   = rand(2, 5);
             $totalAmount = 0;
 
             for ($j = 0; $j < $itemCount; $j++) {
-                $medicine = $medicines->random();
-                $quantity = rand(1, 5);
-                $rate = $medicine->price;
-                $discount = rand(0, 10);
+                $medicine  = $medicines->random();
+                $quantity  = rand(1, 5);
+                $rate      = $medicine->price;
+                $discount  = rand(0, 10);
                 $itemTotal = ($quantity * $rate) - $discount;
 
                 InvoiceItem::create([
-                    'invoice_id' => $invoice->id,
-                    'medicine_id' => $medicine->id,
-                    'batch_id' => 'BATCH' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT),
-                    'quantity' => $quantity,
-                    'rate' => $rate,
-                    'discount' => $discount,
+                    'invoice_id'   => $invoice->id,
+                    'medicine_id'  => $medicine->id,
+                    'batch_id'     => 'BATCH'.str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT),
+                    'quantity'     => $quantity,
+                    'rate'         => $rate,
+                    'discount'     => $discount,
                     'total_amount' => $itemTotal,
                 ]);
 
@@ -495,15 +495,15 @@ class DemoDataSeeder extends Seeder
             }
 
             // Update invoice totals
-            $tax = $totalAmount * 0.1; // 10% tax
+            $tax        = $totalAmount * 0.1; // 10% tax
             $finalTotal = $totalAmount + $tax;
             $paidAmount = rand(0, $finalTotal);
 
             $invoice->update([
                 'total_amount' => $finalTotal,
-                'total_tax' => $tax,
-                'paid_amount' => $paidAmount,
-                'due_amount' => $finalTotal - $paidAmount,
+                'total_tax'    => $tax,
+                'paid_amount'  => $paidAmount,
+                'due_amount'   => $finalTotal - $paidAmount,
             ]);
         }
     }

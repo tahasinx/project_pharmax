@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -9,7 +10,7 @@ use Spatie\Permission\Models\Role;
 
 class Menu extends Model
 {
-    use HasFactory;
+    use HasFactory, HasPublicId;
 
     protected $fillable = [
         'name',
@@ -22,7 +23,7 @@ class Menu extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
-        'order' => 'integer',
+        'order'     => 'integer',
     ];
 
     public function roles(): BelongsToMany

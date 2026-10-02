@@ -9,9 +9,7 @@ use Spatie\Permission\Models\Role;
 
 class MenuController extends Controller
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function index()
     {
@@ -36,14 +34,14 @@ class MenuController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'        => 'required|string|max:255',
-            'route'       => 'required|string|max:255',
-            'icon'        => 'nullable|string|max:255',
-            'order'       => 'required|integer|min:0',
-            'is_active'   => 'boolean',
-            'permission'  => 'nullable|string|max:255',
-            'roles'       => 'required|array',
-            'roles.*'     => 'exists:roles,id',
+            'name'       => 'required|string|max:255',
+            'route'      => 'required|string|max:255',
+            'icon'       => 'nullable|string|max:255',
+            'order'      => 'required|integer|min:0',
+            'is_active'  => 'boolean',
+            'permission' => 'nullable|string|max:255',
+            'roles'      => 'required|array',
+            'roles.*'    => 'exists:roles,id',
         ]);
 
         $menu = Menu::create([
@@ -111,7 +109,7 @@ class MenuController extends Controller
     public function toggleStatus(Menu $menu)
     {
         $menu->update([
-            'is_active' => !$menu->is_active
+            'is_active' => ! $menu->is_active,
         ]);
 
         return redirect()->route('menus.index')

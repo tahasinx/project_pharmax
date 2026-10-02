@@ -14,7 +14,7 @@ class SchemaCompare
      */
     public function files(): array
     {
-        return collect(glob(database_path('migrations/*.php')) ?: [])
+        return collect(glob(database_path('migrations/tenant/*.php')) ?: [])
             ->map(fn (string $path) => pathinfo($path, PATHINFO_FILENAME))
             ->sort()
             ->values()
@@ -31,8 +31,8 @@ class SchemaCompare
         return Company::query()->orderBy('name')->get()->map(function (Company $company) use ($files) {
             return $this->compareDatabase($company->database_name, $files) + [
                 'company_id' => $company->id,
-                'name' => $company->name,
-                'slug' => $company->slug,
+                'name'       => $company->name,
+                'slug'       => $company->slug,
             ];
         })->all();
     }
@@ -53,10 +53,17 @@ class SchemaCompare
         ];
     }
 
+    public const TENANT_PATH = 'database/migrations/tenant';
+
+    public const CENTRAL_PATH = 'database/migrations/central';
+
     public function upgradeCompany(Company $company): string
     {
         return TenantRuntime::runOn($company->database_name, function () {
-            Artisan::call('migrate', ['--force' => true, '--path' => 'database/migrations']);
+            Artisan::call('migrate', [
+                '--force' => true,
+                '--path'  => self::TENANT_PATH,
+            ]);
 
             return trim(Artisan::output()) ?: 'Migrations finished.';
         });
@@ -65,9 +72,9 @@ class SchemaCompare
     public function upgradeCentral(): string
     {
         Artisan::call('migrate', [
-            '--force' => true,
+            '--force'    => true,
             '--database' => 'mysql_central',
-            '--path' => 'database/migrations/central',
+            '--path'     => self::CENTRAL_PATH,
         ]);
 
         return trim(Artisan::output()) ?: 'Central migrations finished.';
@@ -88,13 +95,13 @@ class SchemaCompare
                 if (! DB::getSchemaBuilder()->hasTable('migrations')) {
                     return ['status' => 'needs_update', 'pending' => $files, 'ran' => 0];
                 }
-                $ran = DB::table('migrations')->pluck('migration')->all();
+                $ran     = DB::table('migrations')->pluck('migration')->all();
                 $pending = array_values(array_diff($files, $ran));
 
                 return [
-                    'status' => $pending === [] ? 'in_sync' : 'needs_update',
+                    'status'  => $pending === [] ? 'in_sync' : 'needs_update',
                     'pending' => $pending,
-                    'ran' => count($ran),
+                    'ran'     => count($ran),
                 ];
             };
 
@@ -103,13 +110,13 @@ class SchemaCompare
                 if (! $builder->getSchemaBuilder()->hasTable('migrations')) {
                     return ['status' => 'needs_update', 'pending' => $files, 'ran' => 0];
                 }
-                $ran = $builder->table('migrations')->pluck('migration')->all();
+                $ran     = $builder->table('migrations')->pluck('migration')->all();
                 $pending = array_values(array_diff($files, $ran));
 
                 return [
-                    'status' => $pending === [] ? 'in_sync' : 'needs_update',
+                    'status'  => $pending === [] ? 'in_sync' : 'needs_update',
                     'pending' => $pending,
-                    'ran' => count($ran),
+                    'ran'     => count($ran),
                 ];
             }
 

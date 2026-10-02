@@ -20,6 +20,7 @@ trait HasSettingsPagination
             $settings = Storage::get('settings.json');
             if ($settings) {
                 $decoded = json_decode($settings, true);
+
                 return (int) ($decoded['items_per_page'] ?? 15);
             }
         } catch (\Exception $e) {

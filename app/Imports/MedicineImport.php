@@ -5,10 +5,10 @@ namespace App\Imports;
 use App\Models\Category;
 use App\Models\Manufacturer;
 use App\Models\Medicine;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Illuminate\Support\Collection;
 
 class MedicineImport implements ToCollection, WithHeadingRow
 {
@@ -20,7 +20,7 @@ class MedicineImport implements ToCollection, WithHeadingRow
     {
         foreach ($rows as $row) {
             // Normalize keys to lower-case
-            $data = collect($row)->keyBy(fn($v, $k) => strtolower(trim($k)));
+            $data = collect($row)->keyBy(fn ($v, $k) => strtolower(trim($k)));
 
             $name         = trim((string) ($data['name'] ?? ''));
             $genericName  = trim((string) ($data['generic_name'] ?? ''));
@@ -38,17 +38,17 @@ class MedicineImport implements ToCollection, WithHeadingRow
                 'name' => $categoryName,
             ], [
                 'description' => null,
-                'status' => true,
+                'status'      => true,
             ]);
 
             $manufacturer = Manufacturer::firstOrCreate([
                 'name' => $makerName,
             ], [
                 'address' => null,
-                'mobile' => null,
-                'email' => null,
+                'mobile'  => null,
+                'email'   => null,
                 'details' => null,
-                'status' => true,
+                'status'  => true,
             ]);
 
             // Skip duplicates: by name + manufacturer or exact name

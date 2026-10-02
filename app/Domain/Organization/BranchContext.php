@@ -9,7 +9,7 @@ class BranchContext
     public static function id(): ?int
     {
         $user = auth()->user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return null;
         }
 
@@ -27,7 +27,7 @@ class BranchContext
 
         return $user instanceof User
             && ($user->hasRole('admin') || $user->can('view-all-branches'))
-            && !session('branch_id');
+            && ! session('branch_id');
     }
 
     public static function canUse(int $branchId, User $user): bool

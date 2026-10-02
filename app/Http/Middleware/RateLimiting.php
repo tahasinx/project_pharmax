@@ -11,19 +11,19 @@ class RateLimiting
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $key = $this->resolveRequestSignature($request);
-        $maxAttempts = $this->getMaxAttempts($request);
+        $key          = $this->resolveRequestSignature($request);
+        $maxAttempts  = $this->getMaxAttempts($request);
         $decayMinutes = $this->getDecayMinutes($request);
 
         if ($this->tooManyAttempts($key, $maxAttempts)) {
             return response()->json([
-                'error' => 'Too Many Requests',
-                'message' => 'Rate limit exceeded. Please try again later.',
-                'retry_after' => $this->getRetryAfter($key)
+                'error'       => 'Too Many Requests',
+                'message'     => 'Rate limit exceeded. Please try again later.',
+                'retry_after' => $this->getRetryAfter($key),
             ], 429);
         }
 
@@ -39,10 +39,10 @@ class RateLimiting
     protected function resolveRequestSignature(Request $request): string
     {
         if ($user = $request->user()) {
-            return 'user:' . $user->id;
+            return 'user:'.$user->id;
         }
 
-        return 'ip:' . $request->ip();
+        return 'ip:'.$request->ip();
     }
 
     protected function getMaxAttempts(Request $request): int
@@ -67,6 +67,7 @@ class RateLimiting
     protected function tooManyAttempts(string $key, int $maxAttempts): bool
     {
         $attempts = cache()->get($key, 0);
+
         return $attempts >= $maxAttempts;
     }
 
@@ -79,12 +80,13 @@ class RateLimiting
     protected function getRetryAfter(string $key): int
     {
         $attempts = cache()->get($key, 0);
+
         return max(0, 60 - (time() % 60)); // Seconds until next minute
     }
 
     protected function addRateLimitHeaders(Response $response, string $key, int $maxAttempts): void
     {
-        $attempts = cache()->get($key, 0);
+        $attempts  = cache()->get($key, 0);
         $remaining = max(0, $maxAttempts - $attempts);
 
         $response->headers->set('X-RateLimit-Limit', $maxAttempts);

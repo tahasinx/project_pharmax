@@ -23,7 +23,7 @@ class PurchaseController extends Controller
     public function index()
     {
         $itemsPerPage = $this->getItemsPerPage();
-        $purchases = Purchase::with(['manufacturer', 'items.medicine'])
+        $purchases    = Purchase::with(['manufacturer', 'items.medicine'])
             ->orderBy('created_at', 'desc')
             ->paginate($itemsPerPage)->withQueryString();
 
@@ -35,31 +35,31 @@ class PurchaseController extends Controller
     public function create()
     {
         $manufacturers = Manufacturer::where('status', true)->get();
-        $medicines = Medicine::with(['category', 'manufacturer'])
+        $medicines     = Medicine::with(['category', 'manufacturer'])
             ->where('status', true)
             ->get();
 
         return Inertia::render('Purchase/Create', [
             'manufacturers' => $manufacturers,
-            'medicines' => $medicines,
+            'medicines'     => $medicines,
         ]);
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'manufacturer_id' => 'required|exists:manufacturers,id',
-            'purchase_date' => 'required|date',
-            'items' => 'required|array|min:1',
-            'items.*.medicine_id' => 'required|exists:medicines,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.rate' => 'required|numeric|min:0',
+            'manufacturer_id'     => 'required|exists:manufacturers,manufacturer_id',
+            'purchase_date'       => 'required|date',
+            'items'               => 'required|array|min:1',
+            'items.*.medicine_id' => 'required|exists:medicines,medicine_id',
+            'items.*.quantity'    => 'required|integer|min:1',
+            'items.*.rate'        => 'required|numeric|min:0',
         ]);
 
         $purchase = Purchase::create([
             'purchase_id'     => $this->generatePurchaseId(),
             'branch_id'       => BranchContext::id(),
-            'manufacturer_id' => $request->manufacturer_id,
+            'manufacturer_id' => Manufacturer::localIdOrFail($request->manufacturer_id),
             'purchase_date'   => $request->purchase_date,
             'purchase_no'     => $this->generatePurchaseNumber(),
             'chalan_no'       => $request->chalan_no ?? $this->generateChalanNumber(),
@@ -79,18 +79,19 @@ class PurchaseController extends Controller
         // Create purchase items and update stock
         DB::transaction(function () use ($request, $purchase) {
             foreach ($request->items as $item) {
-                $purchaseItem = PurchaseItem::create([
-                    'purchase_id' => $purchase->id,
-                    'medicine_id' => $item['medicine_id'],
-                    'batch_id' => $item['batch_id'] ?? 'BATCH001',
-                    'quantity' => $item['quantity'],
-                    'rate' => $item['rate'],
-                    'discount' => $item['discount'] ?? 0,
+                $medicineLocalId = Medicine::localIdOrFail($item['medicine_id']);
+                $purchaseItem    = PurchaseItem::create([
+                    'purchase_id'  => $purchase->id,
+                    'medicine_id'  => $medicineLocalId,
+                    'batch_id'     => $item['batch_id'] ?? 'BATCH001',
+                    'quantity'     => $item['quantity'],
+                    'rate'         => $item['rate'],
+                    'discount'     => $item['discount'] ?? 0,
                     'total_amount' => $item['quantity'] * $item['rate'] - ($item['discount'] ?? 0),
                 ]);
 
                 // Update or create stock
-                $stock = Stock::where('medicine_id', $item['medicine_id'])
+                $stock = Stock::where('medicine_id', $medicineLocalId)
                     ->where('batch_number', $item['batch_id'] ?? 'BATCH001')
                     ->where('is_active', true)
                     ->first();
@@ -100,53 +101,53 @@ class PurchaseController extends Controller
                     $stock->increment('quantity', $item['quantity']);
                     $stock->update([
                         'purchase_price' => $item['rate'],
-                        'supplier' => $purchase->manufacturer->name ?? 'Unknown',
-                        'branch_id' => $stock->branch_id ?? BranchContext::id(),
-                        'status' => $stock->status ?: 'available',
+                        'supplier'       => $purchase->manufacturer->name ?? 'Unknown',
+                        'branch_id'      => $stock->branch_id ?? BranchContext::id(),
+                        'status'         => $stock->status ?: 'available',
                     ]);
                 } else {
                     // Create new stock entry
                     $stock = Stock::create([
-                        'medicine_id' => $item['medicine_id'],
-                        'purchase_id' => $purchase->id,
-                        'batch_number' => $item['batch_id'] ?? 'BATCH001',
-                        'expiry_date' => $item['expiry_date'] ?? null,
-                        'quantity' => $item['quantity'],
+                        'medicine_id'     => $medicineLocalId,
+                        'purchase_id'     => $purchase->id,
+                        'batch_number'    => $item['batch_id'] ?? 'BATCH001',
+                        'expiry_date'     => $item['expiry_date'] ?? null,
+                        'quantity'        => $item['quantity'],
                         'min_stock_level' => 10, // Default minimum
                         'max_stock_level' => 100, // Default maximum
-                        'purchase_price' => $item['rate'],
-                        'selling_price' => $item['rate'] * 1.2, // 20% markup by default
-                        'supplier' => $purchase->manufacturer->name ?? 'Unknown',
-                        'notes' => 'Created from purchase',
-                        'is_active' => true,
-                        'branch_id' => BranchContext::id(),
-                        'status' => 'available',
+                        'purchase_price'  => $item['rate'],
+                        'selling_price'   => $item['rate'] * 1.2, // 20% markup by default
+                        'supplier'        => $purchase->manufacturer->name ?? 'Unknown',
+                        'notes'           => 'Created from purchase',
+                        'is_active'       => true,
+                        'branch_id'       => BranchContext::id(),
+                        'status'          => 'available',
                     ]);
                 }
 
                 // Create stock transaction
                 StockTransaction::create([
-                    'stock_id' => $stock->id,
-                    'medicine_id' => $item['medicine_id'],
-                    'type' => 'purchase',
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['rate'],
+                    'stock_id'     => $stock->id,
+                    'medicine_id'  => $medicineLocalId,
+                    'type'         => 'purchase',
+                    'quantity'     => $item['quantity'],
+                    'unit_price'   => $item['rate'],
                     'total_amount' => $item['quantity'] * $item['rate'],
-                    'purchase_id' => $purchase->id,
+                    'purchase_id'  => $purchase->id,
                     'batch_number' => $item['batch_id'] ?? 'BATCH001',
-                    'expiry_date' => $item['expiry_date'] ?? null,
-                    'notes' => 'Stock added from purchase',
-                    'user_id' => auth()->id(),
+                    'expiry_date'  => $item['expiry_date'] ?? null,
+                    'notes'        => 'Stock added from purchase',
+                    'user_id'      => auth()->id(),
                 ]);
             }
         });
 
         $total = (float) $purchase->grand_total;
-        $paid = (float) $purchase->paid_amount;
-        $due = max($total - $paid, 0);
-        $cash = $purchase->payment_type === 'bank' ? 0 : $paid;
-        $bank = $purchase->payment_type === 'bank' ? $paid : 0;
-        app(JournalPoster::class)->post($purchase->branch_id, $purchase->purchase_date->toDateString(), 'purchase', $purchase->id, 'Purchase ' . $purchase->purchase_id, [
+        $paid  = (float) $purchase->paid_amount;
+        $due   = max($total - $paid, 0);
+        $cash  = $purchase->payment_type === 'bank' ? 0 : $paid;
+        $bank  = $purchase->payment_type === 'bank' ? $paid : 0;
+        app(JournalPoster::class)->post($purchase->branch_id, $purchase->purchase_date->toDateString(), 'purchase', $purchase->id, 'Purchase '.$purchase->purchase_id, [
             ['code' => '1200', 'debit' => $total],
             ['code' => '1000', 'credit' => $cash],
             ['code' => '1010', 'credit' => $bank],
@@ -169,31 +170,39 @@ class PurchaseController extends Controller
     public function edit(Purchase $purchase)
     {
         $manufacturers = Manufacturer::where('status', true)->get();
-        $medicines = Medicine::with(['category', 'manufacturer'])
+        $medicines     = Medicine::with(['category', 'manufacturer'])
             ->where('status', true)
             ->get();
         $purchase->load(['manufacturer', 'items.medicine']);
+        $payload                    = $purchase->toArray();
+        $payload['manufacturer_id'] = $purchase->manufacturer?->publicId();
+        $payload['items']           = collect($purchase->items)->map(function ($item) {
+            $row                = $item->toArray();
+            $row['medicine_id'] = $item->medicine?->publicId();
+
+            return $row;
+        })->values()->all();
 
         return Inertia::render('Purchase/Edit', [
-            'purchase' => $purchase,
+            'purchase'      => $payload,
             'manufacturers' => $manufacturers,
-            'medicines' => $medicines,
+            'medicines'     => $medicines,
         ]);
     }
 
     public function update(Request $request, Purchase $purchase)
     {
         $request->validate([
-            'manufacturer_id' => 'required|exists:manufacturers,id',
-            'purchase_date' => 'required|date',
-            'items' => 'required|array|min:1',
-            'items.*.medicine_id' => 'required|exists:medicines,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.rate' => 'required|numeric|min:0',
+            'manufacturer_id'     => 'required|exists:manufacturers,manufacturer_id',
+            'purchase_date'       => 'required|date',
+            'items'               => 'required|array|min:1',
+            'items.*.medicine_id' => 'required|exists:medicines,medicine_id',
+            'items.*.quantity'    => 'required|integer|min:1',
+            'items.*.rate'        => 'required|numeric|min:0',
         ]);
 
         $purchase->update([
-            'manufacturer_id' => $request->manufacturer_id,
+            'manufacturer_id' => Manufacturer::localIdOrFail($request->manufacturer_id),
             'purchase_date'   => $request->purchase_date,
             'chalan_no'       => $request->chalan_no ?? $purchase->chalan_no,
             'payment_type'    => $request->payment_type ?? $purchase->payment_type,
@@ -212,12 +221,12 @@ class PurchaseController extends Controller
         $purchase->items()->delete();
         foreach ($request->items as $item) {
             PurchaseItem::create([
-                'purchase_id' => $purchase->id,
-                'medicine_id' => $item['medicine_id'],
-                'batch_id' => $item['batch_id'] ?? 'BATCH001',
-                'quantity' => $item['quantity'],
-                'rate' => $item['rate'],
-                'discount' => $item['discount'] ?? 0,
+                'purchase_id'  => $purchase->id,
+                'medicine_id'  => Medicine::localIdOrFail($item['medicine_id']),
+                'batch_id'     => $item['batch_id'] ?? 'BATCH001',
+                'quantity'     => $item['quantity'],
+                'rate'         => $item['rate'],
+                'discount'     => $item['discount'] ?? 0,
                 'total_amount' => $item['quantity'] * $item['rate'] - ($item['discount'] ?? 0),
             ]);
         }
@@ -247,6 +256,7 @@ class PurchaseController extends Controller
     private function generatePurchaseNumber()
     {
         $lastPurchase = Purchase::orderBy('id', 'desc')->first();
+
         return $lastPurchase ? $lastPurchase->purchase_no + 1 : 1000;
     }
 
@@ -254,7 +264,8 @@ class PurchaseController extends Controller
     {
         $lastPurchase = Purchase::orderBy('id', 'desc')->first();
         $lastChalanNo = $lastPurchase ? $lastPurchase->chalan_no : 'CHL000';
-        $number = (int) str_replace('CHL', '', $lastChalanNo);
-        return 'CHL' . str_pad($number + 1, 3, '0', STR_PAD_LEFT);
+        $number       = (int) str_replace('CHL', '', $lastChalanNo);
+
+        return 'CHL'.str_pad($number + 1, 3, '0', STR_PAD_LEFT);
     }
 }

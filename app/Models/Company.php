@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Company extends Model
 {
+    use HasPublicId;
+
     protected $connection = 'mysql_central';
 
     protected $fillable = [
@@ -27,7 +31,7 @@ class Company extends Model
     ];
 
     protected $casts = [
-        'provision_log' => 'array',
+        'provision_log'  => 'array',
         'provisioned_at' => 'datetime',
     ];
 
@@ -42,7 +46,7 @@ class Company extends Model
         return in_array($provision, ['active', 'degraded'], true);
     }
 
-    public function subscriptions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function subscriptions(): HasMany
     {
         return $this->hasMany(PlatformSubscription::class);
     }

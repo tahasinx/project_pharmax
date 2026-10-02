@@ -23,13 +23,13 @@ class TenantBackup
      */
     public function listFor(Company $company): array
     {
-        $dir = $this->directory($company);
+        $dir   = $this->directory($company);
         $files = glob($dir.'/*.sql.gz') ?: [];
         usort($files, fn ($a, $b) => filemtime($b) <=> filemtime($a));
 
         return array_map(fn (string $path) => [
-            'name' => basename($path),
-            'bytes' => filesize($path) ?: 0,
+            'name'       => basename($path),
+            'bytes'      => filesize($path) ?: 0,
             'created_at' => date('c', filemtime($path) ?: time()),
         ], $files);
     }
@@ -43,8 +43,8 @@ class TenantBackup
             throw new RuntimeException('The pharmacy database does not exist.');
         }
 
-        $name = $company->slug.'-'.now()->format('YmdHis').'.sql.gz';
-        $path = $this->directory($company).DIRECTORY_SEPARATOR.$name;
+        $name    = $company->slug.'-'.now()->format('YmdHis').'.sql.gz';
+        $path    = $this->directory($company).DIRECTORY_SEPARATOR.$name;
         $command = sprintf(
             'mysqldump --single-transaction --quick -h%s -P%s -u%s %s | gzip > %s',
             escapeshellarg((string) config('database.connections.mysql.host')),
@@ -60,7 +60,7 @@ class TenantBackup
             }
         }
         $env['MYSQL_PWD'] = (string) config('database.connections.mysql.password');
-        $process = Process::fromShellCommandline($command, null, $env);
+        $process          = Process::fromShellCommandline($command, null, $env);
         $process->setTimeout(180);
         $process->run();
         if (! $process->isSuccessful() || ! is_file($path)) {

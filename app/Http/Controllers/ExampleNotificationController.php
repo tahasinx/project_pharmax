@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\NotificationHelper;
+use App\Models\Customer;
+use App\Models\Invoice;
+use App\Models\Medicine;
 use Illuminate\Http\Request;
 
 class ExampleNotificationController extends Controller
@@ -13,9 +16,9 @@ class ExampleNotificationController extends Controller
     public function sendEmailExample(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'email'   => 'required|email',
             'subject' => 'required|string',
-            'message' => 'required|string'
+            'message' => 'required|string',
         ]);
 
         $result = NotificationHelper::sendEmail(
@@ -33,8 +36,8 @@ class ExampleNotificationController extends Controller
     public function sendSmsExample(Request $request)
     {
         $request->validate([
-            'phone' => 'required|string',
-            'message' => 'required|string'
+            'phone'   => 'required|string',
+            'message' => 'required|string',
         ]);
 
         $result = NotificationHelper::sendSms(
@@ -51,13 +54,13 @@ class ExampleNotificationController extends Controller
     public function notifyCustomer(Request $request)
     {
         $request->validate([
-            'customer_id' => 'required|exists:customers,id',
-            'type' => 'required|in:email,sms,both',
-            'message' => 'required|string'
+            'customer_id' => 'required|exists:customers,customer_id',
+            'type'        => 'required|in:email,sms,both',
+            'message'     => 'required|string',
         ]);
 
-        $customer = \App\Models\Customer::find($request->customer_id);
-        $results = [];
+        $customer = Customer::findByPublicId($request->customer_id);
+        $results  = [];
 
         if ($request->type === 'email' || $request->type === 'both') {
             $emailResult = NotificationHelper::sendEmail(
@@ -79,7 +82,7 @@ class ExampleNotificationController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Notifications sent',
-            'results' => $results
+            'results' => $results,
         ]);
     }
 
@@ -89,19 +92,19 @@ class ExampleNotificationController extends Controller
     public function sendLowStockAlert(Request $request)
     {
         $request->validate([
-            'medicine_id' => 'required|exists:medicines,id',
+            'medicine_id'   => 'required|exists:medicines,medicine_id',
             'current_stock' => 'required|integer',
-            'minimum_stock' => 'required|integer'
+            'minimum_stock' => 'required|integer',
         ]);
 
-        $medicine = \App\Models\Medicine::find($request->medicine_id);
+        $medicine = Medicine::findByPublicId($request->medicine_id);
 
         $message = "Low Stock Alert: {$medicine->name} has only {$request->current_stock} units remaining. Minimum required: {$request->minimum_stock} units.";
 
         // Send to admin email (you can configure this)
         $result = NotificationHelper::sendEmail(
             'admin@pharmacare.com', // Configure this in settings
-            'Low Stock Alert - ' . $medicine->name,
+            'Low Stock Alert - '.$medicine->name,
             $message
         );
 
@@ -114,18 +117,18 @@ class ExampleNotificationController extends Controller
     public function sendInvoiceNotification(Request $request)
     {
         $request->validate([
-            'invoice_id' => 'required|exists:invoices,id',
-            'type' => 'required|in:email,sms'
+            'invoice_id' => 'required|exists:invoices,invoice_id',
+            'type'       => 'required|in:email,sms',
         ]);
 
-        $invoice = \App\Models\Invoice::with('customer')->find($request->invoice_id);
+        $invoice = Invoice::with('customer')->find($request->invoice_id);
 
         $message = "Your invoice #{$invoice->invoice_no} for {$invoice->grand_total} has been generated. Thank you for your business!";
 
         if ($request->type === 'email') {
             $result = NotificationHelper::sendEmail(
                 $invoice->customer->email,
-                'Invoice #' . $invoice->invoice_no,
+                'Invoice #'.$invoice->invoice_no,
                 $message
             );
         } else {

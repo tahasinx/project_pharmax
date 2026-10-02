@@ -45,22 +45,22 @@ class PermissionCatalog
         }
 
         $roles = [
-            'admin' => self::names(),
+            'admin'   => self::names(),
             'manager' => [
                 'view-dashboard', 'manage-medicines', 'manage-customers', 'manage-invoices',
                 'manage-purchases', 'manage-accounts', 'manage-categories', 'manage-manufacturers',
                 'view-reports', 'pos-access', 'print-invoices', 'import-data', 'export-data',
                 'manage-suppliers', 'manage-inventory', 'view-all-branches',
             ],
-            'cashier' => ['view-dashboard', 'manage-customers', 'manage-invoices', 'pos-access', 'print-invoices'],
+            'cashier'    => ['view-dashboard', 'manage-customers', 'manage-invoices', 'pos-access', 'print-invoices'],
             'pharmacist' => [
                 'view-dashboard', 'manage-medicines', 'manage-customers', 'manage-invoices',
                 'pos-access', 'print-invoices', 'view-reports', 'dispense', 'manage-controlled',
             ],
-            'storekeeper' => ['view-dashboard', 'manage-inventory', 'manage-medicines'],
+            'storekeeper'      => ['view-dashboard', 'manage-inventory', 'manage-medicines'],
             'purchase-officer' => ['view-dashboard', 'manage-purchases', 'manage-suppliers', 'manage-medicines'],
-            'accountant' => ['view-dashboard', 'manage-finance', 'manage-accounts', 'view-reports'],
-            'branch-manager' => [
+            'accountant'       => ['view-dashboard', 'manage-finance', 'manage-accounts', 'view-reports'],
+            'branch-manager'   => [
                 'view-dashboard', 'manage-medicines', 'manage-customers', 'manage-invoices',
                 'manage-purchases', 'manage-inventory', 'manage-suppliers', 'view-reports',
                 'pos-access', 'dispense', 'manage-branches',

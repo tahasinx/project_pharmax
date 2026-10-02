@@ -43,31 +43,31 @@ return new class extends Migration
         });
 
         $orgId = DB::table('organizations')->insertGetId([
-            'name' => 'Pharmax',
-            'is_active' => true,
+            'name'       => 'Pharmax',
+            'is_active'  => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
         $branchId = DB::table('branches')->insertGetId([
             'organization_id' => $orgId,
-            'name' => 'Head Office',
-            'code' => 'HO',
-            'is_head_office' => true,
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'name'            => 'Head Office',
+            'code'            => 'HO',
+            'is_head_office'  => true,
+            'is_active'       => true,
+            'created_at'      => now(),
+            'updated_at'      => now(),
         ]);
         $warehouseId = DB::table('warehouses')->insertGetId([
-            'branch_id' => $branchId,
-            'name' => 'Main Warehouse',
-            'is_active' => true,
+            'branch_id'  => $branchId,
+            'name'       => 'Main Warehouse',
+            'is_active'  => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
         $counterId = DB::table('counters')->insertGetId([
-            'branch_id' => $branchId,
-            'name' => 'Main Counter',
-            'is_active' => true,
+            'branch_id'  => $branchId,
+            'name'       => 'Main Counter',
+            'is_active'  => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -152,16 +152,16 @@ return new class extends Migration
             $table->boolean('recalled')->default(false);
         });
         DB::table('stocks')->update([
-            'branch_id' => $branchId,
+            'branch_id'    => $branchId,
             'warehouse_id' => $warehouseId,
-            'status' => 'available',
+            'status'       => 'available',
         ]);
 
         Schema::table('invoices', function (Blueprint $table) {
             $table->foreignId('branch_id')->nullable()->after('id')->constrained()->nullOnDelete();
             $table->foreignId('counter_id')->nullable()->after('branch_id')->constrained()->nullOnDelete();
         });
-        DB::statement("ALTER TABLE invoices MODIFY payment_type VARCHAR(32) NOT NULL");
+        DB::statement('ALTER TABLE invoices MODIFY payment_type VARCHAR(32) NOT NULL');
         DB::table('invoices')->update(['branch_id' => $branchId, 'counter_id' => $counterId]);
 
         Schema::table('invoice_items', function (Blueprint $table) {
@@ -173,10 +173,10 @@ return new class extends Migration
             $table->foreignId('branch_id')->nullable()->after('id')->constrained()->nullOnDelete();
             $table->foreignId('supplier_id')->nullable()->after('manufacturer_id')->constrained()->nullOnDelete();
         });
-        DB::statement("ALTER TABLE purchases MODIFY payment_type VARCHAR(32) NOT NULL");
+        DB::statement('ALTER TABLE purchases MODIFY payment_type VARCHAR(32) NOT NULL');
         DB::table('purchases')->update(['branch_id' => $branchId]);
 
-        DB::statement("ALTER TABLE stock_transactions MODIFY type VARCHAR(32) NOT NULL");
+        DB::statement('ALTER TABLE stock_transactions MODIFY type VARCHAR(32) NOT NULL');
 
         Schema::table('customers', function (Blueprint $table) {
             $table->date('date_of_birth')->nullable();

@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ControlledDrugRegister extends Model
 {
+    use HasPublicId;
+
     protected $guarded = [];
 
     protected $casts = ['dispensed_at' => 'datetime'];

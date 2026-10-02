@@ -16,29 +16,29 @@ class PlatformSettingsStore
         $stored = PlatformSetting::query()->pluck('value', 'key')->all();
 
         return [
-            'name' => $stored['name'] ?? 'Epharma',
-            'tagline' => $stored['tagline'] ?? 'Pharmacy platform',
-            'support_email' => $stored['support_email'] ?? '',
-            'support_phone' => $stored['support_phone'] ?? '',
-            'address' => $stored['address'] ?? '',
-            'default_currency' => $stored['default_currency'] ?? 'BDT',
-            'invoice_footer' => $stored['invoice_footer'] ?? '',
-            'theme_primary' => $this->theme($stored)['primary'],
-            'theme_shape' => $this->theme($stored)['shape'],
-            'theme_font_family' => $this->theme($stored)['font_family'],
-            'theme_font_href' => $this->theme($stored)['font_href'],
-            'theme_font_size' => $this->theme($stored)['font_size'],
-            'theme_font_weight' => $this->theme($stored)['font_weight'],
-            'logo_url' => $this->publicFile($stored['logo'] ?? ''),
-            'favicon_url' => $this->publicFile($stored['favicon'] ?? ''),
-            'email_enabled' => ($stored['email_enabled'] ?? '0') === '1',
-            'email_host' => $stored['email_host'] ?? '',
-            'email_port' => (int) ($stored['email_port'] ?? 587),
-            'email_encryption' => $stored['email_encryption'] ?? 'tls',
-            'email_username' => $stored['email_username'] ?? '',
+            'name'               => $stored['name'] ?? 'Epharma',
+            'tagline'            => $stored['tagline'] ?? 'Pharmacy platform',
+            'support_email'      => $stored['support_email'] ?? '',
+            'support_phone'      => $stored['support_phone'] ?? '',
+            'address'            => $stored['address'] ?? '',
+            'default_currency'   => $stored['default_currency'] ?? 'BDT',
+            'invoice_footer'     => $stored['invoice_footer'] ?? '',
+            'theme_primary'      => $this->theme($stored)['primary'],
+            'theme_shape'        => $this->theme($stored)['shape'],
+            'theme_font_family'  => $this->theme($stored)['font_family'],
+            'theme_font_href'    => $this->theme($stored)['font_href'],
+            'theme_font_size'    => $this->theme($stored)['font_size'],
+            'theme_font_weight'  => $this->theme($stored)['font_weight'],
+            'logo_url'           => $this->publicFile($stored['logo'] ?? ''),
+            'favicon_url'        => $this->publicFile($stored['favicon'] ?? ''),
+            'email_enabled'      => ($stored['email_enabled'] ?? '0') === '1',
+            'email_host'         => $stored['email_host'] ?? '',
+            'email_port'         => (int) ($stored['email_port'] ?? 587),
+            'email_encryption'   => $stored['email_encryption'] ?? 'tls',
+            'email_username'     => $stored['email_username'] ?? '',
             'email_password_set' => ($stored['email_password'] ?? '') !== '',
             'email_from_address' => $stored['email_from_address'] ?? '',
-            'email_from_name' => $stored['email_from_name'] ?? '',
+            'email_from_name'    => $stored['email_from_name'] ?? '',
         ];
     }
 
@@ -70,16 +70,16 @@ class PlatformSettingsStore
         }
 
         return [
-            'primary' => $primary,
-            'shape' => $shape,
+            'primary'     => $primary,
+            'shape'       => $shape,
             'font_family' => $family,
-            'font_href' => $this->stylesheet((string) ($stored['theme_font_href'] ?? '')),
-            'font_size' => $size,
+            'font_href'   => $this->stylesheet((string) ($stored['theme_font_href'] ?? '')),
+            'font_size'   => $size,
             'font_weight' => $weight,
-            'radius' => match ($shape) {
-                'flat' => '0px',
+            'radius'      => match ($shape) {
+                'flat'    => '0px',
                 'default' => '4px',
-                default => '10px',
+                default   => '10px',
             },
         ];
     }
@@ -92,14 +92,14 @@ class PlatformSettingsStore
         $stored = PlatformSetting::query()->pluck('value', 'key')->all();
 
         return [
-            'enabled' => ($stored['email_enabled'] ?? '0') === '1',
-            'host' => (string) ($stored['email_host'] ?? ''),
-            'port' => (int) ($stored['email_port'] ?? 587),
-            'encryption' => (string) ($stored['email_encryption'] ?? 'tls'),
-            'username' => (string) ($stored['email_username'] ?? ''),
-            'password' => $this->decrypt((string) ($stored['email_password'] ?? '')),
+            'enabled'      => ($stored['email_enabled'] ?? '0') === '1',
+            'host'         => (string) ($stored['email_host'] ?? ''),
+            'port'         => (int) ($stored['email_port'] ?? 587),
+            'encryption'   => (string) ($stored['email_encryption'] ?? 'tls'),
+            'username'     => (string) ($stored['email_username'] ?? ''),
+            'password'     => $this->decrypt((string) ($stored['email_password'] ?? '')),
             'from_address' => (string) ($stored['email_from_address'] ?? ''),
-            'from_name' => (string) ($stored['email_from_name'] ?? ''),
+            'from_name'    => (string) ($stored['email_from_name'] ?? ''),
         ];
     }
 
@@ -129,10 +129,10 @@ class PlatformSettingsStore
     public function tenancySnapshot(): array
     {
         return [
-            'enabled' => (bool) config('database.tenant.enabled'),
-            'base_domain' => (string) config('database.tenant.base_domain'),
-            'prefix' => (string) config('database.tenant.db_prefix'),
-            'central' => (string) config('database.central_database'),
+            'enabled'       => (bool) config('database.tenant.enabled'),
+            'base_domain'   => (string) config('database.tenant.base_domain'),
+            'prefix'        => (string) config('database.tenant.db_prefix'),
+            'central'       => (string) config('database.central_database'),
             'central_hosts' => config('database.tenant.central_subdomains', []),
         ];
     }
@@ -150,7 +150,7 @@ class PlatformSettingsStore
         if (! str_starts_with($raw, 'https://') || filter_var($raw, FILTER_VALIDATE_URL) === false) {
             return '';
         }
-        $host = parse_url($raw, PHP_URL_HOST);
+        $host    = parse_url($raw, PHP_URL_HOST);
         $allowed = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdn.jsdelivr.net', 'cdnjs.cloudflare.com'];
         if (! is_string($host) || ! in_array(strtolower($host), $allowed, true)) {
             return '';
@@ -167,7 +167,7 @@ class PlatformSettingsStore
         $stored = PlatformSetting::query()->whereIn('key', ['logo', 'favicon'])->pluck('value', 'key');
 
         return [
-            'logo' => $this->publicFile((string) ($stored['logo'] ?? '')),
+            'logo'    => $this->publicFile((string) ($stored['logo'] ?? '')),
             'favicon' => $this->publicFile((string) ($stored['favicon'] ?? '')),
         ];
     }

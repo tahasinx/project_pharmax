@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Services\SimpleCommandService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class TerminalController extends Controller
 {
@@ -32,11 +32,11 @@ class TerminalController extends Controller
             'command'           => 'required|string|max:100',
             'arguments'         => 'array',
             'arguments.*'       => 'string|max:50',
-            'working_directory' => 'nullable|string|max:500'
+            'working_directory' => 'nullable|string|max:500',
         ]);
 
-        $command = $request->input('command');
-        $arguments = $request->input('arguments', []);
+        $command          = $request->input('command');
+        $arguments        = $request->input('arguments', []);
         $workingDirectory = $request->input('working_directory');
 
         $result = $this->commandService->execute($command, $arguments, $workingDirectory);
@@ -51,7 +51,7 @@ class TerminalController extends Controller
     {
         return response()->json([
             'success'  => true,
-            'commands' => $this->commandService->getAvailableCommands()
+            'commands' => $this->commandService->getAvailableCommands(),
         ]);
     }
 
@@ -60,12 +60,12 @@ class TerminalController extends Controller
      */
     public function getSystemInfo(): JsonResponse
     {
-        $info = $this->commandService->getEnvironmentInfo();
+        $info                       = $this->commandService->getEnvironmentInfo();
         $info['available_commands'] = $this->commandService->getAvailableCommands();
 
         return response()->json([
             'success'     => true,
-            'system_info' => $info
+            'system_info' => $info,
         ]);
     }
 
@@ -79,7 +79,7 @@ class TerminalController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Command paths refreshed successfully',
-            'paths'   => $paths
+            'paths'   => $paths,
         ]);
     }
 }

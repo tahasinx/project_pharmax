@@ -60,14 +60,14 @@ class HostProvisioner
         $process->setTimeout(180);
         $process->run();
         $output = trim($process->getOutput()."\n".$process->getErrorOutput());
-        $ssl = str_contains($output, 'SSL_OK') ? 'ok' : (str_contains($output, 'SSL_FAIL') ? 'failed' : 'missing');
-        $vhost = str_contains($output, 'VHOST_OK') || str_contains($output, 'HOST_ALREADY_PRESENT') || $action === 'remove' ? 'ok' : 'missing';
+        $ssl    = str_contains($output, 'SSL_OK') ? 'ok' : (str_contains($output, 'SSL_FAIL') ? 'failed' : 'missing');
+        $vhost  = str_contains($output, 'VHOST_OK') || str_contains($output, 'HOST_ALREADY_PRESENT') || $action === 'remove' ? 'ok' : 'missing';
 
         return [
-            'ok' => $process->isSuccessful(),
+            'ok'     => $process->isSuccessful(),
             'output' => $output,
-            'vhost' => $vhost,
-            'ssl' => $process->isSuccessful() ? ($ssl === 'missing' ? 'ok' : $ssl) : $ssl,
+            'vhost'  => $vhost,
+            'ssl'    => $process->isSuccessful() ? ($ssl === 'missing' ? 'ok' : $ssl) : $ssl,
         ];
     }
 }

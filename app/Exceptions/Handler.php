@@ -2,8 +2,9 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Throwable;
 
@@ -50,7 +51,7 @@ class Handler extends ExceptionHandler
         if (in_array($status, [500, 503, 404, 403, 419, 429])) {
             return Inertia::render('Errors/Error', [
                 'status' => $status,
-                'error' => $this->getUserFriendlyErrorMessage($e, $status),
+                'error'  => $this->getUserFriendlyErrorMessage($e, $status),
             ])->toResponse($request)->setStatusCode($status);
         }
 
@@ -72,12 +73,13 @@ class Handler extends ExceptionHandler
             case 429:
                 return 'Too many requests. Please wait a moment before trying again.';
             case 500:
-                if ($e instanceof \Illuminate\Database\QueryException) {
+                if ($e instanceof QueryException) {
                     return 'A database error occurred. Please contact support if this persists.';
                 }
-                if ($e instanceof \Illuminate\Validation\ValidationException) {
+                if ($e instanceof ValidationException) {
                     return 'Please check your input and try again.';
                 }
+
                 return 'An unexpected error occurred. Please try again later.';
             case 503:
                 return 'The service is temporarily unavailable. Please try again later.';

@@ -17,23 +17,22 @@ class MedicineTest extends TestCase
     use RefreshDatabase;
 
     protected $user;
+
     protected $category;
+
     protected $manufacturer;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Create roles
         Role::create(['name' => 'admin']);
         Role::create(['name' => 'user']);
 
-        // Create test user
         $this->user = User::factory()->create();
         $this->user->assignRole('admin');
 
-        // Create test data
-        $this->category = Category::factory()->create(['name' => 'Test Category']);
+        $this->category     = Category::factory()->create(['name' => 'Test Category']);
         $this->manufacturer = Manufacturer::factory()->create(['name' => 'Test Manufacturer']);
     }
 
@@ -51,28 +50,31 @@ class MedicineTest extends TestCase
 
     public function test_can_create_medicine()
     {
+        $type    = MedicineType::firstOrCreate(['name' => 'Allopathic']);
+        $generic = Generic::firstOrCreate(['name' => 'Paracetamol']);
+
         $medicineData = [
-            'name' => 'Test Medicine',
-            'medicine_type_id' => MedicineType::create(['name' => 'Allopathic'])->id,
-            'generic_id' => Generic::create(['name' => 'Paracetamol'])->id,
-            'category_id' => $this->category->id,
-            'manufacturer_id' => $this->manufacturer->id,
-            'generic_name' => 'Test Generic',
-            'strength' => '500mg',
-            'box_size' => 10,
-            'price' => 25.50,
+            'name'               => 'Test Medicine',
+            'medicine_type_id'   => $type->getRouteKey(),
+            'generic_id'         => $generic->getRouteKey(),
+            'category_id'        => $this->category->getRouteKey(),
+            'manufacturer_id'    => $this->manufacturer->getRouteKey(),
+            'generic_name'       => 'Test Generic',
+            'strength'           => '500mg',
+            'box_size'           => 10,
+            'price'              => 25.50,
             'manufacturer_price' => 20.00,
-            'unit' => 'tablet',
-            'details' => 'Test medicine details',
-            'status' => true,
+            'unit'               => 'tablet',
+            'details'            => 'Test medicine details',
+            'status'             => true,
         ];
 
         $response = $this->actingAs($this->user)->post('/medicines', $medicineData);
         $response->assertRedirect('/medicines');
 
         $this->assertDatabaseHas('medicines', [
-            'name' => 'Test Medicine',
-            'category_id' => $this->category->id,
+            'name'            => 'Test Medicine',
+            'category_id'     => $this->category->id,
             'manufacturer_id' => $this->manufacturer->id,
         ]);
     }
@@ -86,29 +88,31 @@ class MedicineTest extends TestCase
     public function test_can_update_medicine()
     {
         $medicine = Medicine::factory()->create([
-            'category_id' => $this->category->id,
+            'category_id'     => $this->category->id,
             'manufacturer_id' => $this->manufacturer->id,
         ]);
+        $type    = MedicineType::firstOrCreate(['name' => 'Allopathic']);
+        $generic = Generic::firstOrCreate(['name' => 'Paracetamol']);
 
         $updateData = [
-            'name' => 'Updated Medicine',
-            'category_id' => $this->category->id,
-            'manufacturer_id' => $this->manufacturer->id,
-            'medicine_type_id' => MedicineType::firstOrCreate(['name' => 'Allopathic'])->id,
-            'generic_id' => Generic::firstOrCreate(['name' => 'Paracetamol'])->id,
-            'strength' => '500mg',
-            'unit' => 'Piece',
-            'price' => 30.00,
+            'name'               => 'Updated Medicine',
+            'category_id'        => $this->category->getRouteKey(),
+            'manufacturer_id'    => $this->manufacturer->getRouteKey(),
+            'medicine_type_id'   => $type->getRouteKey(),
+            'generic_id'         => $generic->getRouteKey(),
+            'strength'           => '500mg',
+            'unit'               => 'Piece',
+            'price'              => 30.00,
             'manufacturer_price' => 25.00,
-            'box_size' => 15,
+            'box_size'           => 15,
         ];
 
-        $response = $this->actingAs($this->user)->put("/medicines/{$medicine->id}", $updateData);
+        $response = $this->actingAs($this->user)->put('/medicines/'.$medicine->getRouteKey(), $updateData);
         $response->assertRedirect('/medicines');
 
         $this->assertDatabaseHas('medicines', [
-            'id' => $medicine->id,
-            'name' => 'Updated Medicine',
+            'id'    => $medicine->id,
+            'name'  => 'Updated Medicine',
             'price' => 30.00,
         ]);
     }
@@ -116,11 +120,11 @@ class MedicineTest extends TestCase
     public function test_can_delete_medicine()
     {
         $medicine = Medicine::factory()->create([
-            'category_id' => $this->category->id,
+            'category_id'     => $this->category->id,
             'manufacturer_id' => $this->manufacturer->id,
         ]);
 
-        $response = $this->actingAs($this->user)->delete("/medicines/{$medicine->id}");
+        $response = $this->actingAs($this->user)->delete('/medicines/'.$medicine->getRouteKey());
         $response->assertRedirect('/medicines');
 
         $this->assertDatabaseMissing('medicines', ['id' => $medicine->id]);
@@ -129,14 +133,15 @@ class MedicineTest extends TestCase
     public function test_medicine_import_functionality()
     {
         $csvContent = "name,generic_name,category,manufacturer,price\n";
-        $csvContent .= "Test Medicine,Test Generic,Test Category,Test Manufacturer,25.50";
+        $csvContent .= 'Test Medicine,Test Generic,Test Category,Test Manufacturer,25.50';
 
-        $file = tmpfile();
-        fwrite($file, $csvContent);
-        rewind($file);
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent(
+            'medicines.csv',
+            $csvContent
+        );
 
         $response = $this->actingAs($this->user)->post('/medicines/import', [
-            'file' => $file
+            'file' => $file,
         ]);
 
         $response->assertRedirect('/medicines');
@@ -153,33 +158,33 @@ class MedicineTest extends TestCase
     public function test_medicine_codes_generation()
     {
         $medicine = Medicine::factory()->create([
-            'category_id' => $this->category->id,
+            'category_id'     => $this->category->id,
             'manufacturer_id' => $this->manufacturer->id,
         ]);
 
-        $response = $this->actingAs($this->user)->get("/medicines/{$medicine->id}/codes");
+        $response = $this->actingAs($this->user)->get('/medicines/'.$medicine->getRouteKey().'/codes');
         $response->assertStatus(200);
     }
 
     public function test_medicine_show_page()
     {
         $medicine = Medicine::factory()->create([
-            'category_id' => $this->category->id,
+            'category_id'     => $this->category->id,
             'manufacturer_id' => $this->manufacturer->id,
         ]);
 
-        $response = $this->actingAs($this->user)->get("/medicines/{$medicine->id}");
+        $response = $this->actingAs($this->user)->get('/medicines/'.$medicine->getRouteKey());
         $response->assertStatus(200);
     }
 
     public function test_medicine_edit_page()
     {
         $medicine = Medicine::factory()->create([
-            'category_id' => $this->category->id,
+            'category_id'     => $this->category->id,
             'manufacturer_id' => $this->manufacturer->id,
         ]);
 
-        $response = $this->actingAs($this->user)->get("/medicines/{$medicine->id}/edit");
+        $response = $this->actingAs($this->user)->get('/medicines/'.$medicine->getRouteKey().'/edit');
         $response->assertStatus(200);
     }
 

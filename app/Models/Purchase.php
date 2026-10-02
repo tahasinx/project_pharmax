@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Purchase extends Model
 {
-    use HasFactory;
+    use HasFactory, HasPublicId;
 
     protected $fillable = [
         'purchase_id',
@@ -33,14 +34,14 @@ class Purchase extends Model
     ];
 
     protected $casts = [
-        'purchase_date' => 'date',
-        'grand_total' => 'decimal:2',
-        'total_tax' => 'decimal:2',
+        'purchase_date'  => 'date',
+        'grand_total'    => 'decimal:2',
+        'total_tax'      => 'decimal:2',
         'total_discount' => 'decimal:2',
-        'paid_amount' => 'decimal:2',
-        'due_amount' => 'decimal:2',
-        'total_vat' => 'decimal:2',
-        'status' => 'boolean',
+        'paid_amount'    => 'decimal:2',
+        'due_amount'     => 'decimal:2',
+        'total_vat'      => 'decimal:2',
+        'status'         => 'boolean',
     ];
 
     public function manufacturer(): BelongsTo

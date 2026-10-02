@@ -97,7 +97,7 @@ Medicines, stock, purchases, invoices, POS, accounts, and settings do not check 
 app/Http/Controllers   Inertia controllers
 app/Models             Eloquent models
 app/Services           NotificationService, SimpleCommandService
-database/migrations    Schema
+database/migrations    Schema (tenant/ + central/)
 database/seeders       Roles, menus, demo data
 resources/js/Pages     Vue pages
 routes/web.php         Authenticated UI

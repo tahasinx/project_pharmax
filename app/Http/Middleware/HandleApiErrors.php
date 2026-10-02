@@ -12,7 +12,7 @@ class HandleApiErrors
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -41,18 +41,18 @@ class HandleApiErrors
         }
 
         Log::error('API Error', [
-            'url' => $request->fullUrl(),
-            'method' => $request->method(),
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
+            'url'     => $request->fullUrl(),
+            'method'  => $request->method(),
+            'error'   => $e->getMessage(),
+            'trace'   => $e->getTraceAsString(),
             'user_id' => $userId,
         ]);
 
         if ($request->expectsJson()) {
             return response()->json([
-                'error' => 'Internal Server Error',
+                'error'   => 'Internal Server Error',
                 'message' => config('app.debug') ? $e->getMessage() : 'An error occurred while processing your request.',
-                'code' => 500,
+                'code'    => 500,
             ], 500);
         }
 
@@ -72,11 +72,11 @@ class HandleApiErrors
         }
 
         Log::warning('API Error Response', [
-            'url' => $request->fullUrl(),
-            'method' => $request->method(),
+            'url'         => $request->fullUrl(),
+            'method'      => $request->method(),
             'status_code' => $response->getStatusCode(),
-            'user_id' => $userId,
-            'ip' => $request->ip(),
+            'user_id'     => $userId,
+            'ip'          => $request->ip(),
         ]);
     }
 }

@@ -14,22 +14,22 @@ class PackagingConverter
 
         $levels = $units->sortByDesc('factor_to_base')->values();
         if ($levels->isEmpty() || $levels->where('factor_to_base', '>', 1)->isEmpty()) {
-            return $baseQuantity . ' ' . ($levels->first()->name ?? 'piece');
+            return $baseQuantity.' '.($levels->first()->name ?? 'piece');
         }
 
         $remaining = $baseQuantity;
-        $parts = [];
+        $parts     = [];
         foreach ($levels as $unit) {
             $factor = max(1, (int) $unit->factor_to_base);
             if ($factor === 1) {
                 if ($remaining > 0) {
-                    $parts[] = $remaining . ' ' . $unit->name;
+                    $parts[] = $remaining.' '.$unit->name;
                 }
                 break;
             }
             $count = intdiv($remaining, $factor);
             if ($count > 0) {
-                $parts[] = $count . ' ' . $unit->name;
+                $parts[] = $count.' '.$unit->name;
                 $remaining -= $count * $factor;
             }
         }
@@ -39,7 +39,7 @@ class PackagingConverter
 
     public static function toBase(Medicine $medicine, string $unitName, int $quantity): int
     {
-        $unit = $medicine->units()->where('name', $unitName)->first();
+        $unit   = $medicine->units()->where('name', $unitName)->first();
         $factor = $unit ? (int) $unit->factor_to_base : 1;
 
         return $quantity * max(1, $factor);

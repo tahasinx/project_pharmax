@@ -25,4 +25,3 @@ Route::prefix('install')->name('install.')->group(function () {
     Route::post('/execute', [InstallationController::class, 'execute'])->name('execute');
     Route::get('/complete', [InstallationController::class, 'complete'])->name('complete');
 });
-

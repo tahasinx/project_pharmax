@@ -25,12 +25,12 @@ class GitHubDeployService
     public function settings(): array
     {
         return [
-            'owner' => (string) config('github_deploy.owner'),
-            'repo' => (string) config('github_deploy.repo'),
-            'base' => (string) config('github_deploy.base_branch', 'dev'),
-            'prod' => (string) config('github_deploy.prod_branch', 'master'),
-            'workflow' => (string) config('github_deploy.workflow', 'production.yml'),
-            'enabled' => (bool) config('github_deploy.enabled'),
+            'owner'      => (string) config('github_deploy.owner'),
+            'repo'       => (string) config('github_deploy.repo'),
+            'base'       => (string) config('github_deploy.base_branch', 'dev'),
+            'prod'       => (string) config('github_deploy.prod_branch', 'master'),
+            'workflow'   => (string) config('github_deploy.workflow', 'production.yml'),
+            'enabled'    => (bool) config('github_deploy.enabled'),
             'configured' => $this->isConfigured(),
         ];
     }
@@ -48,21 +48,21 @@ class GitHubDeployService
         $baseSha = $baseRef['object']['sha'] ?? null;
         $prodSha = $prodRef['object']['sha'] ?? null;
 
-        $aheadBy = 0;
+        $aheadBy  = 0;
         $behindBy = 0;
-        $commits = [];
+        $commits  = [];
         if ($baseSha && $prodSha) {
             $comparison = $this->get("repos/{$owner}/{$repo}/compare/{$prod}...{$base}");
-            $aheadBy = (int) ($comparison['ahead_by'] ?? 0);
-            $behindBy = (int) ($comparison['behind_by'] ?? 0);
-            $commits = collect($comparison['commits'] ?? [])
+            $aheadBy    = (int) ($comparison['ahead_by'] ?? 0);
+            $behindBy   = (int) ($comparison['behind_by'] ?? 0);
+            $commits    = collect($comparison['commits'] ?? [])
                 ->reverse()
                 ->take(12)
                 ->map(fn ($commit) => [
-                    'sha' => substr((string) ($commit['sha'] ?? ''), 0, 7),
+                    'sha'     => substr((string) ($commit['sha'] ?? ''), 0, 7),
                     'message' => trim(explode("\n", (string) ($commit['commit']['message'] ?? ''))[0]),
-                    'author' => $commit['commit']['author']['name'] ?? '—',
-                    'date' => $commit['commit']['author']['date'] ?? null,
+                    'author'  => $commit['commit']['author']['name'] ?? '—',
+                    'date'    => $commit['commit']['author']['date'] ?? null,
                 ])
                 ->values()
                 ->all();
@@ -71,7 +71,7 @@ class GitHubDeployService
         try {
             $runs = $this->get("repos/{$owner}/{$repo}/actions/workflows/{$workflow}/runs", [
                 'per_page' => 5,
-                'branch' => $prod,
+                'branch'   => $prod,
             ]);
             $workflowRuns = $runs['workflow_runs'] ?? [];
         } catch (RuntimeException $e) {
@@ -85,25 +85,25 @@ class GitHubDeployService
             fn ($run) => in_array($run['status'], ['queued', 'in_progress', 'waiting', 'pending'], true)
         );
 
-        $inSync = $baseSha && $prodSha && hash_equals((string) $baseSha, (string) $prodSha);
+        $inSync         = $baseSha && $prodSha && hash_equals((string) $baseSha, (string) $prodSha);
         $canFastForward = $aheadBy > 0 && $behindBy === 0;
 
         return [
-            'configured' => true,
-            'base' => $base,
-            'prod' => $prod,
-            'base_sha' => $baseSha ? substr($baseSha, 0, 7) : null,
-            'prod_sha' => $prodSha ? substr($prodSha, 0, 7) : null,
-            'base_sha_full' => $baseSha,
-            'ahead_by' => $aheadBy,
-            'behind_by' => $behindBy,
-            'in_sync' => $inSync,
+            'configured'       => true,
+            'base'             => $base,
+            'prod'             => $prod,
+            'base_sha'         => $baseSha ? substr($baseSha, 0, 7) : null,
+            'prod_sha'         => $prodSha ? substr($prodSha, 0, 7) : null,
+            'base_sha_full'    => $baseSha,
+            'ahead_by'         => $aheadBy,
+            'behind_by'        => $behindBy,
+            'in_sync'          => $inSync,
             'can_fast_forward' => $canFastForward,
-            'needs_merge' => $aheadBy > 0 && $behindBy > 0,
-            'commits' => $commits,
-            'runs' => $recent,
-            'run_busy' => $active !== null,
-            'message' => $inSync
+            'needs_merge'      => $aheadBy > 0 && $behindBy > 0,
+            'commits'          => $commits,
+            'runs'             => $recent,
+            'run_busy'         => $active !== null,
+            'message'          => $inSync
                 ? 'Production branch is already at the staging tip.'
                 : ($canFastForward
                     ? "{$aheadBy} commit(s) on {$base} can fast-forward onto {$prod}."
@@ -169,10 +169,10 @@ class GitHubDeployService
      */
     protected function coords(): array
     {
-        $owner = $this->ident((string) config('github_deploy.owner'), 'owner');
-        $repo = $this->ident((string) config('github_deploy.repo'), 'repo');
-        $base = $this->ident((string) config('github_deploy.base_branch'), 'base branch');
-        $prod = $this->ident((string) config('github_deploy.prod_branch'), 'prod branch');
+        $owner    = $this->ident((string) config('github_deploy.owner'), 'owner');
+        $repo     = $this->ident((string) config('github_deploy.repo'), 'repo');
+        $base     = $this->ident((string) config('github_deploy.base_branch'), 'base branch');
+        $prod     = $this->ident((string) config('github_deploy.prod_branch'), 'prod branch');
         $workflow = trim((string) config('github_deploy.workflow'));
         if ($base === $prod || ! preg_match('/^[A-Za-z0-9._-]+\.ya?ml$/', $workflow)) {
             throw new RuntimeException('Invalid GitHub deploy coordinates.');
@@ -214,7 +214,7 @@ class GitHubDeployService
         $response = Http::withToken((string) config('github_deploy.token'))
             ->accept('application/vnd.github+json')
             ->patch("https://api.github.com/repos/{$owner}/{$repo}/git/refs/heads/{$branch}", [
-                'sha' => $sha,
+                'sha'   => $sha,
                 'force' => false,
             ]);
 
@@ -228,7 +228,7 @@ class GitHubDeployService
         $response = Http::withToken((string) config('github_deploy.token'))
             ->accept('application/vnd.github+json')
             ->post("https://api.github.com/repos/{$owner}/{$repo}/actions/workflows/{$workflow}/dispatches", [
-                'ref' => $branch,
+                'ref'    => $branch,
                 'inputs' => ['reason' => $reason],
             ]);
 
@@ -244,10 +244,10 @@ class GitHubDeployService
     protected function mapRun(array $run): array
     {
         return [
-            'name' => (string) ($run['name'] ?? 'Deploy'),
-            'status' => (string) ($run['status'] ?? ''),
+            'name'       => (string) ($run['name'] ?? 'Deploy'),
+            'status'     => (string) ($run['status'] ?? ''),
             'conclusion' => (string) ($run['conclusion'] ?? ''),
-            'url' => (string) ($run['html_url'] ?? ''),
+            'url'        => (string) ($run['html_url'] ?? ''),
             'created_at' => $run['created_at'] ?? null,
         ];
     }

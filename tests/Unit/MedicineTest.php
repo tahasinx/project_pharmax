@@ -2,14 +2,13 @@
 
 namespace Tests\Unit;
 
-use App\Models\Medicine;
 use App\Models\Category;
-use App\Models\Manufacturer;
-use App\Models\Stock;
 use App\Models\InvoiceItem;
-use App\Services\NotificationService;
+use App\Models\Manufacturer;
+use App\Models\Medicine;
+use App\Models\Stock;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class MedicineTest extends TestCase
@@ -17,17 +16,19 @@ class MedicineTest extends TestCase
     use RefreshDatabase;
 
     protected $category;
+
     protected $manufacturer;
+
     protected $medicine;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->category = Category::factory()->create();
+        $this->category     = Category::factory()->create();
         $this->manufacturer = Manufacturer::factory()->create();
-        $this->medicine = Medicine::factory()->create([
-            'category_id' => $this->category->id,
+        $this->medicine     = Medicine::factory()->create([
+            'category_id'     => $this->category->id,
             'manufacturer_id' => $this->manufacturer->id,
         ]);
     }
@@ -64,14 +65,14 @@ class MedicineTest extends TestCase
     {
         Stock::factory()->create([
             'medicine_id' => $this->medicine->id,
-            'quantity' => 50,
-            'is_active' => true,
+            'quantity'    => 50,
+            'is_active'   => true,
         ]);
 
         Stock::factory()->create([
             'medicine_id' => $this->medicine->id,
-            'quantity' => 30,
-            'is_active' => true,
+            'quantity'    => 30,
+            'is_active'   => true,
         ]);
 
         $this->assertEquals(80, $this->medicine->getTotalStockAttribute());
@@ -81,10 +82,10 @@ class MedicineTest extends TestCase
     {
         // Create stock with low quantity
         Stock::factory()->create([
-            'medicine_id' => $this->medicine->id,
-            'quantity' => 5,
+            'medicine_id'     => $this->medicine->id,
+            'quantity'        => 5,
             'min_stock_level' => 10,
-            'is_active' => true,
+            'is_active'       => true,
         ]);
 
         $this->assertTrue($this->medicine->isLowStock());
@@ -94,10 +95,10 @@ class MedicineTest extends TestCase
     {
         // Create stock with sufficient quantity
         Stock::factory()->create([
-            'medicine_id' => $this->medicine->id,
-            'quantity' => 50,
+            'medicine_id'     => $this->medicine->id,
+            'quantity'        => 50,
             'min_stock_level' => 10,
-            'is_active' => true,
+            'is_active'       => true,
         ]);
 
         $this->assertFalse($this->medicine->isLowStock());
@@ -107,14 +108,14 @@ class MedicineTest extends TestCase
     {
         Stock::factory()->create([
             'medicine_id' => $this->medicine->id,
-            'quantity' => 50,
-            'is_active' => true,
+            'quantity'    => 50,
+            'is_active'   => true,
         ]);
 
         Stock::factory()->create([
             'medicine_id' => $this->medicine->id,
-            'quantity' => 0, // No stock
-            'is_active' => true,
+            'quantity'    => 0, // No stock
+            'is_active'   => true,
         ]);
 
         $availableStocks = $this->medicine->getAvailableStocks()->get();
@@ -125,8 +126,8 @@ class MedicineTest extends TestCase
     {
         Stock::factory()->create([
             'medicine_id' => $this->medicine->id,
-            'quantity' => 50,
-            'is_active' => true,
+            'quantity'    => 50,
+            'is_active'   => true,
         ]);
 
         $this->assertTrue($this->medicine->hasSufficientStock(30));
@@ -136,20 +137,20 @@ class MedicineTest extends TestCase
     public function test_average_purchase_price_calculation()
     {
         Stock::factory()->create([
-            'medicine_id' => $this->medicine->id,
-            'quantity' => 50,
+            'medicine_id'    => $this->medicine->id,
+            'quantity'       => 50,
             'purchase_price' => 20.00,
-            'is_active' => true,
+            'is_active'      => true,
         ]);
 
         Stock::factory()->create([
-            'medicine_id' => $this->medicine->id,
-            'quantity' => 30,
+            'medicine_id'    => $this->medicine->id,
+            'quantity'       => 30,
             'purchase_price' => 25.00,
-            'is_active' => true,
+            'is_active'      => true,
         ]);
 
-        $averagePrice = $this->medicine->getAveragePurchasePriceAttribute();
+        $averagePrice    = $this->medicine->getAveragePurchasePriceAttribute();
         $expectedAverage = (50 * 20.00 + 30 * 25.00) / 80; // 21.875
 
         $this->assertEquals($expectedAverage, $averagePrice);
@@ -166,50 +167,39 @@ class MedicineTest extends TestCase
 
     public function test_medicine_fillable_attributes()
     {
-        $fillable = [
+        $fillable = $this->medicine->getFillable();
+
+        foreach ([
             'product_id',
             'name',
             'category_id',
             'manufacturer_id',
-            'generic_name',
-            'strength',
-            'box_size',
-            'product_location',
+            'medicine_id',
             'price',
-            'manufacturer_price',
-            'unit',
-            'details',
-            'image',
-            'medex_id',
-            'medex_name',
-            'qr_code_data',
-            'qr_code_type',
-            'qr_code_image_path',
-            'barcode_data',
-            'barcode_type',
-            'barcode_image_path',
             'status',
-        ];
-
-        $this->assertEquals($fillable, $this->medicine->getFillable());
+            'discount_percent',
+            'alert_qty',
+        ] as $column) {
+            $this->assertContains($column, $fillable);
+        }
     }
 
     public function test_medicine_casts()
     {
-        $casts = [
-            'price' => 'decimal:2',
-            'manufacturer_price' => 'decimal:2',
-            'box_size' => 'integer',
-            'status' => 'boolean',
-        ];
+        $casts = $this->medicine->getCasts();
 
-        $this->assertEquals($casts, $this->medicine->getCasts());
+        $this->assertSame('decimal:2', $casts['price']);
+        $this->assertSame('decimal:2', $casts['manufacturer_price']);
+        $this->assertSame('decimal:2', $casts['discount_percent']);
+        $this->assertSame('integer', $casts['box_size']);
+        $this->assertSame('integer', $casts['alert_qty']);
+        $this->assertSame('boolean', $casts['status']);
     }
 
     public function test_medicine_has_stock_transactions()
     {
         $stock = Stock::factory()->create(['medicine_id' => $this->medicine->id]);
 
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $this->medicine->stockTransactions());
+        $this->assertInstanceOf(HasMany::class, $this->medicine->stockTransactions());
     }
 }

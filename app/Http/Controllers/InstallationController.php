@@ -3,32 +3,31 @@
 /**
  * Installation Controller
  *
- * @package    App\Http\Controllers
  * @license    MIT License
  */
 
 namespace App\Http\Controllers;
 
+use App\Domain\Access\PermissionCatalog;
+use App\Models\User;
+use App\Services\Platform\SchemaCompare;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-use App\Models\User;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 use PDO;
 use PDOException;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 /**
  * InstallationController
  *
  * Handles the installation wizard.
  * Provides step-by-step installation process.
- *
- * @package App\Http\Controllers
  */
 class InstallationController extends Controller
 {
@@ -38,6 +37,7 @@ class InstallationController extends Controller
     private function checkInstallationLock(): bool
     {
         $lockFile = storage_path('install.lock');
+
         return file_exists($lockFile);
     }
 
@@ -60,19 +60,19 @@ class InstallationController extends Controller
         }
 
         // Check PHP version
-        $phpVersion = PHP_VERSION;
+        $phpVersion   = PHP_VERSION;
         $phpVersionOk = version_compare($phpVersion, '8.1.0', '>=');
 
         // Check requirements
         $envExists = file_exists(base_path('.env'));
 
         $requirements = [
-            'php_version'     => [
+            'php_version' => [
                 'name'   => 'PHP Version (8.1+)',
                 'status' => $phpVersionOk,
                 'value'  => $phpVersion,
             ],
-            'env_file'       => [
+            'env_file' => [
                 'name'   => '.env File',
                 'status' => true, // Always OK - will be created/overwritten during installation
                 'value'  => $envExists ? 'Exists (will be overwritten)' : 'Will be created',
@@ -114,8 +114,8 @@ class InstallationController extends Controller
     public function testDatabase(Request $request)
     {
         $request->validate([
-            'db_host' => 'required|string',
-            'db_port' => 'required|numeric',
+            'db_host'     => 'required|string',
+            'db_port'     => 'required|numeric',
             'db_database' => 'required|string',
             'db_username' => 'required|string',
             'db_password' => 'nullable|string',
@@ -145,7 +145,7 @@ class InstallationController extends Controller
 
             return redirect()->route('install.app')->with('success', 'Database connection successful!');
         } catch (PDOException $e) {
-            return back()->withInput()->withErrors(['database' => 'Database connection failed: ' . $e->getMessage()]);
+            return back()->withInput()->withErrors(['database' => 'Database connection failed: '.$e->getMessage()]);
         }
     }
 
@@ -158,7 +158,7 @@ class InstallationController extends Controller
             return redirect()->route('install.complete');
         }
 
-        if (!session()->has('db_config')) {
+        if (! session()->has('db_config')) {
             return redirect()->route('install.database');
         }
 
@@ -177,13 +177,13 @@ class InstallationController extends Controller
     public function saveApp(Request $request)
     {
         $request->validate([
-            'app_name' => 'required|string|max:255',
-            'app_url' => 'required|url',
-            'app_env' => 'required|in:local,production',
+            'app_name'  => 'required|string|max:255',
+            'app_url'   => 'required|url',
+            'app_env'   => 'required|in:local,production',
             'app_debug' => 'nullable|boolean',
         ]);
 
-        if (!session()->has('db_config')) {
+        if (! session()->has('db_config')) {
             return redirect()->route('install.database');
         }
 
@@ -201,12 +201,12 @@ class InstallationController extends Controller
         $envFile    = base_path('.env');
 
         // Copy from .env.example if it exists and .env doesn't exist
-        if (!file_exists($envFile) && file_exists($envExample)) {
+        if (! file_exists($envFile) && file_exists($envExample)) {
             copy($envExample, $envFile);
         }
 
         // If .env still doesn't exist, create minimal one
-        if (!file_exists($envFile)) {
+        if (! file_exists($envFile)) {
             $minimalEnv = "APP_NAME=Laravel\nAPP_ENV=local\nAPP_KEY=\nAPP_DEBUG=true\nAPP_URL=http://localhost\n\nLOG_CHANNEL=stack\nLOG_LEVEL=debug\n\nDB_CONNECTION=mysql\nDB_HOST=127.0.0.1\nDB_PORT=3306\nDB_DATABASE=\nDB_USERNAME=\nDB_PASSWORD=\n\nSESSION_DRIVER=file\nSESSION_LIFETIME=120\n";
             file_put_contents($envFile, $minimalEnv);
         }
@@ -223,32 +223,32 @@ class InstallationController extends Controller
 
         // Update database configuration
         $replacements = [
-            'DB_HOST='     => 'DB_HOST=' . ($dbConfig['host'] ?? '127.0.0.1'),
-            'DB_PORT='     => 'DB_PORT=' . ($dbConfig['port'] ?? '3306'),
-            'DB_DATABASE=' => 'DB_DATABASE=' . ($dbConfig['database'] ?? ''),
-            'DB_USERNAME=' => 'DB_USERNAME=' . ($dbConfig['username'] ?? 'root'),
-            'DB_PASSWORD=' => 'DB_PASSWORD=' . ($dbConfig['password'] ?? ''),
+            'DB_HOST='     => 'DB_HOST='.($dbConfig['host'] ?? '127.0.0.1'),
+            'DB_PORT='     => 'DB_PORT='.($dbConfig['port'] ?? '3306'),
+            'DB_DATABASE=' => 'DB_DATABASE='.($dbConfig['database'] ?? ''),
+            'DB_USERNAME=' => 'DB_USERNAME='.($dbConfig['username'] ?? 'root'),
+            'DB_PASSWORD=' => 'DB_PASSWORD='.($dbConfig['password'] ?? ''),
         ];
 
         // Update application configuration
-        $replacements['APP_NAME=']  = 'APP_NAME="' . $appConfig['name'] . '"';
-        $replacements['APP_URL=']   = 'APP_URL=' . $appConfig['url'];
-        $replacements['APP_ENV=']   = 'APP_ENV=' . $appConfig['env'];
-        $replacements['APP_DEBUG='] = 'APP_DEBUG=' . $appConfig['debug'];
+        $replacements['APP_NAME=']  = 'APP_NAME="'.$appConfig['name'].'"';
+        $replacements['APP_URL=']   = 'APP_URL='.$appConfig['url'];
+        $replacements['APP_ENV=']   = 'APP_ENV='.$appConfig['env'];
+        $replacements['APP_DEBUG='] = 'APP_DEBUG='.$appConfig['debug'];
 
         foreach ($replacements as $search => $replace) {
-            $envContent = preg_replace('/^' . preg_quote($search, '/') . '.*$/m', $replace, $envContent);
+            $envContent = preg_replace('/^'.preg_quote($search, '/').'.*$/m', $replace, $envContent);
         }
 
         // Ensure APP_KEY exists and is not empty
-        if (!preg_match('/^APP_KEY=(.+)$/m', $envContent, $matches) || empty(trim($matches[1] ?? ''))) {
+        if (! preg_match('/^APP_KEY=(.+)$/m', $envContent, $matches) || empty(trim($matches[1] ?? ''))) {
             // Generate key if missing
-            $key = 'base64:' . base64_encode(random_bytes(32));
+            $key = 'base64:'.base64_encode(random_bytes(32));
             if (preg_match('/^APP_KEY=.*$/m', $envContent)) {
-                $envContent = preg_replace('/^APP_KEY=.*$/m', 'APP_KEY=' . $key, $envContent);
+                $envContent = preg_replace('/^APP_KEY=.*$/m', 'APP_KEY='.$key, $envContent);
             } else {
                 // Add APP_KEY if completely missing
-                $envContent = "APP_KEY={$key}\n" . $envContent;
+                $envContent = "APP_KEY={$key}\n".$envContent;
             }
         }
 
@@ -266,7 +266,7 @@ class InstallationController extends Controller
             return redirect()->route('install.complete');
         }
 
-        if (!session()->has('app_config')) {
+        if (! session()->has('app_config')) {
             return redirect()->route('install.app');
         }
 
@@ -305,7 +305,7 @@ class InstallationController extends Controller
             return redirect()->route('install.complete');
         }
 
-        if (!session()->has('admin_config')) {
+        if (! session()->has('admin_config')) {
             return redirect()->route('install.admin');
         }
 
@@ -321,7 +321,7 @@ class InstallationController extends Controller
             return redirect()->route('install.complete');
         }
 
-        if (!session()->has('db_config') || !session()->has('app_config') || !session()->has('admin_config')) {
+        if (! session()->has('db_config') || ! session()->has('app_config') || ! session()->has('admin_config')) {
             return redirect()->route('install.index')->withErrors(['error' => 'Installation data missing. Please start over.']);
         }
 
@@ -329,7 +329,7 @@ class InstallationController extends Controller
             // .env file should already be created/updated in saveApp()
             // Just verify it exists
             $envFile = base_path('.env');
-            if (!file_exists($envFile)) {
+            if (! file_exists($envFile)) {
                 throw new \Exception('.env file not found. Please go back and complete the application configuration step.');
             }
 
@@ -353,7 +353,10 @@ class InstallationController extends Controller
 
             // Run migrations
             try {
-                Artisan::call('migrate', ['--force' => true]);
+                Artisan::call('migrate', [
+                    '--force' => true,
+                    '--path'  => SchemaCompare::TENANT_PATH,
+                ]);
                 $results['migrate'] = [
                     'success' => true,
                     'message' => 'Database migrations completed',
@@ -373,16 +376,16 @@ class InstallationController extends Controller
                 if ($user) {
                     // Update existing user
                     $user->update([
-                        'name'        => $adminConfig['name'],
-                        'password'    => Hash::make($adminConfig['password']),
+                        'name'              => $adminConfig['name'],
+                        'password'          => Hash::make($adminConfig['password']),
                         'email_verified_at' => now(),
                     ]);
                 } else {
                     // Create new user
                     $user = User::create([
-                        'name'        => $adminConfig['name'],
-                        'email'       => $adminConfig['email'],
-                        'password'    => Hash::make($adminConfig['password']),
+                        'name'              => $adminConfig['name'],
+                        'email'             => $adminConfig['email'],
+                        'password'          => Hash::make($adminConfig['password']),
                         'email_verified_at' => now(),
                     ]);
                 }
@@ -393,18 +396,18 @@ class InstallationController extends Controller
                 Role::firstOrCreate(['name' => 'cashier', 'guard_name' => 'web']);
 
                 // Create permissions
-                $permissions = \App\Domain\Access\PermissionCatalog::names();
+                $permissions = PermissionCatalog::names();
 
                 // Create permissions using DB transaction for better error handling
                 DB::beginTransaction();
                 try {
                     $existing = Permission::pluck('name')->toArray();
-                    $new = array_diff($permissions, $existing);
+                    $new      = array_diff($permissions, $existing);
 
-                    if (!empty($new)) {
+                    if (! empty($new)) {
                         $insert = array_map(function ($name) {
                             return [
-                                'name' => $name,
+                                'name'       => $name,
                                 'guard_name' => 'web',
                                 'created_at' => now(),
                                 'updated_at' => now(),
@@ -423,12 +426,12 @@ class InstallationController extends Controller
 
                 // Clear Spatie permission cache
                 try {
-                    app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+                    app()[PermissionRegistrar::class]->forgetCachedPermissions();
                 } catch (\Exception $e) {
                     // Ignore cache clearing errors
                 }
 
-                \App\Domain\Access\PermissionCatalog::sync();
+                PermissionCatalog::sync();
 
                 // Sync all permissions to admin role
                 try {
@@ -442,7 +445,7 @@ class InstallationController extends Controller
 
                 // Assign admin role to user
                 try {
-                    if (!$user->hasRole($adminRole)) {
+                    if (! $user->hasRole($adminRole)) {
                         $user->assignRole($adminRole);
                     }
                 } catch (\Exception $e) {
@@ -468,7 +471,7 @@ class InstallationController extends Controller
 
             return redirect()->route('install.complete');
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Installation failed: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Installation failed: '.$e->getMessage()]);
         }
     }
 
@@ -477,7 +480,7 @@ class InstallationController extends Controller
      */
     public function complete()
     {
-        if (!$this->checkInstallationLock()) {
+        if (! $this->checkInstallationLock()) {
             return redirect()->route('install.index');
         }
 

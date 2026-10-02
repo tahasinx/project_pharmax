@@ -2,17 +2,20 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class JournalLine extends Model
 {
+    use HasPublicId;
+
     protected $guarded = [];
 
     public $timestamps = false;
 
     protected $casts = [
-        'debit' => 'decimal:2',
+        'debit'  => 'decimal:2',
         'credit' => 'decimal:2',
     ];
 

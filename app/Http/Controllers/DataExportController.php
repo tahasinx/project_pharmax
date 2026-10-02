@@ -2,24 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\MedicinesExport;
 use App\Exports\CustomersExport;
 use App\Exports\InvoicesExport;
+use App\Exports\MedicinesExport;
 use App\Exports\StocksExport;
-use App\Imports\MedicinesImport;
 use App\Imports\CustomersImport;
+use App\Imports\MedicinesImport;
 use App\Imports\StocksImport;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DataExportController extends Controller
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Display data export/import page
@@ -35,20 +31,20 @@ class DataExportController extends Controller
     public function exportMedicines(Request $request)
     {
         $request->validate([
-            'format' => 'required|in:excel,csv',
+            'format'  => 'required|in:excel,csv',
             'filters' => 'array',
         ]);
 
         $filters = $request->get('filters', []);
-        $format = $request->get('format', 'excel');
+        $format  = $request->get('format', 'excel');
 
-        $filename = 'medicines_export_' . Carbon::now()->format('Y_m_d_H_i_s');
+        $filename = 'medicines_export_'.Carbon::now()->format('Y_m_d_H_i_s');
 
         if ($format === 'csv') {
-            return Excel::download(new MedicinesExport($filters), $filename . '.csv', \Maatwebsite\Excel\Excel::CSV);
+            return Excel::download(new MedicinesExport($filters), $filename.'.csv', \Maatwebsite\Excel\Excel::CSV);
         }
 
-        return Excel::download(new MedicinesExport($filters), $filename . '.xlsx');
+        return Excel::download(new MedicinesExport($filters), $filename.'.xlsx');
     }
 
     /**
@@ -57,20 +53,20 @@ class DataExportController extends Controller
     public function exportCustomers(Request $request)
     {
         $request->validate([
-            'format' => 'required|in:excel,csv',
+            'format'  => 'required|in:excel,csv',
             'filters' => 'array',
         ]);
 
         $filters = $request->get('filters', []);
-        $format = $request->get('format', 'excel');
+        $format  = $request->get('format', 'excel');
 
-        $filename = 'customers_export_' . Carbon::now()->format('Y_m_d_H_i_s');
+        $filename = 'customers_export_'.Carbon::now()->format('Y_m_d_H_i_s');
 
         if ($format === 'csv') {
-            return Excel::download(new CustomersExport($filters), $filename . '.csv', \Maatwebsite\Excel\Excel::CSV);
+            return Excel::download(new CustomersExport($filters), $filename.'.csv', \Maatwebsite\Excel\Excel::CSV);
         }
 
-        return Excel::download(new CustomersExport($filters), $filename . '.xlsx');
+        return Excel::download(new CustomersExport($filters), $filename.'.xlsx');
     }
 
     /**
@@ -79,20 +75,20 @@ class DataExportController extends Controller
     public function exportInvoices(Request $request)
     {
         $request->validate([
-            'format' => 'required|in:excel,csv',
+            'format'  => 'required|in:excel,csv',
             'filters' => 'array',
         ]);
 
         $filters = $request->get('filters', []);
-        $format = $request->get('format', 'excel');
+        $format  = $request->get('format', 'excel');
 
-        $filename = 'invoices_export_' . Carbon::now()->format('Y_m_d_H_i_s');
+        $filename = 'invoices_export_'.Carbon::now()->format('Y_m_d_H_i_s');
 
         if ($format === 'csv') {
-            return Excel::download(new InvoicesExport($filters), $filename . '.csv', \Maatwebsite\Excel\Excel::CSV);
+            return Excel::download(new InvoicesExport($filters), $filename.'.csv', \Maatwebsite\Excel\Excel::CSV);
         }
 
-        return Excel::download(new InvoicesExport($filters), $filename . '.xlsx');
+        return Excel::download(new InvoicesExport($filters), $filename.'.xlsx');
     }
 
     /**
@@ -101,20 +97,20 @@ class DataExportController extends Controller
     public function exportStocks(Request $request)
     {
         $request->validate([
-            'format' => 'required|in:excel,csv',
+            'format'  => 'required|in:excel,csv',
             'filters' => 'array',
         ]);
 
         $filters = $request->get('filters', []);
-        $format = $request->get('format', 'excel');
+        $format  = $request->get('format', 'excel');
 
-        $filename = 'stocks_export_' . Carbon::now()->format('Y_m_d_H_i_s');
+        $filename = 'stocks_export_'.Carbon::now()->format('Y_m_d_H_i_s');
 
         if ($format === 'csv') {
-            return Excel::download(new StocksExport($filters), $filename . '.csv', \Maatwebsite\Excel\Excel::CSV);
+            return Excel::download(new StocksExport($filters), $filename.'.csv', \Maatwebsite\Excel\Excel::CSV);
         }
 
-        return Excel::download(new StocksExport($filters), $filename . '.xlsx');
+        return Excel::download(new StocksExport($filters), $filename.'.xlsx');
     }
 
     /**
@@ -123,7 +119,7 @@ class DataExportController extends Controller
     public function importMedicines(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv',
+            'file'            => 'required|file|mimes:xlsx,xls,csv',
             'update_existing' => 'boolean',
         ]);
 
@@ -139,7 +135,7 @@ class DataExportController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Import failed: ' . $e->getMessage(),
+                'message' => 'Import failed: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -150,7 +146,7 @@ class DataExportController extends Controller
     public function importCustomers(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv',
+            'file'            => 'required|file|mimes:xlsx,xls,csv',
             'update_existing' => 'boolean',
         ]);
 
@@ -166,7 +162,7 @@ class DataExportController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Import failed: ' . $e->getMessage(),
+                'message' => 'Import failed: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -177,7 +173,7 @@ class DataExportController extends Controller
     public function importStocks(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv',
+            'file'            => 'required|file|mimes:xlsx,xls,csv',
             'update_existing' => 'boolean',
         ]);
 
@@ -193,7 +189,7 @@ class DataExportController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Import failed: ' . $e->getMessage(),
+                'message' => 'Import failed: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -204,14 +200,14 @@ class DataExportController extends Controller
     public function downloadSample(Request $request)
     {
         $request->validate([
-            'type' => 'required|in:medicines,customers,stocks',
+            'type'   => 'required|in:medicines,customers,stocks',
             'format' => 'required|in:excel,csv',
         ]);
 
-        $type = $request->get('type');
+        $type   = $request->get('type');
         $format = $request->get('format');
 
-        $filename = $type . '_sample_' . Carbon::now()->format('Y_m_d_H_i_s');
+        $filename = $type.'_sample_'.Carbon::now()->format('Y_m_d_H_i_s');
 
         switch ($type) {
             case 'medicines':
@@ -226,10 +222,10 @@ class DataExportController extends Controller
         }
 
         if ($format === 'csv') {
-            return Excel::download($export, $filename . '.csv', \Maatwebsite\Excel\Excel::CSV);
+            return Excel::download($export, $filename.'.csv', \Maatwebsite\Excel\Excel::CSV);
         }
 
-        return Excel::download($export, $filename . '.xlsx');
+        return Excel::download($export, $filename.'.xlsx');
     }
 
     /**
@@ -245,47 +241,47 @@ class DataExportController extends Controller
 
         $rules = [
             'medicines' => [
-                'name' => 'required|string|max:255',
-                'category_id' => 'required|exists:categories,id',
-                'manufacturer_id' => 'required|exists:manufacturers,id',
-                'generic_name' => 'nullable|string|max:255',
-                'strength' => 'nullable|string|max:100',
-                'box_size' => 'required|integer|min:1',
-                'price' => 'required|numeric|min:0',
+                'name'               => 'required|string|max:255',
+                'category_id'        => 'required|exists:categories,category_id',
+                'manufacturer_id'    => 'required|exists:manufacturers,manufacturer_id',
+                'generic_name'       => 'nullable|string|max:255',
+                'strength'           => 'nullable|string|max:100',
+                'box_size'           => 'required|integer|min:1',
+                'price'              => 'required|numeric|min:0',
                 'manufacturer_price' => 'required|numeric|min:0',
-                'unit' => 'nullable|string|max:50',
-                'details' => 'nullable|string',
-                'status' => 'nullable|boolean',
+                'unit'               => 'nullable|string|max:50',
+                'details'            => 'nullable|string',
+                'status'             => 'nullable|boolean',
             ],
             'customers' => [
-                'name' => 'required|string|max:255',
-                'mobile' => 'nullable|string|max:20',
-                'email' => 'nullable|email|max:255',
-                'phone' => 'nullable|string|max:20',
+                'name'    => 'required|string|max:255',
+                'mobile'  => 'nullable|string|max:20',
+                'email'   => 'nullable|email|max:255',
+                'phone'   => 'nullable|string|max:20',
                 'address' => 'nullable|string|max:500',
-                'city' => 'nullable|string|max:100',
-                'state' => 'nullable|string|max:100',
-                'zip' => 'nullable|string|max:20',
+                'city'    => 'nullable|string|max:100',
+                'state'   => 'nullable|string|max:100',
+                'zip'     => 'nullable|string|max:20',
                 'country' => 'nullable|string|max:100',
-                'status' => 'nullable|boolean',
+                'status'  => 'nullable|boolean',
             ],
             'stocks' => [
-                'medicine_id' => 'required|exists:medicines,id',
-                'batch_number' => 'required|string|max:100',
-                'expiry_date' => 'required|date|after:today',
-                'quantity' => 'required|integer|min:0',
+                'medicine_id'     => 'required|exists:medicines,medicine_id',
+                'batch_number'    => 'required|string|max:100',
+                'expiry_date'     => 'required|date|after:today',
+                'quantity'        => 'required|integer|min:0',
                 'min_stock_level' => 'required|integer|min:0',
                 'max_stock_level' => 'required|integer|min:0',
-                'purchase_price' => 'required|numeric|min:0',
-                'selling_price' => 'required|numeric|min:0',
-                'supplier' => 'nullable|string|max:255',
-                'notes' => 'nullable|string',
+                'purchase_price'  => 'required|numeric|min:0',
+                'selling_price'   => 'required|numeric|min:0',
+                'supplier'        => 'nullable|string|max:255',
+                'notes'           => 'nullable|string',
             ],
         ];
 
         return response()->json([
             'success' => true,
-            'data' => $rules[$type],
+            'data'    => $rules[$type],
         ]);
     }
 }

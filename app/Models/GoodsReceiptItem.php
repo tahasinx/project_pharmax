@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class GoodsReceiptItem extends Model
 {
+    use HasPublicId;
+
     protected $guarded = [];
 
     protected $casts = [
         'manufacturing_date' => 'date',
-        'expiry_date' => 'date',
+        'expiry_date'        => 'date',
     ];
 
     public function receipt(): BelongsTo

@@ -59,7 +59,7 @@ class CompanyProvisioner
     {
         $this->step($company, 'running', 'Provision started.', [
             'provision_status' => 'running',
-            'provision_error' => null,
+            'provision_error'  => null,
         ]);
 
         try {
@@ -73,7 +73,10 @@ class CompanyProvisioner
                 $admin = Cache::get($this->adminKey($company));
                 TenantRuntime::runOn($database, function () use ($company, $admin) {
                     $this->step($company, 'migrate', 'Running pharmacy migrations.');
-                    Artisan::call('migrate', ['--force' => true, '--path' => 'database/migrations']);
+                    Artisan::call('migrate', [
+                        '--force' => true,
+                        '--path'  => SchemaCompare::TENANT_PATH,
+                    ]);
                     $this->step($company, 'migrate', trim(Artisan::output()) ?: 'Migrations finished.');
                     $this->step($company, 'seed', 'Seeding roles, settings, and menus.');
                     PermissionCatalog::sync();
@@ -92,13 +95,13 @@ class CompanyProvisioner
                 $mapped = app(LocalHostMapper::class)->add($company->slug);
                 $this->step($company, 'vhost', $mapped, [
                     'vhost_status' => 'local',
-                    'ssl_status' => 'skipped',
+                    'ssl_status'   => 'skipped',
                 ]);
                 $company->update([
-                    'status' => 'active',
+                    'status'           => 'active',
                     'provision_status' => 'active',
-                    'provision_error' => null,
-                    'provisioned_at' => now(),
+                    'provision_error'  => null,
+                    'provisioned_at'   => now(),
                 ]);
 
                 return $company->fresh();
@@ -108,20 +111,20 @@ class CompanyProvisioner
             $host = $hosts->add($company->slug);
             $this->step($company, 'ssl', $host['output'] ?: 'Host step finished.', [
                 'vhost_status' => $host['vhost'],
-                'ssl_status' => $host['ssl'],
+                'ssl_status'   => $host['ssl'],
             ]);
 
             $degraded = ! $host['ok'] || $host['ssl'] === 'failed';
             $company->update([
-                'status' => 'active',
+                'status'           => 'active',
                 'provision_status' => $degraded ? 'degraded' : 'active',
-                'provision_error' => $degraded ? 'Certificate was not issued. The hostname may still be on HTTP.' : null,
-                'provisioned_at' => now(),
+                'provision_error'  => $degraded ? 'Certificate was not issued. The hostname may still be on HTTP.' : null,
+                'provisioned_at'   => now(),
             ]);
         } catch (Throwable $e) {
             $this->step($company, 'failed', $e->getMessage(), [
                 'provision_status' => 'failed',
-                'provision_error' => $e->getMessage(),
+                'provision_error'  => $e->getMessage(),
             ]);
             throw new RuntimeException($e->getMessage(), 0, $e);
         }
@@ -133,8 +136,8 @@ class CompanyProvisioner
     {
         $company->update([
             'provision_status' => 'pending',
-            'provision_step' => 'queued',
-            'provision_error' => null,
+            'provision_step'   => 'queued',
+            'provision_error'  => null,
         ]);
         $args = [PHP_BINARY, base_path('artisan'), 'platform:provision', (string) $company->id];
         if ($hostOnly) {
@@ -155,16 +158,16 @@ class CompanyProvisioner
      */
     private function installAdmin(Company $company, ?array $admin): void
     {
-        $email = (string) ($admin['email'] ?? $company->admin_email);
-        $name = (string) ($admin['name'] ?? $company->name.' Admin');
+        $email    = (string) ($admin['email'] ?? $company->admin_email);
+        $name     = (string) ($admin['name'] ?? $company->name.' Admin');
         $password = (string) ($admin['password'] ?? '');
         if ($email === '' || $password === '') {
             throw new RuntimeException('Pharmacy admin login was not supplied. Create the pharmacy again.');
         }
 
         $attributes = [
-            'name' => $name,
-            'password' => $password,
+            'name'              => $name,
+            'password'          => $password,
             'email_verified_at' => now(),
         ];
         if (Schema::hasColumn('users', 'is_platform_admin')) {
@@ -189,11 +192,11 @@ class CompanyProvisioner
      */
     private function step(Company $company, string $step, string $message, array $extra = []): void
     {
-        $log = $company->provision_log ?? [];
+        $log   = $company->provision_log ?? [];
         $log[] = ['at' => now()->toIso8601String(), 'step' => $step, 'message' => $message];
         $company->fill(array_merge([
             'provision_step' => $step,
-            'provision_log' => $log,
+            'provision_log'  => $log,
         ], $extra));
         $company->save();
     }

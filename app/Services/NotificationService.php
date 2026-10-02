@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
@@ -26,7 +26,7 @@ class NotificationService
                     ->subject($subject);
 
                 // Set from address if configured
-                if (!empty($emailConfig['mail_from_address'])) {
+                if (! empty($emailConfig['mail_from_address'])) {
                     $mail->from($emailConfig['mail_from_address'], $emailConfig['mail_from_name'] ?? '');
                 }
             });
@@ -34,20 +34,20 @@ class NotificationService
             return [
                 'success' => true,
                 'message' => 'Email sent successfully',
-                'to' => $to,
-                'subject' => $subject
+                'to'      => $to,
+                'subject' => $subject,
             ];
         } catch (\Exception $e) {
-            Log::error('Email sending failed: ' . $e->getMessage(), [
-                'to' => $to,
+            Log::error('Email sending failed: '.$e->getMessage(), [
+                'to'      => $to,
                 'subject' => $subject,
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to send email: ' . $e->getMessage(),
-                'error' => $e->getMessage()
+                'message' => 'Failed to send email: '.$e->getMessage(),
+                'error'   => $e->getMessage(),
             ];
         }
     }
@@ -72,23 +72,23 @@ class NotificationService
             $customMessage = $this->getCustomResponseMessage($response, $smsConfig);
 
             return [
-                'success' => true,
-                'message' => $customMessage ?: 'SMS sent successfully',
-                'phone' => $phone,
-                'provider' => $smsConfig['sms_provider'],
-                'raw_response' => $response,
-                'custom_message' => $customMessage
+                'success'        => true,
+                'message'        => $customMessage ?: 'SMS sent successfully',
+                'phone'          => $phone,
+                'provider'       => $smsConfig['sms_provider'],
+                'raw_response'   => $response,
+                'custom_message' => $customMessage,
             ];
         } catch (\Exception $e) {
-            Log::error('SMS sending failed: ' . $e->getMessage(), [
+            Log::error('SMS sending failed: '.$e->getMessage(), [
                 'phone' => $phone,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to send SMS: ' . $e->getMessage(),
-                'error' => $e->getMessage()
+                'message' => 'Failed to send SMS: '.$e->getMessage(),
+                'error'   => $e->getMessage(),
             ];
         }
     }
@@ -106,7 +106,7 @@ class NotificationService
             case 'custom':
                 return $this->sendCustomSms($phone, $message, $config);
             default:
-                throw new \Exception('Unsupported SMS provider: ' . $config['sms_provider']);
+                throw new \Exception('Unsupported SMS provider: '.$config['sms_provider']);
         }
     }
 
@@ -115,9 +115,9 @@ class NotificationService
      */
     private function sendTwilioSms(string $phone, string $message, array $config): string
     {
-        $sid = $config['twilio_sid'] ?? '';
+        $sid   = $config['twilio_sid'] ?? '';
         $token = $config['twilio_token'] ?? '';
-        $from = $config['twilio_from'] ?? '';
+        $from  = $config['twilio_from'] ?? '';
 
         if (empty($sid) || empty($token) || empty($from)) {
             throw new \Exception('Twilio configuration incomplete');
@@ -130,7 +130,7 @@ class NotificationService
         $data = [
             'From' => $from,
             'To'   => $formattedPhone,
-            'Body' => $message
+            'Body' => $message,
         ];
 
         $ch = curl_init();
@@ -146,7 +146,7 @@ class NotificationService
         curl_close($ch);
 
         if ($httpCode !== 200) {
-            throw new \Exception('Twilio API error: ' . $response);
+            throw new \Exception('Twilio API error: '.$response);
         }
 
         return $response;
@@ -157,9 +157,9 @@ class NotificationService
      */
     private function sendNexmoSms(string $phone, string $message, array $config): string
     {
-        $apiKey = $config['nexmo_key'] ?? '';
+        $apiKey    = $config['nexmo_key'] ?? '';
         $apiSecret = $config['nexmo_secret'] ?? '';
-        $from = $config['nexmo_from'] ?? '';
+        $from      = $config['nexmo_from'] ?? '';
 
         if (empty($apiKey) || empty($apiSecret) || empty($from)) {
             throw new \Exception('Nexmo configuration incomplete');
@@ -174,7 +174,7 @@ class NotificationService
             'api_secret' => $apiSecret,
             'to'         => $formattedPhone,
             'from'       => $from,
-            'text'       => $message
+            'text'       => $message,
         ];
 
         return $this->makeHttpRequest($url, $data);
@@ -185,8 +185,8 @@ class NotificationService
      */
     private function sendCustomSms(string $phone, string $message, array $config): string
     {
-        $url = $config['sms_api_url'] ?? '';
-        $httpMethod = $config['sms_http_method'] ?? 'POST';
+        $url          = $config['sms_api_url'] ?? '';
+        $httpMethod   = $config['sms_http_method'] ?? 'POST';
         $customParams = $config['sms_custom_params'] ?? [];
 
         if (empty($url)) {
@@ -196,7 +196,7 @@ class NotificationService
         // Build data array from custom parameters
         $data = [];
         foreach ($customParams as $param) {
-            if (!empty($param['name'])) {
+            if (! empty($param['name'])) {
                 $value = $param['value'] ?? '';
 
                 // Handle different parameter types
@@ -243,7 +243,9 @@ class NotificationService
         $responseStr = $remoteResponse;
 
         foreach ($mappings as $mapping) {
-            if (empty($mapping['value']) || empty($mapping['message'])) continue;
+            if (empty($mapping['value']) || empty($mapping['message'])) {
+                continue;
+            }
 
             // Case 1: Empty key - match entire response value
             if (empty($mapping['key']) || trim($mapping['key']) === '') {
@@ -261,15 +263,15 @@ class NotificationService
                         $responseValue = $parsed[$mapping['key']];
                         if (
                             $responseValue === $mapping['value'] ||
-                            $responseValue === (string)$mapping['value'] ||
-                            (string)$responseValue === $mapping['value']
+                            $responseValue === (string) $mapping['value'] ||
+                            (string) $responseValue === $mapping['value']
                         ) {
                             return $mapping['message'];
                         }
                     }
                 } catch (\Exception $e) {
                     // If JSON parsing fails, try string matching with key
-                    $keyPattern = '/"' . preg_quote($mapping['key'], '/') . '"\\s*:\\s*"' . preg_quote($mapping['value'], '/') . '"/i';
+                    $keyPattern = '/"'.preg_quote($mapping['key'], '/').'"\\s*:\\s*"'.preg_quote($mapping['value'], '/').'"/i';
                     if (preg_match($keyPattern, $responseStr)) {
                         return $mapping['message'];
                     }
@@ -289,19 +291,19 @@ class NotificationService
             $settings = json_decode(Storage::get('settings.json'), true) ?? [];
 
             return [
-                'email_provider'     => $settings['email_provider'] ?? 'smtp',
-                'smtp_host'          => $settings['smtp_host'] ?? '',
-                'smtp_port'          => $settings['smtp_port'] ?? 587,
-                'smtp_username'      => $settings['smtp_username'] ?? '',
-                'smtp_password'      => $settings['smtp_password'] ?? '',
-                'smtp_encryption'    => $settings['smtp_encryption'] ?? 'tls',
-                'mailgun_domain'     => $settings['mailgun_domain'] ?? '',
-                'mailgun_secret'     => $settings['mailgun_secret'] ?? '',
-                'ses_key'            => $settings['ses_key'] ?? '',
-                'ses_secret'         => $settings['ses_secret'] ?? '',
-                'ses_region'         => $settings['ses_region'] ?? 'us-east-1',
-                'mail_from_name'     => $settings['mail_from_name'] ?? '',
-                'mail_from_address'  => $settings['mail_from_address'] ?? '',
+                'email_provider'    => $settings['email_provider'] ?? 'smtp',
+                'smtp_host'         => $settings['smtp_host'] ?? '',
+                'smtp_port'         => $settings['smtp_port'] ?? 587,
+                'smtp_username'     => $settings['smtp_username'] ?? '',
+                'smtp_password'     => $settings['smtp_password'] ?? '',
+                'smtp_encryption'   => $settings['smtp_encryption'] ?? 'tls',
+                'mailgun_domain'    => $settings['mailgun_domain'] ?? '',
+                'mailgun_secret'    => $settings['mailgun_secret'] ?? '',
+                'ses_key'           => $settings['ses_key'] ?? '',
+                'ses_secret'        => $settings['ses_secret'] ?? '',
+                'ses_region'        => $settings['ses_region'] ?? 'us-east-1',
+                'mail_from_name'    => $settings['mail_from_name'] ?? '',
+                'mail_from_address' => $settings['mail_from_address'] ?? '',
             ];
         } catch (\Exception $e) {
             return [];
@@ -317,18 +319,18 @@ class NotificationService
             $settings = json_decode(Storage::get('settings.json'), true) ?? [];
 
             return [
-                'sms_provider'         => $settings['sms_provider'] ?? 'custom',
-                'sms_api_url'          => $settings['sms_api_url'] ?? '',
-                'sms_http_method'     => $settings['sms_http_method'] ?? 'POST',
-                'sms_custom_params'   => $settings['sms_custom_params'] ?? [],
+                'sms_provider'          => $settings['sms_provider'] ?? 'custom',
+                'sms_api_url'           => $settings['sms_api_url'] ?? '',
+                'sms_http_method'       => $settings['sms_http_method'] ?? 'POST',
+                'sms_custom_params'     => $settings['sms_custom_params'] ?? [],
                 'sms_response_mappings' => $settings['sms_response_mappings'] ?? [],
-                'sms_country_code'    => $settings['sms_country_code'] ?? '880',
-                'twilio_sid'          => $settings['twilio_sid'] ?? '',
-                'twilio_token'        => $settings['twilio_token'] ?? '',
-                'twilio_from'         => $settings['twilio_from'] ?? '',
-                'nexmo_key'           => $settings['nexmo_key'] ?? '',
-                'nexmo_secret'        => $settings['nexmo_secret'] ?? '',
-                'nexmo_from'          => $settings['nexmo_from'] ?? '',
+                'sms_country_code'      => $settings['sms_country_code'] ?? '880',
+                'twilio_sid'            => $settings['twilio_sid'] ?? '',
+                'twilio_token'          => $settings['twilio_token'] ?? '',
+                'twilio_from'           => $settings['twilio_from'] ?? '',
+                'nexmo_key'             => $settings['nexmo_key'] ?? '',
+                'nexmo_secret'          => $settings['nexmo_secret'] ?? '',
+                'nexmo_from'            => $settings['nexmo_from'] ?? '',
             ];
         } catch (\Exception $e) {
             return [];
@@ -341,17 +343,17 @@ class NotificationService
     private function configureMailSettings(array $emailConfig): void
     {
         config([
-            'mail.default'                    => $emailConfig['email_provider'],
-            'mail.mailers.smtp.host'          => $emailConfig['smtp_host'] ?? '',
-            'mail.mailers.smtp.port'          => $emailConfig['smtp_port'] ?? 587,
-            'mail.mailers.smtp.username'      => $emailConfig['smtp_username'] ?? '',
-            'mail.mailers.smtp.password'      => $emailConfig['smtp_password'] ?? '',
-            'mail.mailers.smtp.encryption'    => $emailConfig['smtp_encryption'] ?? 'tls',
-            'services.mailgun.domain'         => $emailConfig['mailgun_domain'] ?? '',
-            'services.mailgun.secret'         => $emailConfig['mailgun_secret'] ?? '',
-            'services.ses.key'               => $emailConfig['ses_key'] ?? '',
-            'services.ses.secret'            => $emailConfig['ses_secret'] ?? '',
-            'services.ses.region'            => $emailConfig['ses_region'] ?? 'us-east-1',
+            'mail.default'                 => $emailConfig['email_provider'],
+            'mail.mailers.smtp.host'       => $emailConfig['smtp_host'] ?? '',
+            'mail.mailers.smtp.port'       => $emailConfig['smtp_port'] ?? 587,
+            'mail.mailers.smtp.username'   => $emailConfig['smtp_username'] ?? '',
+            'mail.mailers.smtp.password'   => $emailConfig['smtp_password'] ?? '',
+            'mail.mailers.smtp.encryption' => $emailConfig['smtp_encryption'] ?? 'tls',
+            'services.mailgun.domain'      => $emailConfig['mailgun_domain'] ?? '',
+            'services.mailgun.secret'      => $emailConfig['mailgun_secret'] ?? '',
+            'services.ses.key'             => $emailConfig['ses_key'] ?? '',
+            'services.ses.secret'          => $emailConfig['ses_secret'] ?? '',
+            'services.ses.region'          => $emailConfig['ses_region'] ?? 'us-east-1',
         ]);
     }
 
@@ -370,11 +372,11 @@ class NotificationService
 
         // If phone starts with country code, add +
         if (str_starts_with($phone, $countryCode)) {
-            return '+' . $phone;
+            return '+'.$phone;
         }
 
         // Otherwise, add country code
-        return '+' . $countryCode . $phone;
+        return '+'.$countryCode.$phone;
     }
 
     /**
@@ -394,7 +396,7 @@ class NotificationService
         curl_close($ch);
 
         if ($httpCode !== 200) {
-            throw new \Exception('HTTP request failed with code: ' . $httpCode . ', Response: ' . $response);
+            throw new \Exception('HTTP request failed with code: '.$httpCode.', Response: '.$response);
         }
 
         return $response;
@@ -406,7 +408,7 @@ class NotificationService
     private function makeHttpGetRequest(string $url, array $data): string
     {
         $queryString = http_build_query($data);
-        $fullUrl = $url . '?' . $queryString;
+        $fullUrl     = $url.'?'.$queryString;
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $fullUrl);
@@ -418,7 +420,7 @@ class NotificationService
         curl_close($ch);
 
         if ($httpCode !== 200) {
-            throw new \Exception('HTTP GET request failed with code: ' . $httpCode . ', Response: ' . $response);
+            throw new \Exception('HTTP GET request failed with code: '.$httpCode.', Response: '.$response);
         }
 
         return $response;

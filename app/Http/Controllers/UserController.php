@@ -14,14 +14,12 @@ class UserController extends Controller
 {
     use HasSettingsPagination;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function index()
     {
         $itemsPerPage = $this->getItemsPerPage();
-        $users = User::with('roles')->paginate($itemsPerPage)->withQueryString();
+        $users        = User::with('roles')->paginate($itemsPerPage)->withQueryString();
 
         return Inertia::render('User/Index', [
             'users' => $users,
@@ -40,11 +38,11 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'        => 'required|string|max:255',
-            'email'       => 'required|string|lowercase|email|max:255|unique:users',
-            'password'    => ['required', 'confirmed', Rules\Password::defaults()],
-            'roles'       => 'required|array',
-            'roles.*'     => 'exists:roles,name',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|string|lowercase|email|max:255|unique:users',
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'roles'    => 'required|array',
+            'roles.*'  => 'exists:roles,name',
         ]);
 
         $user = User::create([
@@ -83,7 +81,7 @@ class UserController extends Controller
     {
         $request->validate([
             'name'     => 'required|string|max:255',
-            'email'    => 'required|string|lowercase|email|max:255|unique:users,email,' . $user->id,
+            'email'    => 'required|string|lowercase|email|max:255|unique:users,email,'.$user->id,
             'password' => 'nullable|confirmed|min:8',
             'roles'    => 'required|array',
             'roles.*'  => 'exists:roles,name',

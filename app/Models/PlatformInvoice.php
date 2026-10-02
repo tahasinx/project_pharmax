@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PlatformInvoice extends Model
 {
+    use HasPublicId;
+
     protected $connection = 'mysql_central';
 
     protected $fillable = [
@@ -22,9 +25,9 @@ class PlatformInvoice extends Model
     ];
 
     protected $casts = [
-        'amount' => 'decimal:2',
+        'amount'    => 'decimal:2',
         'issued_on' => 'date',
-        'paid_at' => 'datetime',
+        'paid_at'   => 'datetime',
     ];
 
     public function company(): BelongsTo

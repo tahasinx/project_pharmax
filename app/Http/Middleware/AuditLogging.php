@@ -11,7 +11,7 @@ class AuditLogging
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -31,19 +31,19 @@ class AuditLogging
 
     protected function logRequest(Request $request, Response $response, float $startTime): void
     {
-        $endTime = microtime(true);
+        $endTime  = microtime(true);
         $duration = round(($endTime - $startTime) * 1000, 2); // Convert to milliseconds
 
         $logData = [
-            'timestamp' => now()->toISOString(),
-            'method' => $request->method(),
-            'url' => $request->fullUrl(),
-            'ip' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'user_id' => $request->user()?->id,
-            'status_code' => $response->getStatusCode(),
-            'duration_ms' => $duration,
-            'request_size' => strlen($request->getContent()),
+            'timestamp'     => now()->toISOString(),
+            'method'        => $request->method(),
+            'url'           => $request->fullUrl(),
+            'ip'            => $request->ip(),
+            'user_agent'    => $request->userAgent(),
+            'user_id'       => $request->user()?->id,
+            'status_code'   => $response->getStatusCode(),
+            'duration_ms'   => $duration,
+            'request_size'  => strlen($request->getContent()),
             'response_size' => strlen($response->getContent()),
         ];
 
@@ -56,7 +56,7 @@ class AuditLogging
     protected function shouldLog(Request $request): bool
     {
         $sensitiveMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
-        $sensitiveRoutes = [
+        $sensitiveRoutes  = [
             'medicines',
             'invoices',
             'customers',
@@ -64,7 +64,7 @@ class AuditLogging
             'purchases',
             'users',
             'settings',
-            'terminal'
+            'terminal',
         ];
 
         return in_array($request->method(), $sensitiveMethods) ||
@@ -74,8 +74,8 @@ class AuditLogging
 
     protected function writeLog(array $logData): void
     {
-        $logFile = storage_path('logs/audit.log');
-        $logEntry = json_encode($logData) . "\n";
+        $logFile  = storage_path('logs/audit.log');
+        $logEntry = json_encode($logData)."\n";
 
         file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
     }

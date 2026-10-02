@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Customer extends Model
 {
-    use HasFactory;
+    use HasFactory, HasPublicId;
 
     protected $fillable = [
         'name',
@@ -29,7 +30,7 @@ class Customer extends Model
     ];
 
     protected $casts = [
-        'status' => 'boolean',
+        'status'        => 'boolean',
         'date_of_birth' => 'date',
     ];
 

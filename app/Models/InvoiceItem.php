@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InvoiceItem extends Model
 {
-    use HasFactory;
+    use HasFactory, HasPublicId;
 
     protected $fillable = [
         'invoice_id',
@@ -23,9 +24,9 @@ class InvoiceItem extends Model
     ];
 
     protected $casts = [
-        'quantity' => 'integer',
-        'rate' => 'decimal:2',
-        'discount' => 'decimal:2',
+        'quantity'     => 'integer',
+        'rate'         => 'decimal:2',
+        'discount'     => 'decimal:2',
         'total_amount' => 'decimal:2',
     ];
 

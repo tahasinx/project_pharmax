@@ -2,16 +2,15 @@
 
 namespace Database\Factories;
 
+use App\Models\Manufacturer;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Manufacturer>
+ * @extends Factory<Manufacturer>
  */
 class ManufacturerFactory extends Factory
 {
     /**
-     * Define the model's default state.
-     *
      * @return array<string, mixed>
      */
     public function definition(): array
@@ -29,22 +28,19 @@ class ManufacturerFactory extends Factory
                 'Bristol-Myers Squibb',
                 'Eli Lilly',
                 'Amgen',
-                'Gilead Sciences'
+                'Gilead Sciences',
             ]),
-            'contact_person' => $this->faker->optional()->name(),
-            'email' => $this->faker->optional()->companyEmail(),
-            'phone' => $this->faker->optional()->phoneNumber(),
+            'email'   => $this->faker->optional()->companyEmail(),
+            'mobile'  => $this->faker->optional()->numerify('01#########'),
             'address' => $this->faker->optional()->address(),
-            'status' => true,
+            'details' => $this->faker->optional()->sentence(),
+            'status'  => true,
         ];
     }
 
-    /**
-     * Indicate that the manufacturer is inactive.
-     */
     public function inactive(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'status' => false,
         ]);
     }

@@ -28,7 +28,7 @@ class StagingDeployHost
             return false;
         }
 
-        $parts = explode('.', $host);
+        $parts      = explode('.', $host);
         $allowedSub = strtolower((string) config('github_deploy.allowed_subdomain', 'adminx'));
 
         return $allowedSub !== '' && ($parts[0] ?? '') === $allowedSub;
