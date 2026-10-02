@@ -7,6 +7,8 @@ use App\Models\Category;
 use App\Models\Generic;
 use App\Models\Manufacturer;
 use App\Models\Medicine;
+use App\Models\MedicineType;
+use App\Models\Unit;
 use App\Traits\HasSettingsPagination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -22,7 +24,7 @@ class MedicineController extends Controller
     public function index(Request $request)
     {
         $itemsPerPage = $this->getItemsPerPage();
-        $medicines = Medicine::with(['category', 'manufacturer'])
+        $medicines = Medicine::with(['category', 'manufacturer', 'medicineType'])
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->search;
                 $query->where(function ($inner) use ($search) {
@@ -55,6 +57,8 @@ class MedicineController extends Controller
             'manufacturers' => $manufacturers,
             'generics' => Generic::orderBy('name')->get(['id', 'name']),
             'brands' => Brand::orderBy('name')->get(['id', 'name']),
+            'medicineTypes' => MedicineType::orderBy('name')->get(['id', 'name']),
+            'units' => Unit::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -62,20 +66,33 @@ class MedicineController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'manufacturer_id' => 'required|exists:manufacturers,id',
+            'category_id' => 'nullable|exists:categories,id',
+            'manufacturer_id' => 'nullable|exists:manufacturers,id',
+            'medicine_type_id' => 'required|exists:medicine_types,id',
             'price' => 'required|numeric|min:0',
             'manufacturer_price' => 'required|numeric|min:0',
-            'box_size' => 'required|integer|min:1',
+            'box_size' => 'nullable|integer|min:1',
+            'discount_percent' => 'nullable|numeric|min:0|max:100',
+            'alert_qty' => 'nullable|integer|min:0',
+            'barcode' => 'nullable|string|max:255',
+            'image' => 'nullable|image|max:2048',
+            'generic_id' => 'required|exists:generics,id',
+            'strength' => 'required|string|max:255',
+            'unit' => 'required|string|max:255',
         ]);
+
+        $imagePath = $request->hasFile('image')
+            ? $request->file('image')->store('medicines', 'public')
+            : null;
 
         $medicine = Medicine::create([
             'product_id'        => $this->generateProductId(),
             'name'              => $request->name,
-            'category_id'       => $request->category_id,
-            'manufacturer_id'   => $request->manufacturer_id,
+            'category_id'       => $request->category_id ?: null,
+            'manufacturer_id'   => $request->manufacturer_id ?: null,
             'generic_name'      => $request->generic_id ? Generic::find($request->generic_id)?->name : $request->generic_name,
             'generic_id'        => $request->generic_id,
+            'medicine_type_id'  => $request->medicine_type_id,
             'brand_id'          => $request->brand_id,
             'strength'          => $request->strength,
             'dosage_form'       => $request->dosage_form,
@@ -87,18 +104,27 @@ class MedicineController extends Controller
             'is_high_risk'      => $request->boolean('is_high_risk'),
             'is_refrigerated'   => $request->boolean('is_refrigerated'),
             'is_narcotic'       => $request->boolean('is_narcotic'),
-            'box_size'          => $request->box_size,
+            'box_size'          => $request->input('box_size', 1) ?: 1,
             'product_location'  => $request->product_location,
             'price'             => $request->price,
+            'discount_percent'  => $request->input('discount_percent', 0),
             'manufacturer_price' => $request->manufacturer_price,
             'unit'              => $request->unit,
+            'alert_qty'         => $request->input('alert_qty', 0),
+            'barcode_data'      => $request->barcode,
+            'barcode_type'      => 'code128',
+            'image'             => $imagePath,
             'details'           => $request->details,
-            'status'            => $request->status ?? true,
+            'status'            => $request->has('status') ? $request->boolean('status') : true,
         ]);
 
-        // Auto-generate QR code and barcode for new medicine
         $this->generateDefaultCodes($medicine);
         $this->syncUnits($medicine, $request->input('units', []));
+
+        if ($request->boolean('manage_stock')) {
+            return redirect()->route('stocks.create', ['medicine' => $medicine->id])
+                ->with('success', 'Medicine created. Add its stock.');
+        }
 
         return redirect()->route('medicines.index')
             ->with('success', 'Medicine created successfully.');
@@ -126,6 +152,8 @@ class MedicineController extends Controller
             'manufacturers' => $manufacturers,
             'generics' => Generic::orderBy('name')->get(['id', 'name']),
             'brands' => Brand::orderBy('name')->get(['id', 'name']),
+            'medicineTypes' => MedicineType::orderBy('name')->get(['id', 'name']),
+            'units' => Unit::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -133,40 +161,48 @@ class MedicineController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'manufacturer_id' => 'required|exists:manufacturers,id',
+            'category_id' => 'nullable|exists:categories,id',
+            'manufacturer_id' => 'nullable|exists:manufacturers,id',
+            'medicine_type_id' => 'required|exists:medicine_types,id',
+            'generic_id' => 'required|exists:generics,id',
+            'strength' => 'required|string|max:255',
+            'unit' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
             'manufacturer_price' => 'required|numeric|min:0',
-            'box_size' => 'required|integer|min:1',
+            'box_size' => 'nullable|integer|min:1',
+            'discount_percent' => 'nullable|numeric|min:0|max:100',
+            'alert_qty' => 'nullable|integer|min:0',
+            'barcode' => 'nullable|string|max:255',
+            'image' => 'nullable|image|max:2048',
         ]);
 
         $oldPrice = $medicine->price;
-        $medicine->update([
+        $data = [
             'name' => $request->name,
-            'category_id' => $request->category_id,
-            'manufacturer_id' => $request->manufacturer_id,
-            'generic_name' => $request->generic_id ? Generic::find($request->generic_id)?->name : $request->generic_name,
+            'category_id' => $request->category_id ?: null,
+            'manufacturer_id' => $request->manufacturer_id ?: null,
+            'generic_name' => Generic::find($request->generic_id)?->name,
             'generic_id' => $request->generic_id,
-            'brand_id' => $request->brand_id,
+            'medicine_type_id' => $request->medicine_type_id,
             'strength' => $request->strength,
-            'dosage_form' => $request->dosage_form,
-            'atc_code' => $request->atc_code,
-            'sku' => $request->sku,
             'price' => $request->price,
+            'discount_percent' => $request->input('discount_percent', 0),
             'manufacturer_price' => $request->manufacturer_price,
-            'box_size' => $request->box_size,
+            'box_size' => $request->input('box_size', $medicine->box_size) ?: 1,
             'unit' => $request->unit,
+            'alert_qty' => $request->input('alert_qty', 0),
             'product_location' => $request->product_location,
             'details' => $request->details,
-            'status' => $request->boolean('status'),
-            'requires_prescription' => $request->boolean('requires_prescription'),
-            'is_controlled' => $request->boolean('is_controlled'),
-            'is_antibiotic' => $request->boolean('is_antibiotic'),
-            'is_high_risk' => $request->boolean('is_high_risk'),
-            'is_refrigerated' => $request->boolean('is_refrigerated'),
-            'is_narcotic' => $request->boolean('is_narcotic'),
-        ]);
-        $this->syncUnits($medicine, $request->input('units', []));
+            'barcode_data' => $request->barcode ?: $medicine->barcode_data,
+            'status' => $request->has('status') ? $request->boolean('status') : $medicine->status,
+        ];
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('medicines', 'public');
+        }
+        $medicine->update($data);
+        if ($request->exists('units')) {
+            $this->syncUnits($medicine, $request->input('units', []));
+        }
         if ((float) $oldPrice !== (float) $medicine->price) {
             \App\Domain\Audit\AuditRecorder::record('medicine', $medicine, 'price', ['price' => $oldPrice], ['price' => $medicine->price]);
         }
@@ -174,6 +210,11 @@ class MedicineController extends Controller
         // Auto-generate codes if they don't exist
         if (!$medicine->qr_code_data || !$medicine->barcode_data) {
             $this->generateDefaultCodes($medicine);
+        }
+
+        if ($request->boolean('manage_stock')) {
+            return redirect()->route('stocks.create', ['medicine' => $medicine->id])
+                ->with('success', 'Medicine updated. Add its stock.');
         }
 
         return redirect()->route('medicines.index')
@@ -676,7 +717,7 @@ class MedicineController extends Controller
         $medicine->update([
             'qr_code_data' => $qrCodeData,
             'qr_code_type' => 'product_id',
-            'barcode_data' => $barcodeData,
+            'barcode_data' => $medicine->barcode_data ?: $barcodeData,
             'barcode_type' => 'code128',
         ]);
     }

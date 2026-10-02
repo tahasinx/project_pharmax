@@ -1,8 +1,8 @@
 <template>
-    <Head title="Medicines" />
+    <Head title="Medicine List" />
     <AuthenticatedLayout>
         <template #header>
-            <h4 class="mb-sm-0 font-size-18">Medicines</h4>
+            <h4 class="mb-sm-0 font-size-18">Medicine List</h4>
             <div class="page-title-right d-flex flex-wrap align-items-center gap-2">
                 <Link :href="route('medicines.create')" class="btn btn-primary btn-sm">Add Medicine</Link>
                 <button type="button" class="btn btn-success btn-sm" @click="showImportModal = true">Import CSV</button>
@@ -15,16 +15,19 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Medicine
+                                        Brand Name
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Category
+                                        Generic Name
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Manufacturer
+                                        P. Price
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Price
+                                        Box MRP
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Discount
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Stock
@@ -53,18 +56,22 @@
                                                     </button>
                                                     <div v-else class="text-sm font-medium text-gray-900">{{ medicine.name }}</div>
                                                 </div>
-                                                <div class="text-sm text-gray-500">{{ medicine.generic_name }}</div>
+                                                <div class="text-sm text-gray-500">{{ medicine.medicine_type?.name }}</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-[180px]">
-                                        <span class="block truncate" :title="medicine.category?.name">{{ medicine.category?.name }}</span>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">{{ medicine.generic_name }}</div>
+                                        <div class="text-sm text-gray-500">{{ medicine.strength }}</div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-[200px]">
-                                        <span class="block truncate" :title="medicine.manufacturer?.name">{{ medicine.manufacturer?.name }}</span>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ medicine.manufacturer_price }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ medicine.price }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ medicine.discount_percent || 0 }}%
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">

@@ -43,15 +43,20 @@ class StockController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $medicines = Medicine::with('category', 'manufacturer')
             ->where('status', true)
             ->orderBy('name')
             ->get();
 
+        $selected = $request->filled('medicine')
+            ? $medicines->firstWhere('id', (int) $request->medicine)
+            : null;
+
         return Inertia::render('Stock/Create', [
             'medicines' => $medicines,
+            'selectedMedicine' => $selected,
         ]);
     }
 

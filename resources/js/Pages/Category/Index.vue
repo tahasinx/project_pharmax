@@ -1,7 +1,7 @@
 <template>
     <AuthenticatedLayout>
         <template #header>
-            <h4 class="mb-sm-0 font-size-18">Categories</h4>
+            <h4 class="mb-sm-0 font-size-18">Category</h4>
             <div class="page-title-right d-flex flex-wrap align-items-center gap-2">
                 <Link :href="route('categories.create')" class="btn btn-primary btn-sm">Add Category</Link>
             </div>

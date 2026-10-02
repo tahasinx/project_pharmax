@@ -187,8 +187,20 @@ Route::middleware('auth')->group(function () {
 
     Route::get('generics', [PharmacyController::class, 'generics'])->name('generics.index');
     Route::post('generics', [PharmacyController::class, 'storeGeneric'])->name('generics.store');
+    Route::put('generics/{generic}', [PharmacyController::class, 'updateGeneric'])->name('generics.update');
+    Route::delete('generics/{generic}', [PharmacyController::class, 'destroyGeneric'])->name('generics.destroy');
+    Route::get('medicine-types', [PharmacyController::class, 'medicineTypes'])->name('medicine-types.index');
+    Route::post('medicine-types', [PharmacyController::class, 'storeMedicineType'])->name('medicine-types.store');
+    Route::put('medicine-types/{medicineType}', [PharmacyController::class, 'updateMedicineType'])->name('medicine-types.update');
+    Route::delete('medicine-types/{medicineType}', [PharmacyController::class, 'destroyMedicineType'])->name('medicine-types.destroy');
+    Route::get('units', [PharmacyController::class, 'units'])->name('units.index');
+    Route::post('units', [PharmacyController::class, 'storeUnit'])->name('units.store');
+    Route::put('units/{unit}', [PharmacyController::class, 'updateUnit'])->name('units.update');
+    Route::delete('units/{unit}', [PharmacyController::class, 'destroyUnit'])->name('units.destroy');
     Route::get('brands', [PharmacyController::class, 'brands'])->name('brands.index');
     Route::post('brands', [PharmacyController::class, 'storeBrand'])->name('brands.store');
+    Route::put('brands/{brand}', [PharmacyController::class, 'updateBrand'])->name('brands.update');
+    Route::delete('brands/{brand}', [PharmacyController::class, 'destroyBrand'])->name('brands.destroy');
 
     Route::get('suppliers', [PharmacyController::class, 'suppliers'])->name('suppliers.index');
     Route::post('suppliers', [PharmacyController::class, 'storeSupplier'])->name('suppliers.store');

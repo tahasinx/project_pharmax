@@ -160,12 +160,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { Link, router, Head } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 
 const props = defineProps({
-    medicines: Array
+    medicines: Array,
+    selectedMedicine: { type: Object, default: null },
 })
 
 const form = ref({
@@ -213,6 +214,13 @@ const handleBlur = () => {
         medicineSearchFocused.value = false
     }, 200)
 }
+
+onMounted(() => {
+    if (props.selectedMedicine) {
+        selectMedicine(props.selectedMedicine)
+        form.value.min_stock_level = props.selectedMedicine.alert_qty ?? 0
+    }
+})
 
 const submitForm = () => {
     router.post(route('stocks.store'), form.value, {

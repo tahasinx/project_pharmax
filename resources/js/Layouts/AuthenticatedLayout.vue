@@ -7,7 +7,7 @@ const page = usePage();
 
 const sections = [
     { label: 'Counter', names: ['Dashboard', 'POS'] },
-    { label: 'Catalog', names: ['Medicines', 'Generics', 'Brands', 'Categories', 'Manufacturers'] },
+    { label: 'Catalog', names: ['Medicine List', 'Category', 'Manufacturer', 'Generic Name', 'Medicine Type', 'Units'] },
     { label: 'Inventory', names: ['Stock', 'Expiry', 'Transfers'] },
     { label: 'Sales', names: ['Invoices', 'Sales Returns', 'Customers', 'Prescriptions'] },
     { label: 'Buying', names: ['Purchases', 'Purchase Orders', 'Suppliers'] },
@@ -34,6 +34,7 @@ const groups = computed(() => {
     const grouped = sections.map((section) => {
         const items = menus.value
             .filter((menu) => section.names.includes(menu.name))
+            .sort((a, b) => section.names.indexOf(a.name) - section.names.indexOf(b.name))
             .map((menu) => ({
                 key: menu.id,
                 name: menu.name,
