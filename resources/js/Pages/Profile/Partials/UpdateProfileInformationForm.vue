@@ -1,8 +1,5 @@
 <script setup>
 import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
 import { Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
@@ -35,88 +32,39 @@ function choosePicture(event) {
 
 <template>
     <section>
-        <header>
-            <h2 class="text-lg font-medium text-gray-900">Profile Information</h2>
-
-            <p class="mt-1 text-sm text-gray-600">
-                Update your account's profile information and email address.
-            </p>
-        </header>
-
-        <form @submit.prevent="form.patch(route('profile.update'))" class="mt-6 space-y-6">
-            <div class="flex items-center gap-4">
-                <img v-if="picture" :src="picture" alt="" class="h-16 w-16 rounded-full object-cover">
-                <span v-else class="grid h-16 w-16 place-items-center rounded-full bg-[#17342b] text-sm font-semibold text-white">{{ initials }}</span>
-                <label class="text-sm">
-                    <span class="mb-1 block text-gray-700">Profile picture</span>
-                    <input type="file" accept="image/*" class="block w-full text-sm" @change="choosePicture">
-                </label>
+        <p class="text-muted">Update your name, email, and profile picture.</p>
+        <form class="row g-3" @submit.prevent="form.patch(route('profile.update'), { forceFormData: true })">
+            <div class="col-12">
+                <div class="d-flex align-items-center gap-3">
+                    <img v-if="picture" :src="picture" alt="" class="rounded-circle" width="64" height="64" style="object-fit: cover;">
+                    <span v-else class="avatar-title rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">{{ initials }}</span>
+                    <div>
+                        <label for="avatar" class="form-label mb-1">Profile picture</label>
+                        <input id="avatar" type="file" accept="image/*" class="form-control form-control-sm" @change="choosePicture">
+                    </div>
+                </div>
+                <InputError class="mt-2" :message="form.errors.avatar" />
             </div>
-            <InputError :message="form.errors.avatar" />
-
-            <div>
-                <InputLabel for="name" value="Name" />
-
-                <TextInput
-                    id="name"
-                    type="text"
-                    class="mt-1 block w-full"
-                    v-model="form.name"
-                    required
-                    autofocus
-                    autocomplete="name"
-                />
-
+            <div class="col-md-6">
+                <label for="name" class="form-label">Name</label>
+                <input id="name" v-model="form.name" type="text" class="form-control" required autocomplete="name">
                 <InputError class="mt-2" :message="form.errors.name" />
             </div>
-
-            <div>
-                <InputLabel for="email" value="Email" />
-
-                <TextInput
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autocomplete="username"
-                />
-
+            <div class="col-md-6">
+                <label for="email" class="form-label">Email</label>
+                <input id="email" v-model="form.email" type="email" class="form-control" required autocomplete="username">
                 <InputError class="mt-2" :message="form.errors.email" />
             </div>
-
-            <div v-if="mustVerifyEmail && user.email_verified_at === null">
-                <p class="text-sm mt-2 text-gray-800">
+            <div v-if="mustVerifyEmail && user.email_verified_at === null" class="col-12">
+                <p class="text-muted mb-1">
                     Your email address is unverified.
-                    <Link
-                        :href="route('verification.send')"
-                        method="post"
-                        as="button"
-                        class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                        Click here to re-send the verification email.
-                    </Link>
+                    <Link :href="route('verification.send')" method="post" as="button" class="btn btn-link btn-sm p-0 align-baseline">Resend verification email</Link>
                 </p>
-
-                <div
-                    v-show="status === 'verification-link-sent'"
-                    class="mt-2 font-medium text-sm text-green-600"
-                >
-                    A new verification link has been sent to your email address.
-                </div>
+                <p v-show="status === 'verification-link-sent'" class="text-success mb-0">A new verification link has been sent.</p>
             </div>
-
-            <div class="flex items-center gap-4">
-                <PrimaryButton :disabled="form.processing">Save</PrimaryButton>
-
-                <Transition
-                    enter-active-class="transition ease-in-out"
-                    enter-from-class="opacity-0"
-                    leave-active-class="transition ease-in-out"
-                    leave-to-class="opacity-0"
-                >
-                    <p v-if="form.recentlySuccessful" class="text-sm text-gray-600">Saved.</p>
-                </Transition>
+            <div class="col-12 d-flex align-items-center gap-3">
+                <button type="submit" class="btn btn-primary" :disabled="form.processing">Save</button>
+                <span v-if="form.recentlySuccessful" class="text-success">Saved.</span>
             </div>
         </form>
     </section>

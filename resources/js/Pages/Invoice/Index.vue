@@ -151,6 +151,7 @@ import LunaTable from '@/Components/LunaTable.vue'
 
 import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
+import { destroyRecord } from '@/Composables/confirmDelete'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import Pagination from '@/Components/Pagination.vue'
 
@@ -200,8 +201,6 @@ const formatDate = (date) => {
 }
 
 const deleteInvoice = (id) => {
-    if (confirm('Are you sure you want to delete this invoice?')) {
-        router.delete(route('invoices.destroy', id))
-    }
+    destroyRecord('invoices.destroy', id, 'Delete this invoice?', 'The invoice has been deleted.')
 }
 </script>

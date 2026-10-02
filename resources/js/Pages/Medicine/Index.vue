@@ -77,24 +77,12 @@
                                             {{ medicine.status ? 'Active' : 'Inactive' }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex space-x-2">
-                                            <Link :href="route('medicines.show', medicine.id)"
-                                                  class="text-blue-600 hover:text-blue-900">
-                                                View
-                                            </Link>
-                                            <Link :href="route('medicines.edit', medicine.id)"
-                                                  class="text-indigo-600 hover:text-indigo-900">
-                                                Edit
-                                            </Link>
-                                            <Link :href="route('medicines.codes', medicine.id)"
-                                                  class="text-green-600 hover:text-green-900">
-                                                Codes
-                                            </Link>
-                                            <button @click="deleteMedicine(medicine.id)"
-                                                    class="text-red-600 hover:text-red-900">
-                                                Delete
-                                            </button>
+                                    <td class="whitespace-nowrap">
+                                        <div class="dt-actions">
+                                            <Link :href="route('medicines.show', medicine.id)" class="btn btn-sm btn-icon btn-soft-primary" title="View"><i class="bi bi-eye"></i></Link>
+                                            <Link :href="route('medicines.edit', medicine.id)" class="btn btn-sm btn-icon btn-soft-secondary" title="Edit"><i class="bi bi-pencil"></i></Link>
+                                            <Link :href="route('medicines.codes', medicine.id)" class="btn btn-sm btn-icon btn-soft-success" title="Codes"><i class="bi bi-upc"></i></Link>
+                                            <button type="button" class="btn btn-sm btn-icon btn-soft-danger" title="Delete" @click="deleteMedicine(medicine.id)"><i class="bi bi-trash"></i></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -104,85 +92,107 @@
 
         <!-- API Modal -->
         <div v-if="showApiModal" class="fixed inset-0 z-[9999]">
-            <div class="absolute inset-0 bg-black/70" @click="closeApiModal"></div>
-            <div class="absolute inset-0 flex items-stretch p-0 md:p-4">
-                <div class="w-full bg-white md:rounded-lg shadow-2xl flex flex-col">
-                    <div class="px-4 md:px-6 py-4 border-b flex items-center justify-between">
-                        <h3 class="text-lg font-medium text-gray-900">Search Medicine From API</h3>
-                        <button @click="closeApiModal" class="text-gray-500 hover:text-gray-700">✖</button>
-                    </div>
-                    <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-6 p-4 md:p-6">
-                        <div class="md:col-span-1 border-r md:border-r-0 md:border-b pb-4 md:pb-0">
-                            <input v-model="apiSearch" @input="debouncedApiSearch" type="text" placeholder="Type a medicine name..."
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <div v-if="apiSearchLoading" class="text-sm text-gray-500 mt-1">Searching...</div>
-                            <div v-if="apiResults.length" class="mt-2 max-h-[60vh] overflow-y-auto border rounded">
-                                <div v-for="res in apiResults" :key="res.link" @click="selectApiResult(res)"
-                                     class="px-3 py-2 cursor-pointer hover:bg-gray-100 flex items-center gap-3">
-                                    <img v-if="res.img" :src="res.img" alt="" class="w-8 h-8 object-contain"/>
-                                    <div>
-                                        <div class="font-medium">{{ res.name }}</div>
-                                        <div class="text-xs text-gray-500">{{ res.form }} • {{ res.strength }}</div>
-                                    </div>
-                                </div>
-
-                            </div>
-                            <div v-else-if="apiSearch && !apiSearchLoading" class="mt-2 text-sm text-gray-500">No results</div>
+            <div class="absolute inset-0 bg-black/50" @click="closeApiModal"></div>
+            <div class="absolute inset-0 flex items-stretch p-3">
+                <div class="card d-flex flex-column w-100" style="max-height: 100%;">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <div>
+                            <h5 class="mb-1">Medicine reference</h5>
+                            <div class="text-muted font-size-12">Search a product, or import brands and manufacturers from MedEx.</div>
                         </div>
-                        <div class="md:col-span-2">
-                            <div v-if="apiDetails" class="space-y-3 max-h-[85vh] overflow-y-auto pr-2">
-                                <div class="flex items-start justify-between">
-                                    <div>
-                                        <div class="text-xl font-semibold">{{ apiDetails.name }}</div>
-                                        <div class="text-sm text-gray-600">{{ apiDetails.generic }} • {{ apiDetails.form }} • {{ apiDetails.strength }}</div>
-                                        <div class="text-sm text-gray-600">{{ apiDetails.manufacturer }}</div>
-                                    </div>
-                                    <template v-if="!apiDetails.exists">
-                                        <button @click="saveFromApi" :disabled="savingApi" class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded">
-                                            {{ savingApi ? 'Saving...' : 'Save to Database' }}
-                                        </button>
-                                    </template>
-                                    <template v-else>
-                                        <span class="inline-flex items-center px-3 py-2 rounded bg-green-100 text-green-800 text-sm font-medium">Already added</span>
-                                    </template>
+                        <button type="button" class="btn btn-sm btn-light" @click="closeApiModal">Close</button>
+                    </div>
+                    <div class="px-3 pt-3">
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn" :class="apiTab === 'medicine' ? 'btn-primary' : 'btn-light'" @click="apiTab = 'medicine'">Medicines</button>
+                            <button type="button" class="btn" :class="apiTab === 'brands' ? 'btn-primary' : 'btn-light'" @click="apiTab = 'brands'">Brands</button>
+                            <button type="button" class="btn" :class="apiTab === 'companies' ? 'btn-primary' : 'btn-light'" @click="apiTab = 'companies'">Manufacturers</button>
+                        </div>
+                    </div>
+                    <div class="card-body overflow-auto">
+                        <div v-if="apiTab === 'medicine'" class="row g-3">
+                            <div class="col-lg-4">
+                                <input v-model="apiSearch" class="form-control" placeholder="Brand, generic, or strength" @input="debouncedApiSearch">
+                                <div v-if="apiSearchLoading" class="text-muted font-size-12 mt-2">Searching MedEx...</div>
+                                <div v-if="apiResults.length" class="list-group mt-2">
+                                    <button v-for="res in apiResults" :key="res.link" type="button" class="list-group-item list-group-item-action d-flex gap-2 align-items-center" @click="selectApiResult(res)">
+                                        <img v-if="res.img" :src="res.img" alt="" width="28" height="28">
+                                        <span>
+                                            <span class="d-block fw-medium">{{ res.name }}</span>
+                                            <span class="d-block text-muted font-size-12">{{ res.form }} · {{ res.strength }}</span>
+                                        </span>
+                                    </button>
                                 </div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                        <div class="text-gray-500">Therapeutic Class</div>
-                                        <div>{{ apiDetails.therapeutic_class || '—' }}</div>
-                                    </div>
-                                    <div>
-                                        <div class="text-gray-500">Unit Price</div>
-                                        <div>{{ apiDetails.unit_price || '—' }}</div>
-                                    </div>
-                                    <div>
-                                        <div class="text-gray-500">Pack Size</div>
-                                        <div>{{ apiDetails.pack_size || '—' }}</div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="text-gray-700 font-medium mb-1">Indications</div>
-                                    <div class="text-sm whitespace-pre-line">{{ apiDetails.indications || '—' }}</div>
-                                </div>
-                                <div>
-                                    <div class="text-gray-700 font-medium mb-1">Dosage</div>
-                                    <div class="prose max-w-none" v-html="apiDetails.dosage"></div>
-                                </div>
-                                <div>
-                                    <div class="text-gray-700 font-medium mb-1">Precautions</div>
-                                    <div class="text-sm whitespace-pre-line">{{ apiDetails.precautions || '—' }}</div>
-                                </div>
+                                <div v-else-if="apiSearch && !apiSearchLoading" class="text-muted font-size-12 mt-2">No matching products.</div>
                             </div>
-                            <div v-else>
-                                <div v-if="apiDetailsLoading" class="flex items-center gap-2 text-sm text-gray-500">
-                                    <svg class="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                                    </svg>
-                                    <span>Loading...</span>
+                            <div class="col-lg-8">
+                                <div v-if="apiDetailsLoading" class="text-muted">Loading the product record...</div>
+                                <div v-else-if="apiDetails">
+                                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                                        <div>
+                                            <h4 class="mb-1">{{ apiDetails.name }}</h4>
+                                            <div class="text-muted">{{ apiDetails.generic }} · {{ apiDetails.form }} · {{ apiDetails.strength }}</div>
+                                            <div class="text-muted font-size-12">{{ apiDetails.manufacturer }}</div>
+                                        </div>
+                                        <button v-if="!apiDetails.exists" type="button" class="btn btn-primary" :disabled="savingApi" @click="saveFromApi">{{ savingApi ? 'Saving...' : 'Save record' }}</button>
+                                        <span v-else class="badge bg-success">Already in catalog</span>
+                                    </div>
+                                    <div class="row g-2 mb-3">
+                                        <div v-for="fact in apiFacts" :key="fact.label" class="col-md-4">
+                                            <div class="border rounded p-2 h-100">
+                                                <div class="text-muted font-size-12">{{ fact.label }}</div>
+                                                <div>{{ fact.value }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-for="section in apiSections" :key="section.label" class="mb-3">
+                                        <div class="fw-medium mb-1">{{ section.label }}</div>
+                                        <div v-if="section.html" class="font-size-13" v-html="section.value"></div>
+                                        <div v-else class="font-size-13" style="white-space: pre-line;">{{ section.value }}</div>
+                                    </div>
                                 </div>
-                                <div v-else class="text-sm text-gray-500">Select a result to view details.</div>
+                                <div v-else class="text-muted">Search, then choose a product to review the full record before saving.</div>
                             </div>
+                        </div>
+                        <div v-else-if="apiTab === 'brands'">
+                            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                                <select v-model="brandLetter" class="form-select" style="width: 120px;" @change="loadBrands(1)">
+                                    <option value="">All</option>
+                                    <option v-for="letter in letters" :key="letter" :value="letter">{{ letter.toUpperCase() }}</option>
+                                </select>
+                                <button type="button" class="btn btn-light" :disabled="brandPage <= 1 || brandLoading" @click="loadBrands(brandPage - 1)">Previous</button>
+                                <span class="text-muted">Page {{ brandPage }}</span>
+                                <button type="button" class="btn btn-light" :disabled="brandLoading || !brandRows.length" @click="loadBrands(brandPage + 1)">Next</button>
+                                <button type="button" class="btn btn-primary ms-auto" :disabled="brandLoading || importingDirectory || !brandRows.length" @click="importBrands">{{ importingDirectory ? 'Importing...' : 'Import this page' }}</button>
+                            </div>
+                            <div v-if="directoryNote" class="alert alert-success py-2">{{ directoryNote }}</div>
+                            <div v-if="brandLoading" class="text-muted">Loading brands...</div>
+                            <table v-else class="table table-sm align-middle mb-0">
+                                <thead><tr><th>Brand</th><th>Strength</th><th>Generic</th><th>Manufacturer</th></tr></thead>
+                                <tbody>
+                                    <tr v-for="row in brandRows" :key="row.link"><td>{{ row.name }}</td><td>{{ row.strength }}</td><td>{{ row.generic }}</td><td>{{ row.manufacturer }}</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div v-else>
+                            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                                <select v-model="companyLetter" class="form-select" style="width: 120px;" @change="loadCompanies(1)">
+                                    <option value="">All</option>
+                                    <option v-for="letter in letters" :key="letter" :value="letter">{{ letter.toUpperCase() }}</option>
+                                </select>
+                                <button type="button" class="btn btn-light" :disabled="companyPage <= 1 || companyLoading" @click="loadCompanies(companyPage - 1)">Previous</button>
+                                <span class="text-muted">Page {{ companyPage }}</span>
+                                <button type="button" class="btn btn-light" :disabled="companyLoading || !companyRows.length" @click="loadCompanies(companyPage + 1)">Next</button>
+                                <button type="button" class="btn btn-primary ms-auto" :disabled="companyLoading || importingDirectory || !companyRows.length" @click="importCompanies">{{ importingDirectory ? 'Importing...' : 'Import this page' }}</button>
+                            </div>
+                            <div v-if="directoryNote" class="alert alert-success py-2">{{ directoryNote }}</div>
+                            <div v-if="companyLoading" class="text-muted">Loading manufacturers...</div>
+                            <table v-else class="table table-sm align-middle mb-0">
+                                <thead><tr><th>Manufacturer</th><th>Catalog</th></tr></thead>
+                                <tbody>
+                                    <tr v-for="row in companyRows" :key="row.link"><td>{{ row.name }}</td><td>{{ row.details }}</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -276,7 +286,7 @@ import { Link, router, Head } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import SearchableSelect from '@/Components/SearchableSelect.vue'
 import Pagination from '@/Components/Pagination.vue'
-import Swal from 'sweetalert2'
+import { destroyRecord } from '@/Composables/confirmDelete'
 
 const props = defineProps({
     medicines: Object,
@@ -300,6 +310,44 @@ const apiSearchLoading = ref(false)
 const apiDetails = ref(null)
 const savingApi = ref(false)
 const apiDetailsLoading = ref(false)
+const apiTab = ref('medicine')
+const letters = 'abcdefghijklmnopqrstuvwxyz'.split('')
+const brandLetter = ref('')
+const brandPage = ref(1)
+const brandRows = ref([])
+const brandLoading = ref(false)
+const companyLetter = ref('')
+const companyPage = ref(1)
+const companyRows = ref([])
+const companyLoading = ref(false)
+const importingDirectory = ref(false)
+const directoryNote = ref('')
+const apiFacts = computed(() => {
+    const details = apiDetails.value
+    if (!details) return []
+    return [
+        ['Therapeutic class', details.therapeutic_class],
+        ['Unit price', details.unit_price],
+        ['Strip price', details.strip_price],
+        ['Pack size', details.pack_size],
+        ['Storage', details.storage],
+    ].filter((item) => item[1]).map(([label, value]) => ({ label, value }))
+})
+const apiSections = computed(() => {
+    const details = apiDetails.value
+    if (!details) return []
+    return [
+        ['Indications', details.indications],
+        ['Pharmacology', details.pharmacology],
+        ['Dosage', details.dosage, true],
+        ['Interaction', details.interaction],
+        ['Contraindications', details.contraindications],
+        ['Side effects', details.side_effects],
+        ['Pregnancy and lactation', details.pregnancy_lactation],
+        ['Precautions', details.precautions],
+        ['Overdose', details.overdose],
+    ].filter((item) => item[1]).map(([label, value, html]) => ({ label, value, html: Boolean(html) }))
+})
 const requiredHeaders = [
     'name',
     'generic_name',
@@ -362,35 +410,7 @@ const clearFilters = () => {
 }
 
 const deleteMedicine = (id) => {
-    Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            router.delete(route('medicines.destroy', id), {
-                onSuccess: () => {
-                    Swal.fire(
-                        'Deleted!',
-                        'Medicine has been deleted.',
-                        'success'
-                    )
-                },
-                onError: () => {
-                    Swal.fire(
-                        'Error!',
-                        'Something went wrong while deleting.',
-                        'error'
-                    )
-                }
-            })
-        }
-    })
+    destroyRecord('medicines.destroy', id, 'Delete this medicine?', 'The medicine has been deleted.')
 }
 
 const triggerFile = () => fileInput.value?.click()
@@ -535,6 +555,53 @@ const selectApiResult = async (res) => {
     }
 }
 
+const postDirectory = async (name, rows) => {
+    importingDirectory.value = true
+    directoryNote.value = ''
+    try {
+        const response = await fetch(route(name), {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ rows }),
+        })
+        const data = await response.json()
+        directoryNote.value = `${data.created || 0} new records saved from ${data.received || rows.length} rows.`
+    } finally {
+        importingDirectory.value = false
+    }
+}
+const loadBrands = async (page = 1) => {
+    apiTab.value = 'brands'
+    brandLoading.value = true
+    directoryNote.value = ''
+    brandPage.value = page
+    try {
+        const response = await fetch(`${route('api.medex.brands')}?page=${page}&letter=${brandLetter.value}`)
+        const data = await response.json()
+        brandRows.value = data.rows || []
+    } finally {
+        brandLoading.value = false
+    }
+}
+const importBrands = () => postDirectory('api.medex.brands.import', brandRows.value.map((row) => ({ name: row.name })))
+const loadCompanies = async (page = 1) => {
+    apiTab.value = 'companies'
+    companyLoading.value = true
+    directoryNote.value = ''
+    companyPage.value = page
+    try {
+        const response = await fetch(`${route('api.medex.companies')}?page=${page}&letter=${companyLetter.value}`)
+        const data = await response.json()
+        companyRows.value = data.rows || []
+    } finally {
+        companyLoading.value = false
+    }
+}
+const importCompanies = () => postDirectory('api.medex.companies.import', companyRows.value.map((row) => ({ name: row.name, details: row.details })))
 const saveFromApi = async () => {
     if (!apiDetails.value) return
     savingApi.value = true
@@ -567,9 +634,26 @@ const saveFromApi = async () => {
             category: apiDetails.value.therapeutic_class || null,
             generic_name: apiDetails.value.generic,
             strength: apiDetails.value.strength,
+            dosage_form: apiDetails.value.form || null,
             price: numericPrice,
             medex_id: medexId,
             medex_name: medexName,
+            details: {
+                indications: apiDetails.value.indications,
+                pharmacology: apiDetails.value.pharmacology,
+                dosage: apiDetails.value.dosage,
+                interaction: apiDetails.value.interaction,
+                contraindications: apiDetails.value.contraindications,
+                side_effects: apiDetails.value.side_effects,
+                pregnancy: apiDetails.value.pregnancy_lactation,
+                precautions: apiDetails.value.precautions,
+                special_populations: apiDetails.value.special_populations,
+                overdose: apiDetails.value.overdose,
+                storage: apiDetails.value.storage,
+                pack_size: apiDetails.value.pack_size,
+                unit_price: apiDetails.value.unit_price,
+                strip_price: apiDetails.value.strip_price,
+            },
         }
         const res = await fetch(route('api.medicines.storeExternal'), {
             method: 'POST',

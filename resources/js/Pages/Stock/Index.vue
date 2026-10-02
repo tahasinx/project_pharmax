@@ -181,20 +181,11 @@
                                             {{ getStatusText(stock) }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex space-x-2">
-                                            <Link :href="route('stocks.show', stock.id)"
-                                                  class="text-blue-600 hover:text-blue-900">
-                                                View
-                                            </Link>
-                                            <Link :href="route('stocks.edit', stock.id)"
-                                                  class="text-indigo-600 hover:text-indigo-900">
-                                                Edit
-                                            </Link>
-                                            <button @click="deleteStock(stock.id)"
-                                                    class="text-red-600 hover:text-red-900">
-                                                Delete
-                                            </button>
+                                    <td class="whitespace-nowrap">
+                                        <div class="dt-actions">
+                                            <Link :href="route('stocks.show', stock.id)" class="btn btn-sm btn-icon btn-soft-primary" title="View"><i class="bi bi-eye"></i></Link>
+                                            <Link :href="route('stocks.edit', stock.id)" class="btn btn-sm btn-icon btn-soft-secondary" title="Edit"><i class="bi bi-pencil"></i></Link>
+                                            <button type="button" class="btn btn-sm btn-icon btn-soft-danger" title="Delete" @click="deleteStock(stock.id)"><i class="bi bi-trash"></i></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -215,7 +206,7 @@ import { ref, computed } from 'vue'
 import { Link, router, Head } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import Pagination from '@/Components/Pagination.vue'
-import Swal from 'sweetalert2'
+import { destroyRecord } from '@/Composables/confirmDelete'
 
 const props = defineProps({
     stocks: Object,
@@ -302,35 +293,7 @@ const formatDate = (date) => {
 }
 
 const deleteStock = (id) => {
-    Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            router.delete(route('stocks.destroy', id), {
-                onSuccess: () => {
-                    Swal.fire(
-                        'Deleted!',
-                        'Stock entry has been deleted.',
-                        'success'
-                    )
-                },
-                onError: () => {
-                    Swal.fire(
-                        'Error!',
-                        'Something went wrong while deleting.',
-                        'error'
-                    )
-                }
-            })
-        }
-    })
+    destroyRecord('stocks.destroy', id, 'Delete this stock entry?', 'The stock entry has been deleted.')
 }
 
 const isExpired = (stock) => {

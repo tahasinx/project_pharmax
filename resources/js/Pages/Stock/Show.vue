@@ -164,7 +164,7 @@
 <script setup>
 import { Link, router, Head } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import Swal from 'sweetalert2'
+import { destroyRecord } from '@/Composables/confirmDelete'
 
 const props = defineProps({
     stock: Object
@@ -227,34 +227,6 @@ const getExpiryStatusText = () => {
 }
 
 const deleteStock = (id) => {
-    Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            router.delete(route('stocks.destroy', id), {
-                onSuccess: () => {
-                    Swal.fire(
-                        'Deleted!',
-                        'Stock entry has been deleted.',
-                        'success'
-                    )
-                },
-                onError: () => {
-                    Swal.fire(
-                        'Error!',
-                        'Something went wrong while deleting.',
-                        'error'
-                    )
-                }
-            })
-        }
-    })
+    destroyRecord('stocks.destroy', id, 'Delete this stock entry?', 'The stock entry has been deleted.')
 }
 </script>

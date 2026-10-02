@@ -86,6 +86,7 @@ import LunaTable from '@/Components/LunaTable.vue'
 
 import { computed, ref, watch } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { destroyRecord } from '@/Composables/confirmDelete'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import SearchableSelect from '@/Components/SearchableSelect.vue'
 
@@ -146,6 +147,6 @@ const money = (amount) => {
     return ui.currency_position === 'after' ? `${value}${ui.currency_symbol || ''}` : `${ui.currency_symbol || ''}${value}`
 }
 const deleteAccount = (id) => {
-    if (confirm('Delete this account?')) router.delete(route('accounts.destroy', id))
+    destroyRecord('accounts.destroy', id, 'Delete this account?', 'The account has been deleted.')
 }
 </script>

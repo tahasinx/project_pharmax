@@ -32,7 +32,8 @@
                 t[e].nextElementSibling && t[e].nextElementSibling.classList.remove("show"))
     }
     function l(t) {
-        document.getElementById(t).checked = !0
+        var n = document.getElementById(t);
+        if (n) n.checked = !0
     }
     function c() {
         document.webkitIsFullScreen || document.mozFullScreen || document.msFullscreenElement || a("body").removeClass("fullscreen-enable")

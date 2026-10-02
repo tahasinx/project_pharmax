@@ -99,20 +99,11 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             {{ customer.invoices_count || 0 }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <div class="flex space-x-2">
-                                                <Link :href="route('customers.show', customer.id)"
-                                                      class="text-blue-600 hover:text-blue-900">
-                                                    View
-                                                </Link>
-                                                <Link :href="route('customers.edit', customer.id)"
-                                                      class="text-indigo-600 hover:text-indigo-900">
-                                                    Edit
-                                                </Link>
-                                                <button @click="deleteCustomer(customer.id)"
-                                                        class="text-red-600 hover:text-red-900">
-                                                    Delete
-                                                </button>
+                                        <td class="whitespace-nowrap">
+                                            <div class="dt-actions">
+                                                <Link :href="route('customers.show', customer.id)" class="btn btn-sm btn-icon btn-soft-primary" title="View"><i class="bi bi-eye"></i></Link>
+                                                <Link :href="route('customers.edit', customer.id)" class="btn btn-sm btn-icon btn-soft-secondary" title="Edit"><i class="bi bi-pencil"></i></Link>
+                                                <button type="button" class="btn btn-sm btn-icon btn-soft-danger" title="Delete" @click="deleteCustomer(customer.id)"><i class="bi bi-trash"></i></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -134,7 +125,7 @@ import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import Pagination from '@/Components/Pagination.vue'
-import Swal from 'sweetalert2'
+import { destroyRecord } from '@/Composables/confirmDelete'
 
 defineOptions({
     title: 'Customers'
@@ -172,34 +163,6 @@ const clearFilters = () => {
 }
 
 const deleteCustomer = (id) => {
-    Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            router.delete(route('customers.destroy', id), {
-                onSuccess: () => {
-                    Swal.fire(
-                        'Deleted!',
-                        'Customer has been deleted.',
-                        'success'
-                    )
-                },
-                onError: () => {
-                    Swal.fire(
-                        'Error!',
-                        'Something went wrong while deleting.',
-                        'error'
-                    )
-                }
-            })
-        }
-    })
+    destroyRecord('customers.destroy', id, 'Delete this customer?', 'The customer has been deleted.')
 }
 </script>

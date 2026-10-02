@@ -95,20 +95,11 @@
                                                 {{ manufacturer.status ? 'Active' : 'Inactive' }}
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <div class="flex space-x-2">
-                                                <Link :href="route('manufacturers.show', manufacturer.id)"
-                                                      class="text-blue-600 hover:text-blue-900">
-                                                    View
-                                                </Link>
-                                                <Link :href="route('manufacturers.edit', manufacturer.id)"
-                                                      class="text-indigo-600 hover:text-indigo-900">
-                                                    Edit
-                                                </Link>
-                                                <button @click="deleteManufacturer(manufacturer.id)"
-                                                        class="text-red-600 hover:text-red-900">
-                                                    Delete
-                                                </button>
+                                        <td class="whitespace-nowrap">
+                                            <div class="dt-actions">
+                                                <Link :href="route('manufacturers.show', manufacturer.id)" class="btn btn-sm btn-icon btn-soft-primary" title="View"><i class="bi bi-eye"></i></Link>
+                                                <Link :href="route('manufacturers.edit', manufacturer.id)" class="btn btn-sm btn-icon btn-soft-secondary" title="Edit"><i class="bi bi-pencil"></i></Link>
+                                                <button type="button" class="btn btn-sm btn-icon btn-soft-danger" title="Delete" @click="deleteManufacturer(manufacturer.id)"><i class="bi bi-trash"></i></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -128,6 +119,7 @@ import LunaTable from '@/Components/LunaTable.vue'
 
 import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
+import { destroyRecord } from '@/Composables/confirmDelete'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import Pagination from '@/Components/Pagination.vue'
 
@@ -168,8 +160,6 @@ const debounceSearch = () => {
 }
 
 const deleteManufacturer = (id) => {
-    if (confirm('Are you sure you want to delete this manufacturer?')) {
-        router.delete(route('manufacturers.destroy', id))
-    }
+    destroyRecord('manufacturers.destroy', id, 'Delete this manufacturer?', 'The manufacturer has been deleted.')
 }
 </script>

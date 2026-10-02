@@ -166,6 +166,7 @@
 import LunaTable from '@/Components/LunaTable.vue'
 
 import { Link, router, Head } from '@inertiajs/vue3'
+import { destroyRecord } from '@/Composables/confirmDelete'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 
 const props = defineProps({
@@ -192,8 +193,6 @@ const formatDate = (date) => {
 }
 
 const deleteAccount = (id) => {
-    if (confirm('Are you sure you want to delete this account? This action cannot be undone.')) {
-        router.delete(route('accounts.destroy', id))
-    }
+    destroyRecord('accounts.destroy', id, 'Delete this account?', 'The account has been deleted.')
 }
 </script>

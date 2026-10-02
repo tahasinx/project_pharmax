@@ -291,7 +291,128 @@ class MedicineController extends Controller
         return response()->json($results, 200, [], JSON_PRETTY_PRINT);
     }
 
-    // MedEx proxy: product details
+    public function medexBrands(Request $request)
+    {
+        $page = max(1, (int) $request->query('page', 1));
+        $letter = strtolower((string) $request->query('letter', ''));
+        $query = http_build_query(array_filter([
+            'page' => $page,
+            'alpha' => preg_match('/^[a-z]$/', $letter) ? $letter : null,
+        ]));
+        $html = $this->fetchMedex('https://medex.com.bd/brands'.($query ? '?'.$query : ''));
+        if ($html === null) {
+            return response()->json(['error' => 'Failed to fetch brands from MedEx'], 502);
+        }
+
+        $crawler = new Crawler($html);
+        $rows = $crawler->filter('a.brand-card')->each(function (Crawler $card) {
+            $name = $card->filter('.brand-card__name');
+            $strength = $card->filter('.brand-card__strength');
+            $generic = $card->filter('.brand-card__generic');
+            $company = $card->filter('.brand-card__company');
+            $icon = $card->filter('.dosage-icon');
+
+            return [
+                'name' => $name->count() ? trim($name->text()) : null,
+                'strength' => $strength->count() ? trim($strength->text()) : null,
+                'generic' => $generic->count() ? trim($generic->text()) : null,
+                'manufacturer' => $company->count() ? trim($company->text()) : null,
+                'form' => $icon->count() ? ($icon->attr('title') ?: trim($icon->attr('alt') ?? '')) : null,
+                'link' => $card->attr('href'),
+            ];
+        });
+
+        return response()->json(['page' => $page, 'rows' => array_values(array_filter($rows, fn ($row) => ! empty($row['name'])))]);
+    }
+
+    public function importMedexBrands(Request $request)
+    {
+        $request->validate([
+            'rows' => 'required|array|min:1|max:200',
+            'rows.*.name' => 'required|string|max:255',
+        ]);
+
+        $created = 0;
+        foreach ($request->input('rows') as $row) {
+            $brand = Brand::firstOrCreate(['name' => $row['name']], ['is_active' => true]);
+            if ($brand->wasRecentlyCreated) {
+                $created++;
+            }
+        }
+
+        return response()->json(['created' => $created, 'received' => count($request->input('rows'))]);
+    }
+
+    public function medexCompanies(Request $request)
+    {
+        $page = max(1, (int) $request->query('page', 1));
+        $letter = strtolower((string) $request->query('letter', ''));
+        $query = http_build_query(array_filter([
+            'page' => $page,
+            'alpha' => preg_match('/^[a-z]$/', $letter) ? $letter : null,
+        ]));
+        $html = $this->fetchMedex('https://medex.com.bd/companies'.($query ? '?'.$query : ''));
+        if ($html === null) {
+            return response()->json(['error' => 'Failed to fetch companies from MedEx'], 502);
+        }
+
+        $crawler = new Crawler($html);
+        $rows = $crawler->filter('.data-row')->each(function (Crawler $row) {
+            $link = $row->filter('.data-row-top a');
+            if (! $link->count()) {
+                return null;
+            }
+            $stats = trim(preg_replace('/\s+/', ' ', $row->filter('.col-xs-12')->last()->text()) ?? '');
+
+            return [
+                'name' => trim($link->text()),
+                'link' => $link->attr('href'),
+                'details' => $stats,
+            ];
+        });
+
+        return response()->json(['page' => $page, 'rows' => array_values(array_filter($rows))]);
+    }
+
+    public function importMedexCompanies(Request $request)
+    {
+        $request->validate([
+            'rows' => 'required|array|min:1|max:100',
+            'rows.*.name' => 'required|string|max:255',
+            'rows.*.details' => 'nullable|string|max:255',
+        ]);
+
+        $created = 0;
+        foreach ($request->input('rows') as $row) {
+            $manufacturer = Manufacturer::firstOrCreate(['name' => $row['name']], [
+                'status' => true,
+                'details' => $row['details'] ?? null,
+            ]);
+            if ($manufacturer->wasRecentlyCreated) {
+                $created++;
+            }
+        }
+
+        return response()->json(['created' => $created, 'received' => count($request->input('rows'))]);
+    }
+
+    private function fetchMedex(string $url): ?string
+    {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_TIMEOUT => 25,
+            CURLOPT_USERAGENT => 'Mozilla/5.0',
+        ]);
+        $html = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        return $httpCode === 200 && is_string($html) && $html !== '' ? $html : null;
+    }
+
     public function medexProduct(Request $request)
     {
         $url = $request->query('url');
@@ -453,12 +574,13 @@ class MedicineController extends Controller
             'category' => 'nullable|string|max:255',
             'generic_name' => 'nullable|string|max:255',
             'strength' => 'nullable|string|max:255',
+            'dosage_form' => 'nullable|string|max:255',
             'price' => 'nullable|numeric|min:0',
             'medex_id' => 'nullable|string|max:255',
             'medex_name' => 'nullable|string|max:255',
+            'details' => 'nullable|array',
         ]);
 
-        // Resolve or create category/manufacturer
         $manufacturer = Manufacturer::firstOrCreate(['name' => $request->manufacturer], [
             'status' => true,
         ]);
@@ -470,15 +592,41 @@ class MedicineController extends Controller
             ]);
         }
 
-        // Duplicate check by name + manufacturer
+        $generic = null;
+        if ($request->filled('generic_name')) {
+            $generic = Generic::firstOrCreate(['name' => $request->generic_name], [
+                'is_active' => true,
+            ]);
+        }
+
+        $brandName = trim((string) $request->name);
+        if ($request->filled('strength')) {
+            $brandName = trim(str_ireplace($request->strength, '', $brandName));
+        }
+        $brandName = trim(preg_replace('/\s+/', ' ', $brandName) ?? '');
+        if ($brandName === '') {
+            $brandName = $request->name;
+        }
+        $brand = Brand::firstOrCreate(['name' => $brandName], [
+            'is_active' => true,
+        ]);
+
         $existing = Medicine::where('name', $request->name)
             ->where('manufacturer_id', $manufacturer->id)
             ->first();
         if ($existing) {
+            $existing->fill([
+                'generic_id' => $existing->generic_id ?: $generic?->id,
+                'brand_id' => $existing->brand_id ?: $brand->id,
+                'category_id' => $existing->category_id ?: $category?->id,
+                'dosage_form' => $existing->dosage_form ?: $request->dosage_form,
+                'generic_name' => $existing->generic_name ?: $request->generic_name,
+            ]);
+            $existing->save();
+
             return response()->json(['status' => 'duplicate', 'id' => $existing->id], 200);
         }
 
-        // Create medicine
         do {
             $productId = Str::random(8);
         } while (Medicine::where('product_id', $productId)->exists());
@@ -488,12 +636,16 @@ class MedicineController extends Controller
             'name' => $request->name,
             'category_id' => $category?->id,
             'manufacturer_id' => $manufacturer->id,
+            'generic_id' => $generic?->id,
+            'brand_id' => $brand->id,
             'generic_name' => $request->generic_name,
             'strength' => $request->strength,
+            'dosage_form' => $request->dosage_form,
             'price' => $request->price ?? 0,
             'manufacturer_price' => 0,
             'box_size' => 1,
             'status' => true,
+            'details' => $request->filled('details') ? json_encode($request->input('details')) : null,
             'medex_id' => $request->medex_id,
             'medex_name' => $request->medex_name,
         ]);

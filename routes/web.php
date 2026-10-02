@@ -165,6 +165,10 @@ Route::middleware('auth')->group(function () {
     Route::post('api/medicines/store-external', [MedicineController::class, 'storeExternal'])->name('api.medicines.storeExternal');
     Route::get('api/medex/search', [MedicineController::class, 'medexSearch'])->name('api.medex.search');
     Route::get('api/medex/product', [MedicineController::class, 'medexProduct'])->name('api.medex.product');
+    Route::get('api/medex/brands', [MedicineController::class, 'medexBrands'])->name('api.medex.brands');
+    Route::post('api/medex/brands/import', [MedicineController::class, 'importMedexBrands'])->name('api.medex.brands.import');
+    Route::get('api/medex/companies', [MedicineController::class, 'medexCompanies'])->name('api.medex.companies');
+    Route::post('api/medex/companies/import', [MedicineController::class, 'importMedexCompanies'])->name('api.medex.companies.import');
 
     // Menu Management Routes
     Route::resource('menus', MenuController::class);

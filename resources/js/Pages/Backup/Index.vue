@@ -111,6 +111,7 @@ import { router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { Head } from '@inertiajs/vue3'
 import Swal from 'sweetalert2'
+import { confirmDelete, notify } from '@/Composables/confirmDelete'
 
 const props = defineProps({
   backups: Array
@@ -220,15 +221,7 @@ const restoreBackup = async () => {
 }
 
 const deleteBackup = async (backupName) => {
-  const confirmed = await Swal.fire({
-    title: 'Are you sure?',
-    text: "You won't be able to revert this!",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#3085d6',
-    confirmButtonText: 'Yes, delete it!'
-  })
+  const confirmed = await confirmDelete({ title: 'Delete this backup?' })
 
   if (!confirmed.isConfirmed) return
 
@@ -244,11 +237,7 @@ const deleteBackup = async (backupName) => {
     const result = await response.json()
 
     if (result.success) {
-      await Swal.fire({
-        icon: 'success',
-        title: 'Deleted!',
-        text: result.message,
-      })
+      await notify({ title: 'Deleted', text: result.message })
 
       // Reload the page
       router.reload()
@@ -256,11 +245,7 @@ const deleteBackup = async (backupName) => {
       throw new Error(result.message)
     }
   } catch (error) {
-    await Swal.fire({
-      icon: 'error',
-      title: 'Error!',
-      text: error.message,
-    })
+    await notify({ title: 'Could not delete', text: error.message, tone: 'error' })
   }
 }
 

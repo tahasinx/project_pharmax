@@ -131,6 +131,7 @@
 import LunaTable from '@/Components/LunaTable.vue'
 
 import { Link, router, Head } from '@inertiajs/vue3'
+import { destroyRecord } from '@/Composables/confirmDelete'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 
 const props = defineProps({
@@ -159,8 +160,6 @@ const toggleStatus = (menuId) => {
 }
 
 const deleteMenu = (id) => {
-    if (confirm('Are you sure you want to delete this menu item?')) {
-        router.delete(route('menus.destroy', id))
-    }
+    destroyRecord('menus.destroy', id, 'Delete this menu item?', 'The menu item has been deleted.')
 }
 </script>

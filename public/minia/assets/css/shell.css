@@ -124,8 +124,39 @@ body.minia-app #page-topbar {
     height: 70px;
 }
 
+body.minia-app .dash-meter,
+body.minia-app .dash-spark,
+body.minia-app .dash-plot,
+body.minia-app .dash-donut {
+    position: relative;
+    overflow: hidden;
+}
+
 body.minia-app .dash-meter {
-    min-height: 190px;
+    height: 180px;
+}
+
+body.minia-app .dash-donut {
+    height: 230px;
+}
+
+body.minia-app .dash-spark {
+    height: 46px;
+}
+
+body.minia-app .dash-plot {
+    height: 300px;
+}
+
+body.minia-app .dash-plot-side {
+    height: auto;
+    min-height: 0;
+}
+
+body.minia-app .dash-spark .apexcharts-canvas,
+body.minia-app .dash-meter .apexcharts-canvas,
+body.minia-app .dash-plot .apexcharts-canvas {
+    margin: 0 auto;
 }
 
 body.minia-app .watch-tile {
@@ -417,34 +448,131 @@ body.minia-app .alerts-list .dropdown-item {
     gap: 8px;
 }
 
+body.minia-app #sidebar-menu {
+    padding-top: 4px !important;
+}
+
+body.minia-app #sidebar-menu .has-arrow[aria-expanded="true"]:after,
+body.minia-app #sidebar-menu li.mm-active > .has-arrow:after {
+    transform: rotate(90deg);
+}
+
+body.minia-app #sidebar-menu ul li ul.sub-menu.mm-show {
+    border-left: 1px solid #e1e4ea;
+    margin-left: 36px;
+}
+
+body.minia-app #sidebar-menu ul li ul.sub-menu.mm-show > li > a {
+    padding-left: 14px !important;
+}
+
+body.minia-app #sidebar-menu ul li ul.sub-menu.mm-show > li.mm-active > a,
+body.minia-app #sidebar-menu ul li ul.sub-menu.mm-show > li > a.active {
+    margin-left: -1px;
+    box-shadow: inset 2px 0 0 #5156be;
+    color: #5156be !important;
+}
+
+body.minia-app #sidebar-menu li.mm-active > ul.sub-menu.mm-show {
+    border-left-color: #c8cbeb;
+}
+
+body.minia-app .page-content {
+    padding-top: 82px !important;
+}
+
+body.minia-app .page-title-box {
+    padding-bottom: 8px !important;
+}
+
+body.minia-app .navbar-header {
+    padding-right: 0 !important;
+}
+
+body.minia-app #page-topbar .nav-rail {
+    flex: 0 0 auto;
+    width: max-content;
+    height: 70px;
+    background: linear-gradient(180deg, #f8f9fc 0%, #f2f3f8 100%);
+}
+
+body.minia-app #page-topbar .navbar-header > .d-flex > .nav-rail:not(.profile-menu) {
+    background: transparent;
+    border: 0;
+}
+
+body.minia-app #page-topbar .profile-menu.nav-rail {
+    display: flex;
+    align-items: stretch;
+    border-right: 0;
+    border-left: 1px solid #eceef4;
+    margin-right: 0;
+    padding-right: 0;
+    background: linear-gradient(180deg, #f8f9fc 0%, #f2f3f8 100%);
+}
+
+body.minia-app #page-topbar .profile-menu.nav-rail .header-item {
+    height: 70px;
+}
+
+body.minia-app #page-topbar .nav-rail .navbar-brand-box {
+    background: linear-gradient(180deg, #f8f9fc 0%, #f2f3f8 100%) !important;
+    border-right: 1px solid #e9e9ef !important;
+}
+
+body.minia-app[data-bs-theme="dark"] #page-topbar .nav-rail {
+    background: linear-gradient(180deg, #262b36 0%, #1e232d 100%);
+}
+
+body.minia-app[data-bs-theme="dark"] #page-topbar .navbar-header > .d-flex > .nav-rail:not(.profile-menu) {
+    background: transparent !important;
+}
+
+body.minia-app[data-bs-theme="dark"] #page-topbar .nav-rail .navbar-brand-box {
+    background: linear-gradient(180deg, #262b36 0%, #1e232d 100%) !important;
+    border-right-color: var(--bs-sidebar-border-color) !important;
+}
+
+body.minia-app[data-bs-theme="dark"] #page-topbar .profile-menu.nav-rail {
+    background: linear-gradient(180deg, #262b36 0%, #1e232d 100%) !important;
+    border-left-color: #323844;
+}
+
+body.minia-app[data-bs-theme="dark"] #sidebar-menu ul li ul.sub-menu.mm-show {
+    border-left-color: #343a4a;
+}
+
+body.minia-app[data-bs-theme="dark"] #sidebar-menu li.mm-active > ul.sub-menu.mm-show {
+    border-left-color: #6d73c8;
+}
+
+body.minia-app #page-topbar .theme-menu,
+body.minia-app #page-topbar .apps-menu,
+body.minia-app #page-topbar .alerts-menu {
+    display: flex;
+    align-items: center;
+}
+
 body.minia-app #page-topbar .header-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 52px;
+    width: 36px;
     height: 70px;
-    padding: 0;
+    padding: 0 !important;
+    margin: 0;
     line-height: 1;
 }
 
 body.minia-app #page-topbar .header-icon svg,
-body.minia-app #page-topbar .header-icon .icon-lg {
-    display: block;
-    width: 20px;
-    height: 20px;
-    margin: 0;
-}
-
+body.minia-app #page-topbar .header-icon .icon-lg,
 body.minia-app #page-topbar .theme-menu > .header-icon .bi {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
+    display: block;
+    width: 18px;
+    height: 18px;
     margin: 0;
     font-size: 18px;
     line-height: 1;
-    transform: translateY(-2px);
 }
 
 body.minia-app #page-topbar .theme-menu > .header-icon .bi::before {
@@ -453,9 +581,24 @@ body.minia-app #page-topbar .theme-menu > .header-icon .bi::before {
     line-height: 1;
 }
 
-@media (min-width: 576px) {
-    body.minia-app #page-topbar .header-icon.d-sm-inline-flex {
+@media (max-width: 991.98px) {
+    body.minia-app #page-topbar .theme-menu,
+    body.minia-app #page-topbar .apps-menu,
+    body.minia-app #page-topbar .alerts-menu,
+    body.minia-app #page-topbar > .navbar-header .header-icon.d-none {
         display: inline-flex !important;
+        align-items: center;
+    }
+
+    body.minia-app #page-topbar .header-icon {
+        width: 34px;
+    }
+}
+
+@media (min-width: 992px) {
+    body.minia-app #page-topbar .apps-menu.d-lg-inline-block {
+        display: flex !important;
+        align-items: center;
     }
 }
 
@@ -536,7 +679,7 @@ body.minia-app[data-sidebar-size="sm"] #sidebar-menu > ul > li:hover > ul {
         width: 250px !important;
         flex: 0 0 250px;
         padding: 0 1.5rem !important;
-        background: #fbfaff !important;
+        background: linear-gradient(180deg, #f8f9fc 0%, #f2f3f8 100%) !important;
         border-right: 1px solid #e9e9ef !important;
         box-shadow: none !important;
     }
@@ -612,6 +755,549 @@ body.minia-app .dt-wrap .page-link {
     line-height: 1.2;
 }
 
+body.minia-app .btn-icon {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+body.minia-app .btn-icon .bi {
+    font-size: 13px;
+    line-height: 1;
+}
+
+body.minia-app .dt-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    width: auto;
+}
+
+body.minia-app .dataTables_wrapper table.dataTable thead th:last-child,
+body.minia-app .dataTables_wrapper table.dataTable tbody td:last-child,
+body.minia-app .dataTables_wrapper table.dataTable colgroup col:last-child,
+body.minia-app .dataTables_wrapper table.dataTable .dt-fit {
+    width: 1% !important;
+    white-space: nowrap !important;
+    text-align: right !important;
+}
+
+body.minia-app .dataTables_wrapper {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+body.minia-app .dataTables_wrapper table.dataTable {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+body.minia-app .dataTables_wrapper table.dataTable th,
+body.minia-app .dataTables_wrapper table.dataTable td {
+    box-sizing: border-box !important;
+}
+
+body.minia-app .dataTables_wrapper td.dataTables_empty {
+    text-align: center !important;
+}
+
+body.minia-app .screen-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1060;
+    display: flex;
+    padding: 24px;
+    background: rgba(15, 18, 28, 0.45);
+    overflow: auto;
+}
+
+body.minia-app .screen-modal-panel {
+    width: min(1080px, 100%);
+    min-height: calc(100vh - 48px);
+    margin: auto;
+    background: #fff;
+    border: 1px solid #e6e8ee;
+    border-radius: 12px;
+    box-shadow: 0 18px 50px rgba(16, 24, 40, 0.16);
+}
+
+body.minia-app .screen-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e6e8ee;
+}
+
+body.minia-app .screen-modal-body {
+    padding: 20px;
+}
+
+body.minia-app .screen-modal input:not([type="checkbox"]):not([type="radio"]),
+body.minia-app .screen-modal select,
+body.minia-app .screen-modal textarea {
+    width: 100%;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 0.47rem 0.75rem;
+    background: #fff;
+}
+
+body.minia-app[data-bs-theme="dark"] .screen-modal-panel {
+    background: var(--shell-card-bg);
+    border-color: var(--shell-border);
+    color: var(--shell-text);
+}
+
+body.minia-app .dataTables_wrapper table.dataTable thead th,
+body.minia-app .dataTables_wrapper table.dataTable tbody td {
+    padding: 4px 8px !important;
+    font-size: 12.5px;
+    line-height: 1.25;
+    vertical-align: middle;
+    border-color: #e6e8ee !important;
+}
+
+body.minia-app .dataTables_wrapper table.dataTable thead th {
+    position: relative;
+    padding: 4px 16px 4px 8px !important;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    line-height: 1.25;
+    vertical-align: middle !important;
+    background: #e6e8ee !important;
+}
+
+body.minia-app table.dataTable thead th.sorting:before,
+body.minia-app table.dataTable thead th.sorting_asc:before,
+body.minia-app table.dataTable thead th.sorting_desc:before,
+body.minia-app table.dataTable thead > tr > th.sorting:before,
+body.minia-app table.dataTable thead > tr > th.sorting_asc:before,
+body.minia-app table.dataTable thead > tr > th.sorting_desc:before {
+    top: calc(50% - 8px) !important;
+    bottom: auto !important;
+}
+
+body.minia-app table.dataTable thead th.sorting:after,
+body.minia-app table.dataTable thead th.sorting_asc:after,
+body.minia-app table.dataTable thead th.sorting_desc:after,
+body.minia-app table.dataTable thead > tr > th.sorting:after,
+body.minia-app table.dataTable thead > tr > th.sorting_asc:after,
+body.minia-app table.dataTable thead > tr > th.sorting_desc:after {
+    top: calc(50% + 1px) !important;
+    bottom: auto !important;
+}
+
+body.minia-app .dt-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+body.minia-app .dt-toolbar .dt-filter {
+    margin-left: auto;
+}
+
+body.minia-app .dataTables_length select {
+    min-width: 76px;
+    width: 76px !important;
+    margin: 0 6px;
+}
+
+body.minia-app .dt-buttons.btn-group,
+body.minia-app .dt-buttons {
+    display: inline-flex !important;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+body.minia-app .dt-buttons .btn {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0;
+    height: 30px;
+    padding: 0 10px;
+    font-size: 12px;
+}
+
+body.minia-app .dt-buttons .btn .bi {
+    margin: 0 8px 0 0 !important;
+    font-size: 14px;
+    line-height: 1;
+}
+
+body.minia-app .dataTables_wrapper .page-link {
+    min-width: 28px;
+    height: 28px;
+    padding: 0 6px;
+    font-size: 12px;
+    line-height: 26px;
+}
+
+body.minia-app .dt-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+body.minia-app .dt-acc {
+    display: grid;
+    gap: 6px;
+    padding: 4px 4px 4px 8px;
+}
+
+body.minia-app .dt-acc-row {
+    display: grid;
+    grid-template-columns: 108px minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: rgba(81, 86, 190, 0.06);
+    font-size: 12.5px;
+}
+
+body.minia-app .dt-acc-row > span:first-child {
+    color: #74788d;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+body.minia-app .dataTables_wrapper table.dataTable .dt-index {
+    width: 36px !important;
+    text-align: center !important;
+    color: #74788d;
+    white-space: nowrap;
+}
+
+@media (max-width: 767.98px) {
+    body.minia-app .dt-toolbar {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    body.minia-app .dt-toolbar .dt-filter {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    body.minia-app .dt-toolbar .dt-filter input {
+        width: 100%;
+    }
+
+    body.minia-app .dt-buttons,
+    body.minia-app .dt-buttons.btn-group {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        width: 100%;
+        gap: 6px;
+    }
+
+    body.minia-app .dt-buttons .btn,
+    body.minia-app .dt-buttons.btn-group > .btn {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        height: 32px !important;
+        margin: 0 !important;
+        white-space: nowrap;
+    }
+
+    body.minia-app .dataTables_wrapper table.dataTable thead {
+        display: none;
+    }
+
+    body.minia-app .dataTables_wrapper table.dataTable,
+    body.minia-app .dataTables_wrapper table.dataTable tbody {
+        display: block;
+        width: 100% !important;
+    }
+
+    body.minia-app .dataTables_wrapper table.dataTable tbody tr {
+        position: relative;
+        display: grid !important;
+        grid-template-columns: 28px minmax(0, 1fr);
+        margin: 0 0 10px;
+        padding: 0 28px 0 0;
+        overflow: hidden;
+        border: 1px solid #e6e8ee;
+        border-radius: 8px;
+        background: #fff;
+        cursor: pointer;
+        text-align: left;
+    }
+
+    body.minia-app .dataTables_wrapper table.dataTable tbody tr::after {
+        content: "";
+        position: absolute;
+        top: 16px;
+        right: 12px;
+        width: 8px;
+        height: 8px;
+        border-right: 1.5px solid #74788d;
+        border-bottom: 1.5px solid #74788d;
+        transform: rotate(45deg);
+        pointer-events: none;
+    }
+
+    body.minia-app .dataTables_wrapper table.dataTable tbody tr.is-open::after {
+        top: 18px;
+        transform: rotate(-135deg);
+    }
+
+    body.minia-app .dataTables_wrapper table.dataTable tbody td,
+    body.minia-app .dataTables_wrapper table.dataTable tbody td:last-child {
+        display: none !important;
+        float: none !important;
+        width: auto !important;
+        max-width: none !important;
+        border: 0 !important;
+        padding: 8px 12px !important;
+        text-align: left !important;
+        white-space: normal !important;
+    }
+
+    body.minia-app .dataTables_wrapper table.dataTable tbody td.dt-index {
+        display: flex !important;
+        grid-column: 1;
+        align-items: center;
+        justify-content: center;
+        width: 28px !important;
+        padding: 12px 0 !important;
+        color: #74788d;
+        text-align: center !important;
+    }
+
+    body.minia-app .dataTables_wrapper table.dataTable tbody td:nth-child(2) {
+        display: block !important;
+        grid-column: 2;
+        min-width: 0;
+        padding: 12px 8px 12px 4px !important;
+        overflow: hidden;
+        font-weight: 600;
+        text-align: left !important;
+    }
+
+    body.minia-app .dataTables_wrapper table.dataTable tbody td:nth-child(2) button,
+    body.minia-app .dataTables_wrapper table.dataTable tbody td:nth-child(2) a,
+    body.minia-app .dataTables_wrapper table.dataTable tbody td:nth-child(2) .block,
+    body.minia-app .dataTables_wrapper table.dataTable tbody td:nth-child(2) .truncate {
+        display: block;
+        max-width: 100%;
+        overflow: hidden;
+        text-align: left !important;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    body.minia-app .dataTables_wrapper table.dataTable tbody tr.is-open td:nth-child(n+3) {
+        display: flex !important;
+        grid-column: 1 / -1;
+        align-items: center;
+        justify-content: flex-start !important;
+        gap: 12px;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        min-width: 0;
+        margin: 0;
+        padding: 8px 12px !important;
+        overflow: hidden;
+        border-top: 1px solid #eef0f3 !important;
+        text-align: left !important;
+    }
+
+    body.minia-app .dataTables_wrapper table.dataTable tbody tr.is-open td:nth-child(n+3)::before {
+        content: attr(data-label);
+        flex: 0 0 92px;
+        color: #74788d;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-align: left;
+        text-transform: uppercase;
+    }
+
+    body.minia-app .dataTables_wrapper table.dataTable tbody tr.is-open td:nth-child(n+3) > *:not(.dt-actions) {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-align: left !important;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    body.minia-app .dataTables_wrapper table.dataTable tbody tr.is-open td.dt-fit {
+        display: flex !important;
+        justify-content: flex-end !important;
+        padding: 10px 12px !important;
+    }
+
+    body.minia-app .dataTables_wrapper table.dataTable tbody tr.is-open td.dt-fit::before {
+        content: none !important;
+    }
+
+    body.minia-app .dataTables_wrapper table.dataTable tbody tr.is-open td.dt-fit .dt-actions {
+        display: inline-flex !important;
+        flex-flow: row nowrap !important;
+        align-items: center;
+        justify-content: flex-end !important;
+        gap: 8px;
+        width: auto !important;
+        overflow: visible;
+    }
+
+    body.minia-app .dataTables_wrapper table.dataTable tbody tr.is-open td.dt-fit .dt-actions .btn {
+        display: inline-flex !important;
+        flex: 0 0 32px !important;
+        width: 32px !important;
+        height: 32px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible;
+    }
+
+    body.minia-app[data-bs-theme="dark"] .dataTables_wrapper table.dataTable tbody tr {
+        background: var(--shell-card-bg);
+        border-color: var(--shell-border);
+    }
+}
+
+body.minia-app .dataTables_wrapper .rounded-full {
+    padding: 1px 6px !important;
+    line-height: 1.35;
+    font-size: 11px;
+}
+
+body.minia-app .epharma-confirm {
+    width: 320px;
+    padding: 22px 22px 18px;
+    border: 0;
+    border-radius: 14px;
+    background: #fff;
+    color: #1f2430;
+    font-family: "IBM Plex Sans", sans-serif;
+    box-shadow: 0 18px 50px rgba(16, 24, 40, 0.18);
+}
+
+body.minia-app .epharma-confirm .swal2-icon,
+body.minia-app .epharma-confirm .epharma-confirm-icon {
+    width: 44px;
+    height: 44px;
+    margin: 2px auto 10px;
+    border: 0;
+    border-radius: 12px;
+    background: #fff1f3;
+    color: #e11d48;
+    line-height: 44px;
+}
+
+body.minia-app .epharma-confirm .swal2-icon .swal2-icon-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+body.minia-app .epharma-confirm .swal2-close {
+    width: 28px;
+    height: 28px;
+    color: #98a2b3;
+    font-size: 22px;
+}
+
+body.minia-app .epharma-confirm-title {
+    padding: 0;
+    color: #1f2430;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+body.minia-app .epharma-confirm-text {
+    margin: 6px 0 0;
+    color: #98a2b3;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+body.minia-app .epharma-confirm-actions {
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    margin: 18px 0 0;
+}
+
+body.minia-app .epharma-confirm-cancel,
+body.minia-app .epharma-confirm-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 96px;
+    height: 36px;
+    margin: 0;
+    border: 0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+body.minia-app .epharma-confirm-cancel {
+    background: #fff1f3;
+    color: #e11d48;
+}
+
+body.minia-app .epharma-confirm-cancel:hover {
+    background: #ffe4e8;
+}
+
+body.minia-app .epharma-confirm-delete {
+    background: #e11d48;
+    color: #fff;
+}
+
+body.minia-app .epharma-confirm .epharma-confirm-icon.is-success {
+    background: #ecfdf3;
+    color: #039855;
+}
+
+body.minia-app .epharma-confirm .epharma-confirm-icon.is-error {
+    background: #fff1f3;
+    color: #e11d48;
+}
+
+body.minia-app .epharma-confirm-ok {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 88px;
+    height: 36px;
+    margin: 0;
+    border: 0;
+    border-radius: 8px;
+    background: #5156be;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+}
+
 body.minia-app .dt-wrap thead th.dt-sort {
     cursor: pointer;
     user-select: none;
@@ -673,6 +1359,48 @@ body.minia-app[data-bs-theme="dark"] {
     --shell-card-bg: #20242d;
     --shell-text: #d8dee9;
     --shell-border: #303642;
+}
+
+body.minia-app #layout-wrapper[data-layout-mode="dark"] {
+    --bs-body-bg: #171a21;
+    --bs-body-color: #d8dee9;
+    --bs-heading-color: #f3f5f8;
+    --bs-card-bg: #20242d;
+    --bs-card-cap-bg: #20242d;
+    --bs-card-border-color: #303642;
+    --bs-border-color: #303642;
+    --bs-light: #252a34;
+    --bs-secondary-color: #98a2b3;
+    --bs-input-bg: #252a34;
+    --bs-input-color: #d8dee9;
+    --bs-input-border-color: #39404e;
+    --shell-card-bg: #20242d;
+    --shell-text: #d8dee9;
+    --shell-muted: #98a2b3;
+    --shell-border: #303642;
+    --shell-input-bg: #252a34;
+    --shell-btn-hover: #343b48;
+}
+
+body.minia-app #layout-wrapper[data-theme="night"] {
+    --bs-body-bg: #171b2a;
+    --bs-body-color: #c9d2ea;
+    --bs-heading-color: #f4f6fb;
+    --bs-card-bg: #222844;
+    --bs-card-cap-bg: #222844;
+    --bs-card-border-color: #343c5c;
+    --bs-border-color: #343c5c;
+    --bs-light: #1a2040;
+    --bs-secondary-color: #93a0c4;
+    --bs-input-bg: #1a2040;
+    --bs-input-color: #c9d2ea;
+    --bs-input-border-color: #3a446c;
+    --shell-card-bg: #222844;
+    --shell-text: #c9d2ea;
+    --shell-muted: #93a0c4;
+    --shell-border: #343c5c;
+    --shell-input-bg: #1a2040;
+    --shell-btn-hover: #323a62;
 }
 
 body.minia-app[data-theme="night"] {
@@ -900,4 +1628,467 @@ body.minia-app .shell-logo {
         padding: 8px 20px !important;
         width: 190px;
     }
+}
+
+/* Surfaces that were locked to white by Bootstrap, DataTables, or utility classes. */
+body.minia-app[data-bs-theme="dark"] :is(
+    .bg-white,
+    .bg-gray-50,
+    .bg-gray-100,
+    .bg-slate-50,
+    .bg-slate-100,
+    .bg-zinc-50,
+    .bg-light,
+    .table,
+    .table > :not(caption) > * > *,
+    table.dataTable thead th,
+    table.dataTable tbody td,
+    table.dataTable tbody tr,
+    .dataTables_empty
+),
+.pos-app[data-appearance="dark"] :is(.bg-white, .bg-gray-50, .bg-gray-100),
+.pos-app[data-appearance="night"] :is(.bg-white, .bg-gray-50, .bg-gray-100) {
+    background-color: var(--shell-card-bg) !important;
+    color: var(--shell-text);
+}
+
+body.minia-app[data-bs-theme="dark"] table.dataTable thead th,
+.pos-app[data-appearance="dark"] table thead th,
+.pos-app[data-appearance="night"] table thead th {
+    color: var(--shell-muted) !important;
+    border-color: var(--shell-border) !important;
+    box-shadow: none !important;
+    background-color: #171b24 !important;
+}
+
+body.minia-app[data-theme="night"] table.dataTable thead th {
+    background-color: #14182a !important;
+}
+
+body.minia-app[data-bs-theme="dark"] table.dataTable tbody td,
+body.minia-app[data-bs-theme="dark"] .table > :not(caption) > * > * {
+    border-color: var(--shell-border) !important;
+    box-shadow: none !important;
+}
+
+body.minia-app[data-bs-theme="dark"] table.dataTable.table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: rgba(255, 255, 255, 0.035) !important;
+}
+
+body.minia-app[data-bs-theme="dark"] table.dataTable.table-hover > tbody > tr:hover > * {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    color: #fff !important;
+}
+
+body.minia-app[data-bs-theme="dark"] :is(
+    .text-gray-900,
+    .text-gray-800,
+    .text-gray-700,
+    .text-slate-900,
+    .text-slate-800,
+    .text-black
+),
+.pos-app[data-appearance="dark"] :is(.text-gray-900, .text-gray-800, .text-gray-700),
+.pos-app[data-appearance="night"] :is(.text-gray-900, .text-gray-800, .text-gray-700) {
+    color: var(--shell-text) !important;
+}
+
+body.minia-app[data-bs-theme="dark"] :is(
+    .text-gray-600,
+    .text-gray-500,
+    .text-gray-400,
+    .text-slate-600,
+    .text-slate-500
+),
+.pos-app[data-appearance="dark"] :is(.text-gray-600, .text-gray-500, .text-gray-400),
+.pos-app[data-appearance="night"] :is(.text-gray-600, .text-gray-500, .text-gray-400) {
+    color: var(--shell-muted) !important;
+}
+
+body.minia-app[data-bs-theme="dark"] :is(
+    .border-gray-100,
+    .border-gray-200,
+    .border-gray-300,
+    .border-slate-200
+),
+.pos-app[data-appearance="dark"] :is(.border-gray-100, .border-gray-200, .border-gray-300),
+.pos-app[data-appearance="night"] :is(.border-gray-100, .border-gray-200, .border-gray-300) {
+    border-color: var(--shell-border) !important;
+}
+
+body.minia-app[data-bs-theme="dark"] :is(.divide-gray-100, .divide-gray-200, .divide-slate-200) > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--shell-border) !important;
+}
+
+body.minia-app[data-bs-theme="dark"] :is(.hover\:bg-gray-50, .hover\:bg-gray-100, .hover\:bg-white):hover,
+.pos-app[data-appearance="dark"] :is(.hover\:bg-gray-50, .hover\:bg-white):hover,
+.pos-app[data-appearance="night"] :is(.hover\:bg-gray-50, .hover\:bg-white):hover {
+    background-color: var(--shell-btn-hover) !important;
+    color: #fff;
+}
+
+body.minia-app[data-bs-theme="dark"] .dt-wrap .dt-buttons .btn,
+body.minia-app[data-bs-theme="dark"] .dataTables_paginate .paginate_button {
+    background: var(--shell-input-bg) !important;
+    color: var(--shell-text) !important;
+    border-color: var(--shell-input-border) !important;
+}
+
+body.minia-app[data-bs-theme="dark"] .dataTables_paginate .paginate_button.current,
+body.minia-app[data-bs-theme="dark"] .dataTables_paginate .paginate_button.current:hover {
+    background: #5156be !important;
+    color: #fff !important;
+    border-color: #5156be !important;
+}
+
+.pos-app[data-appearance="dark"],
+.pos-app[data-appearance="night"] {
+    --shell-text: #d8dee9;
+    --shell-muted: #98a2b3;
+    --shell-card-bg: #20242d;
+    --shell-border: #303642;
+    --shell-input-bg: #252a34;
+    --shell-input-border: #39404e;
+    --shell-btn-hover: #343b48;
+    background: #171a21 !important;
+    color: var(--shell-text) !important;
+}
+
+.pos-app[data-appearance="night"] {
+    --shell-text: #c9d2ea;
+    --shell-muted: #93a0c4;
+    --shell-card-bg: #222844;
+    --shell-border: #343c5c;
+    --shell-input-bg: #1a2040;
+    --shell-input-border: #3a446c;
+    --shell-btn-hover: #323a62;
+    background: #171b2a !important;
+}
+
+.pos-app[data-appearance="dark"] input,
+.pos-app[data-appearance="dark"] select,
+.pos-app[data-appearance="dark"] textarea,
+.pos-app[data-appearance="night"] input,
+.pos-app[data-appearance="night"] select,
+.pos-app[data-appearance="night"] textarea {
+    background-color: var(--shell-input-bg) !important;
+    color: var(--shell-text) !important;
+    border-color: var(--shell-input-border) !important;
+}
+
+.pos-app[data-appearance="dark"] input::placeholder,
+.pos-app[data-appearance="night"] input::placeholder {
+    color: var(--shell-muted);
+}
+
+body.minia-app .pos-shell {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #f8f8fb;
+    color: #495057;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 0.875rem;
+}
+
+body.minia-app .pos-shell .btn,
+body.minia-app .pos-shell .form-control,
+body.minia-app .pos-shell .form-select,
+body.minia-app .pos-shell h1,
+body.minia-app .pos-shell h5,
+body.minia-app .pos-shell h6 {
+    font-family: "IBM Plex Sans", sans-serif;
+}
+
+body.minia-app .pos-top {
+    height: 70px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0 1.25rem;
+    background: #fff;
+    border-bottom: 1px solid #e9e9ef;
+}
+
+body.minia-app .pos-title {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+body.minia-app .pos-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+}
+
+body.minia-app .pos-catalog {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 1.25rem 1.25rem;
+}
+
+body.minia-app .pos-search {
+    position: relative;
+}
+
+body.minia-app .pos-search .bi {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #74788d;
+    z-index: 2;
+}
+
+body.minia-app .pos-search .form-control {
+    padding-left: 2.25rem;
+    height: 38px;
+}
+
+body.minia-app .pos-grid {
+    margin-top: 1rem;
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 1rem;
+    align-content: start;
+    padding-right: 2px;
+}
+
+body.minia-app .pos-product .card-body {
+    padding: 1rem;
+}
+
+body.minia-app .pos-ticket {
+    width: 380px;
+    flex: 0 0 380px;
+    background: #fff;
+    border-left: 1px solid #e9e9ef;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+body.minia-app .pos-ticket-block {
+    padding: 1rem 1rem 0.75rem;
+    border-bottom: 1px solid #e9e9ef;
+}
+
+body.minia-app .pos-suggest {
+    position: absolute;
+    z-index: 6;
+    left: 0;
+    right: 0;
+    margin-top: 4px;
+    max-height: 220px;
+    overflow: auto;
+}
+
+body.minia-app .pos-lines {
+    flex: 1;
+    overflow: auto;
+    padding: 0 1rem;
+}
+
+body.minia-app .pos-line {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #eff0f4;
+}
+
+body.minia-app .pos-qty {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+}
+
+body.minia-app .pos-qty-value {
+    min-width: 1.25rem;
+    text-align: center;
+}
+
+body.minia-app .pos-ticket-foot {
+    border-top: 1px solid #e9e9ef;
+    padding: 0.9rem 1rem 1rem;
+}
+
+body.minia-app .pos-totals {
+    margin: 0.75rem 0 0.5rem;
+}
+
+body.minia-app .pos-totals div {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+    color: #74788d;
+}
+
+body.minia-app .pos-totals dd {
+    margin: 0;
+}
+
+body.minia-app .pos-grand {
+    color: #343a40;
+    font-weight: 600;
+    font-size: 1rem;
+    padding-top: 0.35rem;
+}
+
+body.minia-app .pos-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 18, 32, 0.35);
+}
+
+body.minia-app .pos-modal-card {
+    width: 100%;
+    max-width: 420px;
+    margin: 0;
+}
+
+body.minia-app .pos-modal-wide {
+    max-width: 640px;
+}
+
+body.minia-app .pos-video {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #111;
+    border-radius: 6px;
+    object-fit: contain;
+}
+
+@media (max-width: 991.98px) {
+    body.minia-app .pos-shell {
+        height: auto;
+        min-height: 100vh;
+        overflow: auto;
+    }
+
+    body.minia-app .pos-body {
+        flex-direction: column;
+    }
+
+    body.minia-app .pos-grid {
+        max-height: none;
+    }
+
+    body.minia-app .pos-ticket {
+        width: 100%;
+        flex-basis: auto;
+        border-left: 0;
+        border-top: 1px solid #e9e9ef;
+    }
+}
+
+body.minia-app[data-bs-theme="dark"] .pos-shell,
+body.minia-app[data-bs-theme="dark"] .pos-top,
+body.minia-app[data-bs-theme="dark"] .pos-ticket {
+    background: var(--bs-body-bg, #171a21);
+    color: var(--bs-body-color, #d8dee9);
+    border-color: var(--bs-border-color, #303642);
+}
+
+body.minia-app[data-bs-theme="dark"] .pos-grand {
+    color: inherit;
+}
+
+body.minia-app .pos-speed .form-control {
+    height: 31px;
+    font-size: 0.875rem;
+}
+
+body.minia-app .pos-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 1040;
+    display: flex;
+    flex-direction: column;
+    background: #f8f8fb;
+    overflow: hidden;
+}
+
+body.minia-app .pos-screen > .card,
+body.minia-app .pos-screen > .alert {
+    margin: 1rem 1.25rem 0;
+}
+
+body.minia-app .pos-stage {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 1rem;
+    padding: 1rem 1.25rem 1.25rem;
+}
+
+body.minia-app .pos-stage-list,
+body.minia-app .pos-stage-ticket,
+body.minia-app .pos-stage .card,
+body.minia-app .pos-stage .card-body {
+    min-height: 0;
+    height: 100%;
+}
+
+body.minia-app .pos-stage-ticket .card-body {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+}
+
+body.minia-app .pos-screen .pos-list {
+    max-height: none;
+    height: 100%;
+}
+
+@media (max-width: 991.98px) {
+    body.minia-app .pos-screen {
+        position: absolute;
+        height: auto;
+        min-height: 100vh;
+        overflow: auto;
+    }
+
+    body.minia-app .pos-stage {
+        grid-template-columns: 1fr;
+    }
+
+    body.minia-app .pos-stage .card,
+    body.minia-app .pos-stage .card-body,
+    body.minia-app .pos-screen .pos-list {
+        height: auto;
+    }
+}
+
+body.minia-app[data-bs-theme="dark"] .pos-screen {
+    background: var(--bs-body-bg, #171a21);
+}
+
+body.minia-app .pos-list {
+    max-height: calc(100vh - 320px);
+}
+
+body.minia-app .pos-list thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #f8f9fc;
+}
+
+body.minia-app[data-bs-theme="dark"] .pos-list thead th {
+    background: var(--bs-card-bg, #20242d);
+}
+
+body.minia-app .pos-lines {
+    max-height: 280px;
 }

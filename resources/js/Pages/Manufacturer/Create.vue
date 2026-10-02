@@ -1,19 +1,6 @@
 <template>
     <AuthenticatedLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Add New Manufacturer
-                </h2>
-                <Link :href="route('manufacturers.index')"
-                      class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                    Back to Manufacturers
-                </Link>
-            </div>
-        </template>
-
-        <div class="py-12">
-            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+        <FormScreen title="Add manufacturer" :close-href="route('manufacturers.index')">
                 <form @submit.prevent="submitForm">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6">
@@ -92,8 +79,7 @@
                         </div>
                     </div>
                 </form>
-            </div>
-        </div>
+        </FormScreen>
     </AuthenticatedLayout>
 </template>
 
@@ -101,6 +87,7 @@
 import { ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import FormScreen from '@/Components/FormScreen.vue'
 
 const form = ref({
     name: '',

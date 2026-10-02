@@ -84,16 +84,10 @@
                                                 {{ category.status ? 'Active' : 'Inactive' }}
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <div class="flex space-x-2">
-                                                <Link :href="route('categories.edit', category.id)"
-                                                      class="text-indigo-600 hover:text-indigo-900">
-                                                    Edit
-                                                </Link>
-                                                <button @click="deleteCategory(category.id)"
-                                                        class="text-red-600 hover:text-red-900">
-                                                    Delete
-                                                </button>
+                                        <td class="whitespace-nowrap">
+                                            <div class="dt-actions">
+                                                <Link :href="route('categories.edit', category.id)" class="btn btn-sm btn-icon btn-soft-secondary" title="Edit"><i class="bi bi-pencil"></i></Link>
+                                                <button type="button" class="btn btn-sm btn-icon btn-soft-danger" title="Delete" @click="deleteCategory(category.id)"><i class="bi bi-trash"></i></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -113,6 +107,7 @@ import LunaTable from '@/Components/LunaTable.vue'
 
 import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
+import { destroyRecord } from '@/Composables/confirmDelete'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 
 const props = defineProps({
@@ -146,8 +141,6 @@ const clearFilters = () => {
 }
 
 const deleteCategory = (id) => {
-    if (confirm('Are you sure you want to delete this category?')) {
-        router.delete(route('categories.destroy', id))
-    }
+    destroyRecord('categories.destroy', id, 'Delete this category?', 'The category has been deleted.')
 }
 </script>

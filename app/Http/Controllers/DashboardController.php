@@ -125,6 +125,108 @@ class DashboardController extends Controller
             ];
         }
 
+        $fromDay = now()->subDays(29)->toDateString();
+        $salesByDay = (clone $saleQuery)
+            ->where('date', '>=', $fromDay)
+            ->selectRaw('date as day, SUM(total_amount) as total')
+            ->groupBy('date')
+            ->get()
+            ->mapWithKeys(fn ($row) => [\Illuminate\Support\Carbon::parse($row->day)->toDateString() => (float) $row->total]);
+        $purchasesByDay = (clone $purchaseQuery)
+            ->where('purchase_date', '>=', $fromDay)
+            ->selectRaw('purchase_date as day, SUM(grand_total) as total')
+            ->groupBy('purchase_date')
+            ->get()
+            ->mapWithKeys(fn ($row) => [\Illuminate\Support\Carbon::parse($row->day)->toDateString() => (float) $row->total]);
+        $dailyData = [];
+        for ($i = 29; $i >= 0; $i--) {
+            $day = now()->subDays($i);
+            $key = $day->toDateString();
+            $dailyData[] = [
+                'label' => $day->format('d M'),
+                'sales' => (float) ($salesByDay[$key] ?? 0),
+                'purchases' => (float) ($purchasesByDay[$key] ?? 0),
+            ];
+        }
+
+        $change = function (float $current, float $previous): float {
+            if ($previous == 0.0) {
+                return $current > 0 ? 100.0 : 0.0;
+            }
+
+            return round((($current - $previous) / abs($previous)) * 100, 1);
+        };
+        $weekStart = now()->startOfWeek()->toDateString();
+        $prevStart = now()->subWeek()->startOfWeek()->toDateString();
+        $prevEnd = now()->subWeek()->endOfWeek()->toDateString();
+        $periodSales = function (string $start, string $end) use ($saleQuery) {
+            return (float) (clone $saleQuery)->whereBetween('date', [$start, $end])->sum('total_amount');
+        };
+        $periodPurchases = function (string $start, string $end) use ($purchaseQuery) {
+            return (float) (clone $purchaseQuery)->whereBetween('purchase_date', [$start, $end])->sum('grand_total');
+        };
+        $weekSales = $periodSales($weekStart, $today);
+        $prevWeekSales = $periodSales($prevStart, $prevEnd);
+        $weekPurchases = $periodPurchases($weekStart, $today);
+        $prevWeekPurchases = $periodPurchases($prevStart, $prevEnd);
+        $periodMargin = function (string $start, string $end) use ($saleQuery, $seesAll, $branchId) {
+            $sales = (float) (clone $saleQuery)->whereBetween('date', [$start, $end])->sum('total_amount');
+            $cost = (float) InvoiceItem::query()
+                ->whereHas('invoice', function ($q) use ($start, $end, $seesAll, $branchId) {
+                    $q->whereBetween('date', [$start, $end]);
+                    if (!$seesAll && $branchId) {
+                        $q->where('branch_id', $branchId);
+                    }
+                })
+                ->sum('cost_amount');
+
+            return $sales > 0 ? (($sales - $cost) / $sales) * 100 : 0.0;
+        };
+
+        $recentSales = (clone $saleQuery)
+            ->with('customer:id,name')
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->limit(8)
+            ->get()
+            ->map(fn (Invoice $invoice) => [
+                'id' => 's-'.$invoice->id,
+                'kind' => 'sale',
+                'title' => $invoice->invoice_no ?: 'Sale',
+                'party' => $invoice->customer?->name ?: 'Walk-in',
+                'date' => optional($invoice->date)->format('d M, Y'),
+                'amount' => (float) $invoice->total_amount,
+                'due' => (float) $invoice->due_amount,
+                'href' => route('invoices.show', $invoice),
+            ]);
+        $recentPurchases = (clone $purchaseQuery)
+            ->with('manufacturer:id,name')
+            ->orderByDesc('purchase_date')
+            ->orderByDesc('id')
+            ->limit(8)
+            ->get()
+            ->map(fn (Purchase $purchase) => [
+                'id' => 'p-'.$purchase->id,
+                'kind' => 'purchase',
+                'title' => $purchase->purchase_no ?: 'Purchase',
+                'party' => $purchase->manufacturer?->name ?: 'Supplier',
+                'date' => optional($purchase->purchase_date)->format('d M, Y'),
+                'amount' => (float) $purchase->grand_total,
+                'due' => (float) $purchase->due_amount,
+                'href' => route('purchases.show', $purchase),
+            ]);
+
+        $payments = (clone $saleQuery)
+            ->selectRaw("COALESCE(NULLIF(payment_type, ''), 'Unspecified') as method, SUM(total_amount) as total")
+            ->groupByRaw("COALESCE(NULLIF(payment_type, ''), 'Unspecified')")
+            ->orderByDesc('total')
+            ->limit(5)
+            ->get()
+            ->map(fn ($row) => [
+                'method' => $row->method,
+                'total' => round((float) $row->total, 2),
+            ]);
+
         return Inertia::render('Dashboard/Index', [
             'stats' => [
                 'todays_sales' => round($todaysSales, 2),
@@ -151,7 +253,13 @@ class DashboardController extends Controller
                     ->whereDate('updated_at', $today)
                     ->when(!$seesAll && $branchId, fn ($q) => $q->where('branch_id', $branchId))
                     ->count(),
+                'sales_change' => $change($weekSales, $prevWeekSales),
+                'purchases_change' => $change($weekPurchases, $prevWeekPurchases),
+                'margin_change' => $change($periodMargin($weekStart, $today), $periodMargin($prevStart, $prevEnd)),
             ],
+            'dailyData' => $dailyData,
+            'activity' => $recentSales->concat($recentPurchases)->values(),
+            'payments' => $payments,
             'fastMovers' => $fast->map(fn ($row) => [
                 'name' => $names[$row->medicine_id] ?? 'Medicine',
                 'sold' => (int) $row->sold,

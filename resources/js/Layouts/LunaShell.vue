@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { useLunaApp } from '@/Composables/useLunaApp';
+import { useTheme } from '@/Composables/useTheme';
 
 const props = defineProps({
     groups: {
@@ -22,6 +23,7 @@ useLunaApp();
 
 const page = usePage();
 const sidebarKey = 'epharma-sidebar-size';
+const sidebarCollapsed = ref(false);
 
 const loadScript = (src) => new Promise((resolve, reject) => {
     if (document.querySelector(`script[data-minia="${src}"]`)) {
@@ -45,7 +47,6 @@ const bootMinia = async () => {
         '/minia/assets/libs/node-waves/waves.min.js',
         '/minia/assets/libs/feather-icons/feather.min.js',
         '/minia/assets/libs/pace-js/pace.min.js',
-        '/minia/assets/libs/apexcharts/apexcharts.min.js',
         '/minia/assets/js/app.js',
     ];
     for (const file of files) {
@@ -61,6 +62,7 @@ const bootMinia = async () => {
                     const nextSize = !size || size === 'lg' ? 'sm' : 'lg';
                     document.body.setAttribute('data-sidebar-size', nextSize);
                     localStorage.setItem(sidebarKey, nextSize);
+                    sidebarCollapsed.value = nextSize === 'sm';
                 }
             });
         }
@@ -261,6 +263,7 @@ const toggleNav = (event) => {
         const nextSize = size === 'sm' ? 'lg' : 'sm';
         document.body.setAttribute('data-sidebar-size', nextSize);
         localStorage.setItem(sidebarKey, nextSize);
+        sidebarCollapsed.value = nextSize === 'sm';
     }
 };
 
@@ -280,11 +283,8 @@ const togglePanel = (name) => {
     headerPanel.value = headerPanel.value === name ? null : name;
 };
 
-const themeKey = 'epharma-theme';
-const theme = ref(localStorage.getItem(themeKey) || 'system');
+const { preference: theme, appearance, mode, palette, setPreference, syncSystem } = useTheme();
 const themeQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-const resolvedTheme = () => (theme.value === 'system' ? (themeQuery.matches ? 'dark' : 'light') : theme.value);
 
 const themeIcon = computed(() => ({
     light: 'bi-sun',
@@ -294,26 +294,30 @@ const themeIcon = computed(() => ({
 }[theme.value] || 'bi-laptop'));
 
 const applyTheme = () => {
-    const appearance = resolvedTheme();
-    const mode = appearance === 'light' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-bs-theme', mode);
-    document.documentElement.setAttribute('data-theme', appearance);
-    document.documentElement.style.colorScheme = mode;
-    document.body.setAttribute('data-bs-theme', mode);
-    document.body.setAttribute('data-theme', appearance);
-    document.body.setAttribute('data-layout-mode', mode);
-    document.body.setAttribute('data-topbar', mode);
-    document.body.setAttribute('data-sidebar', mode);
+    const next = appearance.value;
+    const colorMode = mode.value;
+    document.documentElement.setAttribute('data-bs-theme', colorMode);
+    document.documentElement.setAttribute('data-theme', next);
+    document.documentElement.style.colorScheme = colorMode;
+    document.body.setAttribute('data-bs-theme', colorMode);
+    document.body.setAttribute('data-theme', next);
+    document.body.setAttribute('data-layout-mode', colorMode);
+    document.body.setAttribute('data-topbar', colorMode);
+    document.body.setAttribute('data-sidebar', colorMode);
+    document.body.style.setProperty('--shell-card-bg', palette.value.card);
+    document.body.style.setProperty('--shell-text', palette.value.text);
+    document.body.style.setProperty('--shell-muted', palette.value.muted);
+    document.body.style.setProperty('--shell-border', palette.value.grid);
 };
 
 const setTheme = (value) => {
-    theme.value = value;
-    localStorage.setItem(themeKey, value);
+    setPreference(value);
     headerPanel.value = null;
     applyTheme();
 };
 
 const onSystemTheme = () => {
+    syncSystem();
     if (theme.value === 'system') {
         applyTheme();
     }
@@ -331,6 +335,7 @@ onMounted(() => {
     applyTheme();
     if (window.innerWidth >= 992) {
         document.body.setAttribute('data-sidebar-size', localStorage.getItem(sidebarKey) === 'sm' ? 'sm' : 'lg');
+        sidebarCollapsed.value = localStorage.getItem(sidebarKey) === 'sm';
     }
     themeQuery.addEventListener('change', onSystemTheme);
     document.addEventListener('click', closeHeader);
@@ -351,11 +356,12 @@ watch(() => page.url, () => {
 </script>
 
 <template>
-    <div id="layout-wrapper">
+    <div id="layout-wrapper" :data-layout-mode="mode" :data-theme="appearance">
         <div ref="topbar"></div>
         <header id="page-topbar">
             <div class="navbar-header">
                 <div class="d-flex align-items-center">
+                    <div class="d-flex align-items-center nav-rail">
                     <div class="navbar-brand-box">
                         <Link :href="homeHref" class="logo shell-logo">
                             <span class="logo-sm">
@@ -374,8 +380,9 @@ watch(() => page.url, () => {
                         </Link>
                     </div>
                     <button type="button" class="btn btn-sm px-3 font-size-16 header-item" id="vertical-menu-btn" aria-label="Toggle navigation">
-                        <i class="fa fa-fw fa-bars"></i>
+                        <i class="fa fa-fw" :class="sidebarCollapsed ? 'fa-indent' : 'fa-outdent'"></i>
                     </button>
+                    </div>
                     <div class="d-none d-lg-flex align-items-center ms-2">
                         <slot name="tools" />
                     </div>
@@ -440,8 +447,8 @@ watch(() => page.url, () => {
                     <button v-if="settingsHref" type="button" class="btn header-item header-icon d-none d-sm-inline-flex" aria-label="Settings" @click="router.visit(settingsHref)">
                         <i data-feather="settings" class="icon-lg"></i>
                     </button>
-                    <div class="dropdown d-inline-block profile-menu">
-                        <button type="button" class="btn header-item bg-soft-light border-start border-end" :aria-expanded="headerPanel === 'profile'" @click.stop="togglePanel('profile')">
+                    <div class="dropdown d-inline-block profile-menu nav-rail">
+                        <button type="button" class="btn header-item" :aria-expanded="headerPanel === 'profile'" @click.stop="togglePanel('profile')">
                             <img v-if="user?.avatar_url" :src="user.avatar_url" alt="" class="rounded-circle header-profile-user">
                             <span v-else class="rounded-circle header-profile-user d-inline-flex align-items-center justify-content-center bg-primary text-white fw-medium">{{ initials }}</span>
                             <span class="d-none d-xl-inline-block ms-1 fw-medium">{{ user?.name }}</span>
@@ -466,7 +473,6 @@ watch(() => page.url, () => {
             <div data-simplebar class="h-100" ref="nav" @scroll.passive="rememberScroll">
                 <div id="sidebar-menu">
                     <ul class="metismenu list-unstyled" id="side-menu">
-                        <li class="menu-title">Menu</li>
                         <li v-for="item in singleItems" :key="item.key || item.name" :class="{ 'mm-active': item.active }">
                             <Link :href="item.href" :class="{ active: item.active }" @click="closeMobileNav">
                                 <i :data-feather="item.icon"></i>

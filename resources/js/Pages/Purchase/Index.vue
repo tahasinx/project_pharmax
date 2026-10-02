@@ -132,6 +132,7 @@ import LunaTable from '@/Components/LunaTable.vue'
 
 import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
+import { destroyRecord } from '@/Composables/confirmDelete'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import Pagination from '@/Components/Pagination.vue'
 
@@ -176,8 +177,6 @@ const formatDate = (date) => {
 }
 
 const deletePurchase = (id) => {
-    if (confirm('Are you sure you want to delete this purchase?')) {
-        router.delete(route('purchases.destroy', id))
-    }
+    destroyRecord('purchases.destroy', id, 'Delete this purchase?', 'The purchase has been deleted.')
 }
 </script>

@@ -1,20 +1,6 @@
 <template>
     <AuthenticatedLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Add New Medicine
-                </h2>
-                <Link :href="route('medicines.index')"
-                      class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                    Back to Medicines
-                </Link>
-            </div>
-        </template>
-
-        <div class="py-12">
-            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-                <!-- Global Validation Errors -->
+        <FormScreen title="Add medicine" :close-href="route('medicines.index')">
                 <ValidationErrors :errors="$page.props.errors" />
 
                 <form @submit.prevent="submitForm">
@@ -192,22 +178,15 @@
                                     </div>
                                 </div>
 
-                                <div class="flex justify-end space-x-4">
-                                    <Link :href="route('medicines.index')"
-                                          class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                                        Cancel
-                                    </Link>
-                                    <button type="submit"
-                                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                        Create Medicine
-                                    </button>
+                                <div class="d-flex justify-content-end gap-2">
+                                    <Link :href="route('medicines.index')" class="btn btn-light">Cancel</Link>
+                                    <button type="submit" class="btn btn-primary">Create Medicine</button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </form>
-            </div>
-        </div>
+        </FormScreen>
     </AuthenticatedLayout>
 </template>
 
@@ -215,6 +194,7 @@
 import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import FormScreen from '@/Components/FormScreen.vue'
 import SearchableSelect from '@/Components/SearchableSelect.vue'
 import ValidationErrors from '@/Components/ValidationErrors.vue'
 
