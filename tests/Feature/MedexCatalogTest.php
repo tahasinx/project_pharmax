@@ -87,4 +87,23 @@ class MedexCatalogTest extends TestCase
         $this->assertDatabaseHas('dosage_forms', ['name' => 'Tablet', 'medex_slug' => 'tablet']);
         $this->assertDatabaseHas('dosage_forms', ['name' => 'Syrup']);
     }
+
+    public function test_search_parser_extracts_medex_identity(): void
+    {
+        $html = <<<'HTML'
+            <a class="lsri" href="/brands/5555/napa-extra">
+                <li title="Tablet"></li>
+                <img src="/img/napa.png" />
+                <span>Napa Extra</span>
+                <span class="sr-strength">500 mg+65 mg</span>
+            </a>
+        HTML;
+
+        $rows = app(\App\Domain\Medex\Parsers\SearchParser::class)->parse($html);
+
+        $this->assertCount(1, $rows);
+        $this->assertSame('5555', $rows[0]['medex_id']);
+        $this->assertSame('napa-extra', $rows[0]['medex_slug']);
+        $this->assertSame('/brands/5555/napa-extra', $rows[0]['medex_path']);
+    }
 }

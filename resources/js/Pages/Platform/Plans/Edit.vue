@@ -1,5 +1,7 @@
 <script setup>
-import { Head, useForm } from '@inertiajs/vue3';
+import BillingNav from '@/Components/Platform/BillingNav.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import Layout from '../Layout.vue';
 
 const props = defineProps({ plan: Object });
@@ -10,24 +12,53 @@ const form = useForm({
     status: props.plan.status,
     features_text: (props.plan.features || []).join('\n'),
 });
+const statusOptions = [
+    { value: 'active', label: 'Active' },
+    { value: 'archived', label: 'Archived' },
+];
 </script>
 
 <template>
     <Head title="Edit plan" />
     <Layout>
-        <h1 class="text-2xl font-semibold">{{ plan.code }}</h1>
-        <form class="mt-4 max-w-lg space-y-3" @submit.prevent="form.put(`/platform/plans/${plan.id}`)">
-            <label class="block text-sm"><span class="mb-1 block">Name</span><input v-model="form.name" class="w-full" required></label>
-            <label class="block text-sm"><span class="mb-1 block">Monthly amount</span><input v-model="form.monthly_amount" type="number" step="0.01" class="w-full" required></label>
-            <label class="block text-sm"><span class="mb-1 block">Currency</span><input v-model="form.currency" class="w-full" required></label>
-            <label class="block text-sm"><span class="mb-1 block">Status</span>
-                <select v-model="form.status" class="w-full">
-                    <option value="active">Active</option>
-                    <option value="archived">Archived</option>
-                </select>
-            </label>
-            <label class="block text-sm"><span class="mb-1 block">Features, one per line</span><textarea v-model="form.features_text" class="w-full" rows="4" /></label>
-            <button class="rounded bg-[#17342b] px-3 py-2 text-sm text-white">Save</button>
-        </form>
+        <template #header>
+            <div class="min-w-0">
+                <h4 class="mb-1 font-size-18">Edit plan</h4>
+                <p class="text-muted mb-0 font-size-13">{{ plan.code }}</p>
+            </div>
+            <div class="page-title-right">
+                <Link href="/platform/plans" class="btn btn-outline-secondary btn-sm">Back to plans</Link>
+            </div>
+        </template>
+
+        <BillingNav />
+
+        <section class="pf-card" style="max-width: 40rem;">
+            <div class="pf-card-head">
+                <div>
+                    <h2>{{ plan.name }}</h2>
+                    <p>Update pricing and package details.</p>
+                </div>
+            </div>
+            <div class="pf-card-body">
+                <form @submit.prevent="form.put(`/platform/plans/${plan.id}`)">
+                    <div class="pf-composer">
+                        <label class="pf-field pf-span-8"><span>Name</span><input v-model="form.name" required></label>
+                        <label class="pf-field pf-span-4">
+                            <span>Status</span>
+                            <SearchableSelect v-model="form.status" :options="statusOptions" placeholder="Status…" />
+                        </label>
+                        <label class="pf-field pf-span-6"><span>Monthly amount</span><input v-model="form.monthly_amount" type="number" step="0.01" required></label>
+                        <label class="pf-field pf-span-6"><span>Currency</span><input v-model="form.currency" required></label>
+                        <label class="pf-field pf-span-12"><span>Features</span><textarea v-model="form.features_text" rows="4" placeholder="One feature per line" /></label>
+                    </div>
+                    <div class="d-flex justify-content-end mt-3">
+                        <button type="submit" class="btn btn-primary btn-sm" :disabled="form.processing">
+                            {{ form.processing ? 'Saving…' : 'Save changes' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
     </Layout>
 </template>

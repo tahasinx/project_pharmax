@@ -17,43 +17,15 @@
                             <div class="med-row med-row-2">
                                 <div class="med-field">
                                     <label class="field-label">Manufacturer <span class="req">*</span></label>
-                                    <div class="entity-search">
-                                        <input
-                                            :value="selectedManufacturer ? selectedManufacturer.name : manufacturerSearch"
-                                            type="text"
-                                            class="field"
-                                            :placeholder="selectedManufacturer ? selectedManufacturer.name : 'Search manufacturers…'"
-                                            autocomplete="off"
-                                            @input="handleManufacturerInput"
-                                            @focus="showManufacturerResults = true"
-                                        >
-                                        <div
-                                            v-if="showManufacturerResults && manufacturerSearchResults.length > 0"
-                                            class="entity-search-dropdown"
-                                        >
-                                            <button
-                                                v-for="manufacturer in manufacturerSearchResults"
-                                                :key="manufacturer.id"
-                                                type="button"
-                                                class="entity-search-item"
-                                                @mousedown.prevent="selectManufacturer(manufacturer)"
-                                            >
-                                                <div class="entity-search-name">{{ manufacturer.name }}</div>
-                                                <div v-if="manufacturer.email" class="entity-search-meta">{{ manufacturer.email }}</div>
-                                                <div v-if="manufacturer.mobile" class="entity-search-meta">{{ manufacturer.mobile }}</div>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div v-if="selectedManufacturer" class="selected-chip">
-                                        <div>
-                                            <div class="selected-chip-name">{{ selectedManufacturer.name }}</div>
-                                            <div v-if="selectedManufacturer.email" class="entity-search-meta">{{ selectedManufacturer.email }}</div>
-                                        </div>
-                                        <button type="button" class="selected-chip-clear" @click="clearManufacturer">×</button>
-                                    </div>
-                                    <p v-if="errors.manufacturer || (!selectedManufacturer && manufacturerSearch.length > 0)" class="field-error">
-                                        {{ errors.manufacturer || 'Please select a manufacturer from the dropdown' }}
-                                    </p>
+                                    <SearchableSelect
+                                        v-model="form.manufacturer_id"
+                                        :options="manufacturerOptions"
+                                        placeholder="Search manufacturer…"
+                                        required
+                                        :invalid="!!errors.manufacturer"
+                                    />
+                                    <p v-if="selectedManufacturerMeta" class="field-hint">{{ selectedManufacturerMeta }}</p>
+                                    <p v-if="errors.manufacturer" class="field-error">{{ errors.manufacturer }}</p>
                                 </div>
                                 <div class="med-field">
                                     <label class="field-label" for="purchase-date">Purchase date <span class="req">*</span></label>
@@ -67,12 +39,13 @@
                                     <input id="purchase-chalan" v-model="form.chalan_no" type="text" class="field" placeholder="Auto-generated if empty">
                                 </div>
                                 <div class="med-field">
-                                    <label class="field-label" for="purchase-payment">Payment type <span class="req">*</span></label>
-                                    <select id="purchase-payment" v-model="form.payment_type" class="field" required>
-                                        <option value="cash">Cash</option>
-                                        <option value="bank">Bank Transfer</option>
-                                        <option value="credit">Credit</option>
-                                    </select>
+                                    <label class="field-label">Payment type <span class="req">*</span></label>
+                                    <SearchableSelect
+                                        v-model="form.payment_type"
+                                        :options="paymentOptions"
+                                        placeholder="Select payment type…"
+                                        required
+                                    />
                                 </div>
                             </div>
 
@@ -99,38 +72,13 @@
                                 <p>Search medicines to add line items</p>
                             </header>
                             <div class="med-field">
-                                <label class="field-label" for="purchase-product-search">Search medicines</label>
-                                <div class="entity-search">
-                                    <input
-                                        id="purchase-product-search"
-                                        v-model="productSearch"
-                                        type="text"
-                                        class="field"
-                                        placeholder="Search medicines…"
-                                        autocomplete="off"
-                                        @input="searchProducts"
-                                    >
-                                    <div v-if="productSearchResults.length > 0" class="entity-search-dropdown">
-                                        <button
-                                            v-for="product in productSearchResults"
-                                            :key="product.id"
-                                            type="button"
-                                            class="entity-search-item"
-                                            @mousedown.prevent="addProduct(product)"
-                                        >
-                                            <div class="d-flex justify-content-between align-items-start gap-2">
-                                                <div>
-                                                    <div class="entity-search-name">{{ product.name }}</div>
-                                                    <div class="entity-search-meta">{{ product.generic_name }}</div>
-                                                </div>
-                                                <div class="text-end">
-                                                    <div class="entity-search-name">{{ money(product.price) }}</div>
-                                                    <div class="entity-search-meta">{{ product.category?.name }}</div>
-                                                </div>
-                                            </div>
-                                        </button>
-                                    </div>
-                                </div>
+                                <label class="field-label">Search medicines</label>
+                                <SearchableSelect
+                                    v-model="medicinePick"
+                                    :options="medicineOptions"
+                                    placeholder="Search medicines…"
+                                    @change="onMedicinePick"
+                                />
                             </div>
                         </section>
 
@@ -227,10 +175,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, nextTick, onMounted } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import FormScreen from '@/Components/FormScreen.vue'
+import SearchableSelect from '@/Components/SearchableSelect.vue'
 
 const props = defineProps({
     purchase: Object,
@@ -248,14 +197,25 @@ const money = (value) => {
         : `${ui.currency_symbol || ''}${amount}`
 }
 
-const productSearch = ref('')
-const productSearchResults = ref([])
-const cartItems = ref([])
+const mapOptions = (items, valueKey = 'id', labelKey = 'name') => [...(items || [])]
+    .sort((a, b) => String(a[labelKey] || '').localeCompare(String(b[labelKey] || '')))
+    .map((item) => ({ value: item[valueKey] ?? item.id, label: item[labelKey] }))
 
-const manufacturerSearch = ref('')
-const manufacturerSearchResults = ref([])
-const selectedManufacturer = ref(null)
-const showManufacturerResults = ref(false)
+const manufacturerOptions = computed(() => mapOptions(props.manufacturers, 'id'))
+const medicineOptions = computed(() => [...(props.medicines || [])]
+    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')))
+    .map((item) => ({
+        value: item.id,
+        label: item.generic_name ? `${item.name} — ${item.generic_name}` : item.name,
+    })))
+const paymentOptions = [
+    { value: 'cash', label: 'Cash' },
+    { value: 'bank', label: 'Bank Transfer' },
+    { value: 'credit', label: 'Credit' },
+]
+
+const medicinePick = ref('')
+const cartItems = ref([])
 
 const form = ref({
     manufacturer_id: '',
@@ -275,14 +235,18 @@ const form = ref({
 
 const errors = ref({ manufacturer: '', items: '' })
 
+const selectedManufacturerMeta = computed(() => {
+    const manufacturer = (props.manufacturers || []).find(
+        (row) => String(row.id) === String(form.value.manufacturer_id),
+    )
+    if (!manufacturer) return ''
+    return [manufacturer.mobile, manufacturer.email].filter(Boolean).join(' · ')
+})
+
 const subtotal = computed(() => cartItems.value.reduce((sum, item) => sum + item.total, 0))
-
 const tax = computed(() => subtotal.value * 0.1)
-
 const discount = computed(() => 0)
-
 const total = computed(() => subtotal.value + tax.value - discount.value)
-
 const dueAmount = computed(() => total.value - form.value.paid_amount)
 
 onMounted(() => {
@@ -302,11 +266,7 @@ onMounted(() => {
         items: [],
     }
 
-    if (props.purchase.manufacturer) {
-        selectedManufacturer.value = props.purchase.manufacturer
-    }
-
-    cartItems.value = props.purchase.items.map(item => ({
+    cartItems.value = (props.purchase.items || []).map((item) => ({
         medicine_id: item.medicine_id,
         name: item.medicine?.name || 'Unknown',
         generic_name: item.medicine?.generic_name || '',
@@ -316,81 +276,31 @@ onMounted(() => {
     }))
 })
 
-const searchProducts = async () => {
-    if (productSearch.value.length < 2) {
-        productSearchResults.value = []
-        return
-    }
-
-    try {
-        const response = await fetch(`/api/medicines/search?q=${productSearch.value}`)
-        productSearchResults.value = await response.json()
-    } catch (error) {
-        console.error('Error searching products:', error)
-        productSearchResults.value = []
-    }
-}
-
-const handleManufacturerInput = (event) => {
-    manufacturerSearch.value = event.target.value
-    if (selectedManufacturer.value && event.target.value !== selectedManufacturer.value.name) {
-        selectedManufacturer.value = null
-        form.value.manufacturer_id = ''
-    }
-    searchManufacturers()
-}
-
-const searchManufacturers = async () => {
-    if (manufacturerSearch.value.length < 2) {
-        manufacturerSearchResults.value = []
-        return
-    }
-
-    try {
-        const response = await fetch(`/api/manufacturers/search?q=${manufacturerSearch.value}`)
-        manufacturerSearchResults.value = await response.json()
-    } catch (error) {
-        console.error('Error searching manufacturers:', error)
-        manufacturerSearchResults.value = []
-    }
-}
-
-const selectManufacturer = (manufacturer) => {
-    selectedManufacturer.value = manufacturer
-    form.value.manufacturer_id = manufacturer.id
-    manufacturerSearch.value = ''
-    manufacturerSearchResults.value = []
-    showManufacturerResults.value = false
-}
-
-const clearManufacturer = () => {
-    selectedManufacturer.value = null
-    form.value.manufacturer_id = ''
-    manufacturerSearch.value = ''
-    manufacturerSearchResults.value = []
-    showManufacturerResults.value = false
-}
-
 const addProduct = (product) => {
-    const existingItem = cartItems.value.find(item => item.medicine_id === product.id)
+    const medicineId = product.id
+    const existingItem = cartItems.value.find((item) => String(item.medicine_id) === String(medicineId))
 
     if (existingItem) {
         existingItem.quantity += 1
         updateItemTotal(cartItems.value.indexOf(existingItem))
-    } else {
-        const rate = Number(product.manufacturer_price || product.price) || 0
-        cartItems.value.push({
-            medicine_id: product.id,
-            name: product.name,
-            generic_name: product.generic_name,
-            quantity: 1,
-            rate: rate,
-            total: rate,
-        })
+        return
     }
 
-    productSearch.value = ''
-    productSearchResults.value = []
+    const rate = Number(product.manufacturer_price || product.price) || 0
+    cartItems.value.push({
+        medicine_id: medicineId,
+        name: product.name,
+        generic_name: product.generic_name,
+        quantity: 1,
+        rate,
+        total: rate,
+    })
+}
+
+const onMedicinePick = (option) => {
+    const product = (props.medicines || []).find((row) => String(row.id) === String(option.value))
+    if (product) addProduct(product)
+    nextTick(() => { medicinePick.value = '' })
 }
 
 const updateItemTotal = (index) => {
@@ -406,7 +316,7 @@ const submitForm = () => {
     errors.value.manufacturer = ''
     errors.value.items = ''
 
-    if (!selectedManufacturer.value) {
+    if (!form.value.manufacturer_id) {
         errors.value.manufacturer = 'Please select a manufacturer from the dropdown'
         return
     }
@@ -556,80 +466,10 @@ const submitForm = () => {
     color: #f46a6a;
 }
 
-.entity-search {
-    position: relative;
-}
-
-.entity-search-dropdown {
-    position: absolute;
-    z-index: 50;
-    top: 100%;
-    left: 0;
-    right: 0;
-    margin-top: 0.25rem;
-    max-height: 15rem;
-    overflow-y: auto;
-    background: var(--shell-panel-surface, #fff);
-    border: 1px solid var(--shell-panel-border, #ced4da);
-    border-radius: var(--pf-radius, 0.35rem);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.entity-search-item {
-    display: block;
-    width: 100%;
-    padding: 0.45rem 0.55rem;
-    border: none;
-    border-bottom: 1px solid var(--shell-panel-border, #e6e8ee);
-    background: transparent;
-    text-align: left;
-    cursor: pointer;
-}
-
-.entity-search-item:last-child {
-    border-bottom: none;
-}
-
-.entity-search-item:hover {
-    background: var(--shell-panel-bg, #f8f9fc);
-}
-
-.entity-search-name {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--shell-panel-text, #343747);
-}
-
-.entity-search-meta {
-    font-size: 0.72rem;
+.field-hint {
+    margin: 0.2rem 0 0;
+    font-size: 0.7rem;
     color: var(--shell-panel-muted, #74788d);
-}
-
-.selected-chip {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.5rem;
-    margin-top: 0.45rem;
-    padding: 0.45rem 0.55rem;
-    border-radius: var(--pf-radius, 0.35rem);
-    border: 1px solid var(--shell-panel-accent-border, #b7ebd6);
-    background: var(--shell-panel-accent-bg, #e8f8f1);
-}
-
-.selected-chip-name {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--shell-panel-accent-text, #1e8f68);
-}
-
-.selected-chip-clear {
-    border: none;
-    background: transparent;
-    font-size: 1.1rem;
-    line-height: 1;
-    color: var(--shell-panel-muted, #74788d);
-    cursor: pointer;
 }
 
 .summary-lines {

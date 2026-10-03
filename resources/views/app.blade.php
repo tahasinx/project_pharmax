@@ -40,13 +40,23 @@
                         if ($tenantSetting?->title) {
                             $appName = $tenantSetting->title;
                         }
+                        if ($tenantSetting?->favicon) {
+                            $path = trim((string) $tenantSetting->favicon);
+                            if ($path !== '' && ! str_contains($path, '..')) {
+                                $favicon = str_starts_with($path, 'http') || str_starts_with($path, '/')
+                                    ? $path
+                                    : asset('storage/'.$path);
+                            }
+                        }
                     } catch (\Throwable) {
                     }
                 }
             } catch (\Throwable) {
             }
         }
-        $strong = min(900, (int) $brand['font_weight'] + 200);
+        $baseWeight = (int) $brand['font_weight'];
+        $medium = min(900, $baseWeight + 100);
+        $strong = min(900, $baseWeight + 200);
         $primaryRgb = $brand['primary_rgb'] ?? '81, 86, 190';
     @endphp
     <meta name="app-name" content="{{ $appName }}">
@@ -55,13 +65,28 @@
         :root {
             --pf-accent: {{ $brand['primary'] }};
             --pf-accent-rgb: {{ $primaryRgb }};
+            --pf-primary: {{ $brand['primary'] }};
             --pf-font: "{{ $brand['font_family'] }}", sans-serif;
             --pf-size: {{ (int) $brand['font_size'] }}px;
-            --pf-weight: {{ (int) $brand['font_weight'] }};
+            --pf-weight: {{ $baseWeight }};
+            --pf-weight-medium: {{ $medium }};
             --pf-weight-strong: {{ $strong }};
             --pf-radius: {{ $brand['radius'] }};
             --bs-primary: {{ $brand['primary'] }};
             --bs-primary-rgb: {{ $primaryRgb }};
+            --bs-link-color: {{ $brand['primary'] }};
+            --bs-link-hover-color: {{ $brand['primary'] }};
+            --bs-body-font-family: "{{ $brand['font_family'] }}", sans-serif;
+            --bs-font-sans-serif: "{{ $brand['font_family'] }}", sans-serif;
+            --bs-border-radius: {{ $brand['radius'] }};
+            --bs-border-radius-sm: {{ $brand['radius'] }};
+            --bs-border-radius-lg: {{ $brand['radius'] }};
+            --bs-body-font-weight: {{ $baseWeight }};
+        }
+        html, body {
+            font-family: var(--pf-font) !important;
+            font-size: var(--pf-size);
+            font-weight: var(--pf-weight) !important;
         }
     </style>
     @if (($brand['font_href'] ?? '') !== '')
@@ -71,9 +96,9 @@
     <!-- Favicon -->
     <link rel="icon" href="{{ $favicon }}">
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <!-- Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="{{ asset('vendor/bootstrap-icons/bootstrap-icons.min.css') }}">
 
     <!-- Scripts -->
@@ -83,7 +108,7 @@
     <link href="{{ asset('minia/assets/css/icons.scoped.css') }}" rel="stylesheet">
     <link href="{{ asset('minia/assets/css/app.scoped.css') }}" rel="stylesheet">
     <link href="{{ asset('minia/assets/libs/datatables.net-bs4/css/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('minia/assets/css/shell.css') }}?v=theme-shell-v49" rel="stylesheet">
+    <link href="{{ asset('minia/assets/css/shell.css') }}?v=theme-shell-v52" rel="stylesheet">
     <link href="{{ asset('minia/assets/css/preloader.min.css') }}" rel="stylesheet">
     <script src="{{ asset('minia/assets/libs/pace-js/pace.min.js') }}"></script>
     @inertiaHead

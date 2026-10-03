@@ -30,15 +30,15 @@ onUnmounted(() => clearTimeout(timer));
 <template>
     <Head title="Deploy" />
     <Layout>
-        <OpsNav />
-        <div class="pf-page-head">
-            <div>
-                <h1>Deploy production</h1>
-                <p class="pf-page-sub">
+        <template #header>
+            <div class="min-w-0">
+                <h4 class="mb-1 font-size-18">Deploy production</h4>
+                <p class="text-muted mb-0 font-size-13">
                     {{ settings.owner }}/{{ settings.repo }} · {{ settings.base }} → {{ settings.prod }} · {{ settings.workflow }}
                 </p>
             </div>
-        </div>
+        </template>
+        <OpsNav />
 
         <div class="row g-3">
             <div class="col-lg-7">

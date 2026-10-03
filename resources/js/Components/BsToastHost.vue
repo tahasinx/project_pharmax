@@ -1,26 +1,42 @@
 <script setup>
+import { computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import { dismissToast, toasts } from '@/toast';
+
+const page = usePage();
+const appName = computed(() => page.props.app?.name || 'Epharma');
+const logo = computed(() => page.props.app?.logo || '/favicon.svg');
+
+const typeClass = (type) => ({
+    success: 'is-success',
+    danger: 'is-danger',
+    warning: 'is-warning',
+    info: 'is-info',
+}[type] || 'is-info');
 </script>
 
 <template>
     <Teleport to="body">
-        <div id="toastHost" class="toast-container position-fixed top-0 end-0 p-3">
-            <TransitionGroup name="bs-toast">
+        <div id="toastHost" class="app-toast-host" aria-live="polite" aria-relevant="additions">
+            <TransitionGroup name="app-toast" tag="div" class="app-toast-stack">
                 <div
                     v-for="toast in toasts"
                     :key="toast.id"
-                    class="toast show"
+                    class="app-toast"
+                    :class="typeClass(toast.type)"
                     role="alert"
-                    aria-live="assertive"
                     aria-atomic="true"
                 >
-                    <div class="toast-header">
-                        <img src="/favicon.svg" class="rounded me-2" width="20" height="20" alt="">
-                        <strong class="me-auto">Epharma</strong>
-                        <small class="text-body-secondary">just now</small>
-                        <button type="button" class="btn-close" aria-label="Close" @click="dismissToast(toast.id)" />
+                    <div class="app-toast-header">
+                        <img :src="logo" alt="" class="app-toast-logo" height="18" width="18">
+                        <strong class="app-toast-brand">{{ appName }}</strong>
+                        <small class="app-toast-when">{{ toast.when || 'just now' }}</small>
+                        <button type="button" class="app-toast-close" aria-label="Close" @click="dismissToast(toast.id)">&times;</button>
                     </div>
-                    <div class="toast-body" :class="`text-${toast.type}`">{{ toast.message }}</div>
+                    <div class="app-toast-body">
+                        <strong v-if="toast.title" class="app-toast-title">{{ toast.title }}</strong>
+                        <span>{{ toast.message }}</span>
+                    </div>
                 </div>
             </TransitionGroup>
         </div>
@@ -28,116 +44,134 @@ import { dismissToast, toasts } from '@/toast';
 </template>
 
 <style>
-#toastHost.toast-container {
-    max-width: 100%;
-    pointer-events: none;
+.app-toast-host {
     position: fixed;
-    right: 0;
-    top: 0;
-    width: max-content;
-    z-index: 1090;
-    padding: 1rem;
+    top: 0.85rem;
+    right: 0.85rem;
+    z-index: 10050;
+    width: min(360px, calc(100vw - 1.5rem));
+    pointer-events: none;
 }
 
-#toastHost .toast {
-    background-clip: padding-box;
-    background-color: rgba(255, 255, 255, 0.85);
-    border: 1px solid rgba(0, 0, 0, 0.175);
-    border-radius: 0.375rem;
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    color: #212529;
-    font-size: 0.875rem;
-    margin-bottom: 0.75rem;
-    max-width: 100%;
-    pointer-events: auto;
-    width: 350px;
-    backdrop-filter: blur(6px);
-}
-
-#toastHost .toast-header {
-    align-items: center;
-    background-clip: padding-box;
-    background-color: rgba(255, 255, 255, 0.85);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.175);
-    border-top-left-radius: calc(0.375rem - 1px);
-    border-top-right-radius: calc(0.375rem - 1px);
-    color: rgba(33, 37, 41, 0.75);
+.app-toast-stack {
     display: flex;
-    padding: 0.5rem 0.75rem;
+    flex-direction: column;
+    gap: 0.65rem;
 }
 
-#toastHost .toast-header .rounded {
-    border-radius: 0.375rem;
+.app-toast {
+    pointer-events: auto;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 0.4rem;
+    box-shadow: 0 0.5rem 1.25rem rgba(16, 24, 40, 0.14);
+    backdrop-filter: blur(8px);
+    overflow: hidden;
+    position: relative;
 }
 
-#toastHost .toast-header .me-2 {
-    margin-right: 0.5rem;
+.app-toast::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #5156be;
 }
 
-#toastHost .toast-header .me-auto {
+.app-toast.is-success::before { background: #34c38f; }
+.app-toast.is-danger::before { background: #f46a6a; }
+.app-toast.is-warning::before { background: #f1b44c; }
+.app-toast.is-info::before { background: #50a5f1; }
+
+.app-toast-header {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.app-toast-logo {
+    border-radius: 0.2rem;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.app-toast-brand {
     flex: 1 1 auto;
-    margin-right: auto;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #212529;
 }
 
-#toastHost .toast-header strong {
+.app-toast-when {
+    color: #74788d;
+    font-size: 0.72rem;
+    white-space: nowrap;
+}
+
+.app-toast-close {
+    border: 0;
+    background: transparent;
+    color: #74788d;
+    font-size: 1.15rem;
+    line-height: 1;
+    padding: 0 0.15rem;
+    cursor: pointer;
+}
+
+.app-toast-close:hover {
     color: #212529;
+}
+
+.app-toast-body {
+    padding: 0.7rem 0.85rem 0.8rem;
+    font-size: 0.86rem;
+    color: #495057;
+    word-break: break-word;
+}
+
+.app-toast-title {
+    display: block;
+    margin-bottom: 0.2rem;
+    font-size: 0.8rem;
     font-weight: 700;
 }
 
-#toastHost .text-body-secondary {
-    color: rgba(33, 37, 41, 0.75);
-    font-size: 0.875em;
+.app-toast.is-success .app-toast-body { color: #1f7a57; }
+.app-toast.is-danger .app-toast-body { color: #c0392b; }
+.app-toast.is-warning .app-toast-body { color: #9a6b12; }
+.app-toast.is-info .app-toast-body { color: #2a6fad; }
+
+body[data-bs-theme="dark"] .app-toast,
+body[data-bs-theme="dark"] .app-toast-header {
+    background: rgba(33, 37, 41, 0.96);
+    border-color: rgba(255, 255, 255, 0.08);
 }
 
-#toastHost .toast-body {
-    padding: 0.75rem;
-    word-wrap: break-word;
+body[data-bs-theme="dark"] .app-toast-brand,
+body[data-bs-theme="dark"] .app-toast-body,
+body[data-bs-theme="dark"] .app-toast-close:hover {
+    color: #e9ecef;
 }
 
-#toastHost .toast-body.text-danger {
-    color: #dc3545;
+body[data-bs-theme="dark"] .app-toast-when,
+body[data-bs-theme="dark"] .app-toast-close {
+    color: #adb5bd;
 }
 
-#toastHost .toast-body.text-success {
-    color: #2f6f4e;
-    font-weight: 500;
-    letter-spacing: 0.01em;
+.app-toast-enter-active,
+.app-toast-leave-active {
+    transition: opacity 0.18s ease, transform 0.18s ease;
 }
 
-#toastHost .toast-body.text-warning {
-    color: #b58105;
-    font-weight: 500;
-}
-
-#toastHost .toast-body.text-info {
-    color: #0d6efd;
-}
-
-#toastHost .btn-close {
-    background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e") center / 1em auto no-repeat;
-    border: 0;
-    box-sizing: content-box;
-    cursor: pointer;
-    flex: 0 0 auto;
-    height: 1em;
-    margin-left: 0.75rem;
-    margin-right: -0.375rem;
-    opacity: 0.5;
-    padding: 0.25em;
-    width: 1em;
-}
-
-#toastHost .btn-close:hover {
-    opacity: 1;
-}
-
-.bs-toast-enter-active,
-.bs-toast-leave-active {
-    transition: opacity 0.15s linear;
-}
-
-.bs-toast-enter-from,
-.bs-toast-leave-to {
+.app-toast-enter-from,
+.app-toast-leave-to {
     opacity: 0;
+    transform: translateX(14px);
 }
 </style>

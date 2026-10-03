@@ -123,6 +123,8 @@ class SettingController extends Controller
             'company_email'   => 'info@pharmacare.com',
             'company_phone'   => '+1 (555) 123-4567',
             'company_address' => '123 Pharmacy Street, Medical City',
+            'logo_url'        => '',
+            'favicon_url'     => '',
 
             // Invoice Settings
             'default_tax_rate'    => 10,
@@ -192,6 +194,8 @@ class SettingController extends Controller
             'company_address' => $setting->address ?? $defaults['company_address'],
             'invoice_footer'  => $setting->footer_text ?? $defaults['invoice_footer'],
             'timezone'        => $setting->timezone ?? $defaults['timezone'],
+            'logo_url'        => $this->publicMediaUrl($setting->logo),
+            'favicon_url'     => $this->publicMediaUrl($setting->favicon),
         ]);
     }
 
@@ -272,6 +276,10 @@ class SettingController extends Controller
             'company_address' => 'nullable|string',
             'company_phone'   => 'nullable|string|max:20',
             'company_email'   => 'nullable|email|max:255',
+            'logo'            => 'nullable|image|mimes:jpg,jpeg,png,gif,webp,svg|max:2048',
+            'favicon'         => 'nullable|file|mimes:jpg,jpeg,png,gif,webp,svg,ico|max:1024',
+            'remove_logo'     => 'nullable|boolean',
+            'remove_favicon'  => 'nullable|boolean',
 
             // Invoice Settings
             'default_tax_rate'    => 'nullable|numeric|min:0|max:100',
@@ -341,7 +349,45 @@ class SettingController extends Controller
             $setting->rtl           = false;
         }
 
+        if ($request->boolean('remove_logo') && $setting->logo) {
+            Storage::disk('public')->delete($setting->logo);
+            $setting->logo = null;
+        }
+
+        if ($request->boolean('remove_favicon') && $setting->favicon) {
+            Storage::disk('public')->delete($setting->favicon);
+            $setting->favicon = null;
+        }
+
+        if ($request->hasFile('logo')) {
+            if ($setting->logo) {
+                Storage::disk('public')->delete($setting->logo);
+            }
+            $setting->logo = $request->file('logo')->store('brand', 'public');
+        }
+
+        if ($request->hasFile('favicon')) {
+            if ($setting->favicon) {
+                Storage::disk('public')->delete($setting->favicon);
+            }
+            $setting->favicon = $request->file('favicon')->store('brand', 'public');
+        }
+
         $setting->save();
+    }
+
+    private function publicMediaUrl(?string $path): string
+    {
+        $path = trim((string) $path);
+        if ($path === '' || str_contains($path, '..')) {
+            return '';
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, '/')) {
+            return $path;
+        }
+
+        return asset('storage/'.$path);
     }
 
     /**

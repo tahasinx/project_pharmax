@@ -109,6 +109,46 @@ class PlatformSettingsStore
     }
 
     /**
+     * Apply saved SMTP settings to the runtime mailer (central / platform mail).
+     */
+    public function applyMailer(): void
+    {
+        $mail = $this->mailer();
+        if (! $mail['enabled'] || $mail['host'] === '') {
+            return;
+        }
+
+        config([
+            'mail.default'                 => 'smtp',
+            'mail.mailers.smtp.transport'  => 'smtp',
+            'mail.mailers.smtp.host'       => $mail['host'],
+            'mail.mailers.smtp.port'       => $mail['port'] ?: 587,
+            'mail.mailers.smtp.encryption' => $mail['encryption'] !== '' ? $mail['encryption'] : null,
+            'mail.mailers.smtp.username'   => $mail['username'],
+            'mail.mailers.smtp.password'   => $mail['password'],
+            'mail.from.address'            => $mail['from_address'] !== '' ? $mail['from_address'] : config('mail.from.address'),
+            'mail.from.name'               => $mail['from_name'] !== '' ? $mail['from_name'] : (string) $this->all()['name'],
+        ]);
+    }
+
+    /**
+     * Merge optional notes with the platform invoice footer.
+     */
+    public function invoiceNotes(?string $notes = null): ?string
+    {
+        $notes = trim((string) $notes);
+        $footer = trim((string) ($this->all()['invoice_footer'] ?? ''));
+        if ($footer === '') {
+            return $notes !== '' ? $notes : null;
+        }
+        if ($notes === '') {
+            return $footer;
+        }
+
+        return $notes."\n\n".$footer;
+    }
+
+    /**
      * @param  array<string, mixed>  $values
      */
     public function save(array $values): void
@@ -156,7 +196,7 @@ class PlatformSettingsStore
             return '';
         }
         $host    = parse_url($raw, PHP_URL_HOST);
-        $allowed = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdn.jsdelivr.net', 'cdnjs.cloudflare.com'];
+        $allowed = ['fonts.googleapis.com', 'fonts.gstatic.com', 'fonts.bunny.net', 'cdn.jsdelivr.net', 'cdnjs.cloudflare.com'];
         if (! is_string($host) || ! in_array(strtolower($host), $allowed, true)) {
             return '';
         }

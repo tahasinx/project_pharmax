@@ -32,6 +32,11 @@ class SwitchTenantDatabase
             $this->useDatabase($centralDb);
             $this->guardSession($request, $centralDb);
             $request->attributes->set('tenant.mode', 'central');
+            try {
+                app(\App\Services\Platform\PlatformSettingsStore::class)->applyMailer();
+            } catch (\Throwable) {
+                // Settings table may be unavailable during install.
+            }
 
             return $next($request);
         }

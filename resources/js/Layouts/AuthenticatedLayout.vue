@@ -41,7 +41,12 @@ const menus = computed(() => {
 
 const isActive = (name) => {
     try {
-        return route().current(name) || route().current(`${name}*`);
+        if (route().current(name) || route().current(`${name}*`)) {
+            return true;
+        }
+        // Keep list menus active on resource create/edit/show (e.g. medicines.index → medicines.create)
+        const base = String(name || '').replace(/\.index$/, '');
+        return Boolean(base && base !== name && route().current(`${base}.*`));
     } catch (e) {
         return false;
     }

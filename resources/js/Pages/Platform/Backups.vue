@@ -10,13 +10,13 @@ defineProps({ rows: Array });
 <template>
     <Head title="Backups" />
     <Layout>
-        <OpsNav />
-        <div class="pf-page-head">
-            <div>
-                <h1>Database backups</h1>
-                <p class="pf-page-sub">Create and download dumps for each pharmacy tenant database.</p>
+        <template #header>
+            <div class="min-w-0">
+                <h4 class="mb-1 font-size-18">Database backups</h4>
+                <p class="text-muted mb-0 font-size-13">Create and download dumps for each pharmacy tenant database.</p>
             </div>
-        </div>
+        </template>
+        <OpsNav />
 
         <section class="pf-card">
             <LunaTable title="Backups">

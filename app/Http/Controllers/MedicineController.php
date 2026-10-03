@@ -440,9 +440,16 @@ class MedicineController extends Controller
             ];
         }
 
-        $existing = Medicine::where('name', $medicineName)
-            ->where('manufacturer_id', $manufacturer->id)
-            ->first();
+        $existing = null;
+        if ($request->filled('medex_id')) {
+            $existing = Medicine::query()->where('medex_id', $request->medex_id)->first();
+        }
+        if (! $existing) {
+            $existing = Medicine::query()
+                ->where('name', $medicineName)
+                ->where('manufacturer_id', $manufacturer->id)
+                ->first();
+        }
         if ($existing) {
             $existing->fill([
                 'generic_id'       => $existing->generic_id ?: $generic?->id,
@@ -452,9 +459,9 @@ class MedicineController extends Controller
                 'dosage_form_id'   => $existing->dosage_form_id ?: $dosageForm?->id,
                 'dosage_form'      => $existing->dosage_form ?: ($dosageFormName !== '' ? $dosageFormName : null),
                 'generic_name'     => $existing->generic_name ?: ($genericName !== '' ? $genericName : null),
-                'medex_id'         => $existing->medex_id ?: $request->medex_id,
-                'medex_name'       => $existing->medex_name ?: $request->medex_name,
-                'details'          => $existing->details ?: ($reference ? json_encode($reference) : null),
+                'medex_id'         => $request->medex_id ?: $existing->medex_id,
+                'medex_name'       => $request->medex_name ?: $existing->medex_name,
+                'details'          => $reference ? json_encode($reference) : $existing->details,
             ]);
             $existing->save();
 

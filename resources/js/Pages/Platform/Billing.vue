@@ -1,6 +1,7 @@
 <script setup>
-import LunaTable from '@/Components/LunaTable.vue'
-
+import LunaTable from '@/Components/LunaTable.vue';
+import BillingNav from '@/Components/Platform/BillingNav.vue';
+import StatusBadge from '@/Components/Platform/StatusBadge.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { reactive } from 'vue';
 import Layout from './Layout.vue';
@@ -12,41 +13,77 @@ const filter = reactive({ from: props.from || '', to: props.to || '' });
 <template>
     <Head title="Billing" />
     <Layout>
-        <section class="overflow-hidden rounded-xl border border-[#e4e4e7] bg-white">
-            <div class="flex flex-wrap items-end justify-between gap-4 border-b border-[#f4f4f5] px-5 py-4">
-                <div>
-                    <h1>Billing</h1>
-                    <p class="mt-1 text-sm text-[#71717a]">Paid {{ paid }} · Unpaid {{ unpaid }}</p>
-                </div>
-                <form class="flex flex-wrap items-end gap-3" @submit.prevent="router.get('/platform/billing', filter)">
-                    <label class="text-sm"><span class="mb-1 block text-[#71717a]">From</span><input v-model="filter.from" type="date"></label>
-                    <label class="text-sm"><span class="mb-1 block text-[#71717a]">To</span><input v-model="filter.to" type="date"></label>
-                    <button class="rounded-md bg-[#17342b] px-3 py-2 text-sm font-medium text-white">Filter</button>
-                </form>
+        <template #header>
+            <div class="min-w-0">
+                <h4 class="mb-1 font-size-18">Billing overview</h4>
+                <p class="text-muted mb-0 font-size-13">Cashflow across issued pharmacy invoices.</p>
             </div>
-            <LunaTable title="Billing">
-<table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>Issued</th>
-                        <th>Number</th>
-                        <th>Pharmacy</th>
-                        <th>Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-if="!invoices.length">
-                        <td colspan="4" class="py-10 text-center text-sm text-[#71717a]">No invoices in this range.</td>
-                    </tr>
-                    <tr v-for="invoice in invoices" :key="invoice.id">
-                        <td>{{ invoice.issued_on }}</td>
-                        <td class="font-medium">{{ invoice.number }}</td>
-                        <td>{{ invoice.company?.name }}</td>
-                        <td>{{ invoice.amount }} · {{ invoice.status }}</td>
-                    </tr>
-                </tbody>
-            </table>
-</LunaTable>
+        </template>
+
+        <BillingNav />
+
+        <div class="pf-metric-grid mb-3">
+            <div class="pf-metric">
+                <span class="pf-metric-label">Paid</span>
+                <span class="pf-metric-value">{{ paid }}</span>
+                <span class="pf-metric-hint">Settled in range</span>
+            </div>
+            <div class="pf-metric">
+                <span class="pf-metric-label">Unpaid</span>
+                <span class="pf-metric-value">{{ unpaid }}</span>
+                <span class="pf-metric-hint">Open balance</span>
+            </div>
+            <div class="pf-metric">
+                <span class="pf-metric-label">Documents</span>
+                <span class="pf-metric-value">{{ invoices.length }}</span>
+                <span class="pf-metric-hint">Invoices shown</span>
+            </div>
+        </div>
+
+        <form class="pf-toolbar" @submit.prevent="router.get('/platform/billing', filter)">
+            <label class="pf-field">
+                <span>From</span>
+                <input v-model="filter.from" type="date">
+            </label>
+            <label class="pf-field">
+                <span>To</span>
+                <input v-model="filter.to" type="date">
+            </label>
+            <button type="submit" class="btn btn-primary btn-sm">Apply range</button>
+        </form>
+
+        <section class="pf-card">
+            <LunaTable title="Invoice activity">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>Issued</th>
+                            <th>Number</th>
+                            <th>Pharmacy</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-if="!invoices.length">
+                            <td colspan="5">
+                                <div class="pf-empty">
+                                    <i class="bi bi-graph-up" />
+                                    <strong>No activity in this range</strong>
+                                    <span>Adjust the dates or issue an invoice first.</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-for="invoice in invoices" :key="invoice.id">
+                            <td class="small text-muted">{{ invoice.issued_on }}</td>
+                            <td class="fw-semibold">{{ invoice.number }}</td>
+                            <td>{{ invoice.company?.name }}</td>
+                            <td><span class="pf-money">{{ invoice.amount }}</span></td>
+                            <td><StatusBadge :status="invoice.status" /></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </LunaTable>
         </section>
     </Layout>
 </template>

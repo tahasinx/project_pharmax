@@ -11,50 +11,23 @@
                             </header>
                             <div class="med-row med-row-2">
                                 <div class="med-field">
-                                    <label class="field-label" for="invoice-customer">Customer <span class="req">*</span></label>
-                                    <div class="entity-search customer-search-container">
-                                        <input
-                                            id="invoice-customer"
-                                            v-model="customerSearch"
-                                            type="text"
-                                            class="field"
-                                            placeholder="Search customer…"
-                                            autocomplete="off"
-                                            required
-                                            @input="searchCustomers"
-                                            @focus="customerSearchFocused = true"
-                                        >
-                                        <div
-                                            v-if="customerSearchFocused && customerSearchResults.length > 0"
-                                            class="entity-search-dropdown"
-                                        >
-                                            <button
-                                                v-for="customer in customerSearchResults"
-                                                :key="customer.id"
-                                                type="button"
-                                                class="entity-search-item"
-                                                @mousedown.prevent="selectCustomer(customer)"
-                                            >
-                                                {{ customer.name }} — {{ customer.mobile }}
-                                            </button>
-                                        </div>
-                                    </div>
+                                    <label class="field-label">Customer <span class="req">*</span></label>
+                                    <SearchableSelect
+                                        v-model="form.customer_id"
+                                        :options="customerOptions"
+                                        placeholder="Search customer…"
+                                        required
+                                    />
+                                    <p v-if="selectedCustomerMeta" class="field-hint">{{ selectedCustomerMeta }}</p>
                                 </div>
                                 <div class="med-field">
-                                    <label class="field-label" for="invoice-payment">Payment type <span class="req">*</span></label>
-                                    <select id="invoice-payment" v-model="form.payment_type" class="field" required>
-                                        <option value="cash">Cash</option>
-                                        <option value="bank">Bank</option>
-                                        <option value="credit">Credit</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div v-if="selectedCustomer" class="selected-chip">
-                                <div>
-                                    <div class="selected-chip-name">{{ selectedCustomer.name }}</div>
-                                    <div class="entity-search-meta">Mobile: {{ selectedCustomer.mobile }}</div>
-                                    <div class="entity-search-meta">Email: {{ selectedCustomer.email || 'N/A' }}</div>
-                                    <div class="entity-search-meta">Address: {{ selectedCustomer.address || 'N/A' }}</div>
+                                    <label class="field-label">Payment type <span class="req">*</span></label>
+                                    <SearchableSelect
+                                        v-model="form.payment_type"
+                                        :options="paymentOptions"
+                                        placeholder="Select payment type…"
+                                        required
+                                    />
                                 </div>
                             </div>
                         </section>
@@ -82,38 +55,13 @@
                                 <p>Search medicines to add line items</p>
                             </header>
                             <div class="med-field">
-                                <label class="field-label" for="invoice-product-search">Search medicines</label>
-                                <div class="entity-search">
-                                    <input
-                                        id="invoice-product-search"
-                                        v-model="productSearch"
-                                        type="text"
-                                        class="field"
-                                        placeholder="Search medicines…"
-                                        autocomplete="off"
-                                        @input="searchProducts"
-                                    >
-                                    <div v-if="productSearchResults.length > 0" class="entity-search-dropdown">
-                                        <button
-                                            v-for="product in productSearchResults"
-                                            :key="product.id"
-                                            type="button"
-                                            class="entity-search-item"
-                                            @mousedown.prevent="addProduct(product)"
-                                        >
-                                            <div class="d-flex justify-content-between align-items-start gap-2">
-                                                <div>
-                                                    <div class="entity-search-name">{{ product.name }}</div>
-                                                    <div class="entity-search-meta">{{ product.generic_name }}</div>
-                                                </div>
-                                                <div class="text-end">
-                                                    <div class="entity-search-name">{{ money(product.price) }}</div>
-                                                    <div class="entity-search-meta">{{ product.category?.name }}</div>
-                                                </div>
-                                            </div>
-                                        </button>
-                                    </div>
-                                </div>
+                                <label class="field-label">Search medicines</label>
+                                <SearchableSelect
+                                    v-model="medicinePick"
+                                    :options="medicineOptions"
+                                    placeholder="Search medicines…"
+                                    @change="onMedicinePick"
+                                />
                             </div>
                         </section>
 
@@ -220,10 +168,11 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import FormScreen from '@/Components/FormScreen.vue'
+import SearchableSelect from '@/Components/SearchableSelect.vue'
 
 const props = defineProps({
     customers: Array,
@@ -243,16 +192,29 @@ const money = (value) => {
         : `${ui.currency_symbol || ''}${amount}`
 }
 
-const productSearch = ref('')
-const productSearchResults = ref([])
+const customerOptions = computed(() => [...(props.customers || [])]
+    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')))
+    .map((item) => ({
+        value: item.id,
+        label: item.mobile ? `${item.name} — ${item.mobile}` : item.name,
+    })))
+const medicineOptions = computed(() => [...(props.medicines || [])]
+    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')))
+    .map((item) => ({
+        value: item.id,
+        label: item.generic_name ? `${item.name} — ${item.generic_name}` : item.name,
+    })))
+const paymentOptions = [
+    { value: 'cash', label: 'Cash' },
+    { value: 'bank', label: 'Bank' },
+    { value: 'credit', label: 'Credit' },
+]
+
+const medicinePick = ref('')
 const cartItems = ref([])
-const selectedCustomer = ref(null)
-const customerSearch = ref('')
-const customerSearchResults = ref([])
-const customerSearchFocused = ref(false)
 
 const form = ref({
-    customer_id: null,
+    customer_id: '',
     payment_type: 'cash',
     paid_amount: 0,
     due_amount: 0,
@@ -262,13 +224,21 @@ const form = ref({
     items: [],
 })
 
+const selectedCustomerMeta = computed(() => {
+    const customer = (props.customers || []).find(
+        (row) => String(row.id) === String(form.value.customer_id),
+    )
+    if (!customer) return ''
+    return [customer.mobile, customer.email, customer.address].filter(Boolean).join(' · ')
+})
+
 const subtotal = computed(() => {
     const sum = cartItems.value.reduce((sum, item) => sum + Number(item.total ?? 0), 0)
     return Math.round(sum * 100) / 100
 })
 
 const tax = computed(() => {
-    const taxRate = props.ui.default_tax_rate || 10
+    const taxRate = props.ui?.default_tax_rate || page.props.ui?.default_tax_rate || 10
     const taxAmount = subtotal.value * (taxRate / 100)
     return Math.round(taxAmount * 100) / 100
 })
@@ -296,62 +266,30 @@ const updateDiscount = () => {
     form.value.due_amount = total.value - (Number(form.value.paid_amount) || 0)
 }
 
-const searchCustomers = async () => {
-    if (customerSearch.value.length < 2) {
-        customerSearchResults.value = []
-        return
-    }
-
-    try {
-        const response = await fetch(`/api/customers/search?q=${customerSearch.value}`)
-        customerSearchResults.value = await response.json()
-    } catch (error) {
-        console.error('Error searching customers:', error)
-    }
-}
-
-const selectCustomer = (customer) => {
-    selectedCustomer.value = customer
-    form.value.customer_id = customer.id
-    customerSearch.value = `${customer.name}`
-    customerSearchResults.value = []
-    customerSearchFocused.value = false
-}
-
-const searchProducts = async () => {
-    if (productSearch.value.length < 2) {
-        productSearchResults.value = []
-        return
-    }
-
-    try {
-        const response = await fetch(`/api/medicines/search?q=${productSearch.value}`)
-        productSearchResults.value = await response.json()
-    } catch (error) {
-        console.error('Error searching products:', error)
-    }
-}
-
 const addProduct = (product) => {
-    const existingItem = cartItems.value.find(item => item.id === product.id)
+    const existingItem = cartItems.value.find((item) => String(item.id) === String(product.id))
 
     if (existingItem) {
         existingItem.quantity += 1
         updateItemTotal(cartItems.value.indexOf(existingItem))
-    } else {
-        cartItems.value.push({
-            id: product.id,
-            medicine_id: product.id,
-            name: product.name,
-            generic_name: product.generic_name,
-            price: Number(product.price ?? 0),
-            quantity: 1,
-            total: Number(product.price ?? 0),
-        })
+        return
     }
 
-    productSearch.value = ''
-    productSearchResults.value = []
+    cartItems.value.push({
+        id: product.id,
+        medicine_id: product.id,
+        name: product.name,
+        generic_name: product.generic_name,
+        price: Number(product.price ?? 0),
+        quantity: 1,
+        total: Number(product.price ?? 0),
+    })
+}
+
+const onMedicinePick = (option) => {
+    const product = (props.medicines || []).find((row) => String(row.id) === String(option.value))
+    if (product) addProduct(product)
+    nextTick(() => { medicinePick.value = '' })
 }
 
 const increaseQuantity = (index) => {
@@ -513,68 +451,10 @@ const submitForm = () => {
     min-width: 4.5rem;
 }
 
-.entity-search {
-    position: relative;
-}
-
-.entity-search-dropdown {
-    position: absolute;
-    z-index: 50;
-    top: 100%;
-    left: 0;
-    right: 0;
-    margin-top: 0.25rem;
-    max-height: 15rem;
-    overflow-y: auto;
-    background: var(--shell-panel-surface, #fff);
-    border: 1px solid var(--shell-panel-border, #ced4da);
-    border-radius: var(--pf-radius, 0.35rem);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.entity-search-item {
-    display: block;
-    width: 100%;
-    padding: 0.45rem 0.55rem;
-    border: none;
-    border-bottom: 1px solid var(--shell-panel-border, #e6e8ee);
-    background: transparent;
-    text-align: left;
-    cursor: pointer;
-    font-size: 0.82rem;
-}
-
-.entity-search-item:last-child {
-    border-bottom: none;
-}
-
-.entity-search-item:hover {
-    background: var(--shell-panel-bg, #f8f9fc);
-}
-
-.entity-search-name {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--shell-panel-text, #343747);
-}
-
-.entity-search-meta {
-    font-size: 0.72rem;
+.field-hint {
+    margin: 0.2rem 0 0;
+    font-size: 0.7rem;
     color: var(--shell-panel-muted, #74788d);
-}
-
-.selected-chip {
-    margin-top: 0.45rem;
-    padding: 0.45rem 0.55rem;
-    border-radius: var(--pf-radius, 0.35rem);
-    border: 1px solid var(--shell-panel-accent-border, #b7ebd6);
-    background: var(--shell-panel-accent-bg, #e8f8f1);
-}
-
-.selected-chip-name {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--shell-panel-accent-text, #1e8f68);
 }
 
 .summary-lines {

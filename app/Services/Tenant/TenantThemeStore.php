@@ -190,7 +190,7 @@ class TenantThemeStore
         if ($href === '') {
             return '';
         }
-        if (! preg_match('#^https://(fonts\.googleapis\.com|cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com)/#i', $href)) {
+        if (! preg_match('#^https://(fonts\.googleapis\.com|fonts\.bunny\.net|cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com)/#i', $href)) {
             return '';
         }
 

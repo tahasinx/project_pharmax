@@ -116,10 +116,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import SettingsNav from '@/Components/SettingsNav.vue'
+import { applyBrandTheme, shapeRadius } from '@/theme/applyBrandTheme'
 
 const props = defineProps({
     theme: Object,
@@ -148,11 +149,7 @@ const form = useForm({
     font_weight: props.theme.font_weight,
 })
 
-const previewRadius = computed(() => {
-    if (form.shape === 'flat') return '0px'
-    if (form.shape === 'default') return '4px'
-    return '10px'
-})
+const previewRadius = computed(() => shapeRadius(form.shape))
 
 const previewStyle = computed(() => ({
     borderRadius: previewRadius.value,
@@ -164,6 +161,32 @@ const previewButtonStyle = computed(() => ({
     borderColor: form.primary,
     borderRadius: previewRadius.value,
 }))
+
+/** Live-preview accent/shape; typography stays platform-owned unless unlocked. */
+watch(
+    () => [
+        form.primary,
+        form.shape,
+        form.font_family,
+        form.font_href,
+        form.font_size,
+        form.font_weight,
+        props.canManageTypography,
+        props.theme,
+    ],
+    () => {
+        applyBrandTheme({
+            primary: form.primary,
+            shape: form.shape,
+            radius: shapeRadius(form.shape),
+            // Platform admin fonts win for tenants unless this role can edit typography.
+            font_family: props.canManageTypography ? form.font_family : props.theme.font_family,
+            font_href: props.canManageTypography ? form.font_href : props.theme.font_href,
+            font_size: props.canManageTypography ? form.font_size : props.theme.font_size,
+            font_weight: props.canManageTypography ? form.font_weight : props.theme.font_weight,
+        })
+    },
+)
 
 const submit = () => {
     const payload = props.canManageTypography
@@ -329,10 +352,15 @@ const submit = () => {
 
 .theme-field input,
 .theme-field select {
-    min-height: 2.15rem;
+    width: 100%;
+    box-sizing: border-box;
+    height: 2rem;
+    min-height: 2rem;
     border: 1px solid #ced4da;
-    border-radius: 0.4rem;
-    padding: 0.4rem 0.65rem;
+    border-radius: var(--pf-radius, 0.35rem);
+    padding: 0 0.55rem;
+    font-size: 0.82rem;
+    line-height: calc(2rem - 2px);
     font-weight: 400;
     color: #495057;
     background: #fff;

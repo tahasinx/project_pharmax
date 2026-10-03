@@ -82,6 +82,13 @@ const openSections = ref({});
 const appName = computed(() => page.props.app?.name || 'Epharma');
 const appInitial = computed(() => String(appName.value).trim().charAt(0).toUpperCase() || 'E');
 const logo = computed(() => page.props.app?.logo || '');
+const footerMeta = computed(() => {
+    const tagline = page.props.platform?.identity?.tagline;
+    if (tagline) {
+        return tagline;
+    }
+    return props.meta;
+});
 const user = computed(() => page.props.auth?.user);
 const email = computed(() => user.value?.email || '');
 const initials = computed(() => String(user.value?.name || 'U')
@@ -128,9 +135,19 @@ const readOpen = () => {
 };
 
 const syncOpen = () => {
+    const saved = readOpen();
     const next = {};
+    let activeLabel = null;
     for (const group of groupedMenus.value) {
-        next[group.label] = group.items.some((item) => item.active);
+        if (group.items.some((item) => item.active)) {
+            activeLabel = group.label;
+            break;
+        }
+    }
+    for (const group of groupedMenus.value) {
+        next[group.label] = activeLabel
+            ? group.label === activeLabel
+            : saved[group.label] === true;
     }
     openSections.value = next;
 };
@@ -533,7 +550,7 @@ watch(() => page.url, () => {
                     <div class="row">
                         <div class="col-sm-6">{{ new Date().getFullYear() }} © {{ appName }}</div>
                         <div class="col-sm-6">
-                            <div class="text-sm-end d-none d-sm-block">{{ meta }}</div>
+                            <div class="text-sm-end d-none d-sm-block">{{ footerMeta }}</div>
                         </div>
                     </div>
                 </div>

@@ -19,11 +19,11 @@ const updatePassword = () => {
         onError: () => {
             if (form.errors.password) {
                 form.reset('password', 'password_confirmation');
-                passwordInput.value.focus();
+                passwordInput.value?.focus();
             }
             if (form.errors.current_password) {
                 form.reset('current_password');
-                currentPasswordInput.value.focus();
+                currentPasswordInput.value?.focus();
             }
         },
     });
@@ -31,29 +31,119 @@ const updatePassword = () => {
 </script>
 
 <template>
-    <section>
-        <p class="text-muted">Use a long password that you do not reuse on other sites.</p>
-        <form class="row g-3" @submit.prevent="updatePassword">
-            <div class="col-md-6">
-                <label for="current_password" class="form-label">Current password</label>
-                <input id="current_password" ref="currentPasswordInput" v-model="form.current_password" type="password" class="form-control" autocomplete="current-password">
-                <InputError class="mt-2" :message="form.errors.current_password" />
+    <section class="profile-section">
+        <header class="profile-section-head">
+            <h6>Password</h6>
+            <p>Use a strong password you do not reuse elsewhere.</p>
+        </header>
+
+        <form class="profile-form" @submit.prevent="updatePassword">
+            <div class="profile-field">
+                <label class="profile-label" for="current_password">Current password</label>
+                <input
+                    id="current_password"
+                    ref="currentPasswordInput"
+                    v-model="form.current_password"
+                    type="password"
+                    class="form-control"
+                    autocomplete="current-password"
+                >
+                <InputError class="mt-1" :message="form.errors.current_password" />
             </div>
-            <div class="col-md-6"></div>
-            <div class="col-md-6">
-                <label for="password" class="form-label">New password</label>
-                <input id="password" ref="passwordInput" v-model="form.password" type="password" class="form-control" autocomplete="new-password">
-                <InputError class="mt-2" :message="form.errors.password" />
+
+            <div class="profile-grid">
+                <div class="profile-field">
+                    <label class="profile-label" for="password">New password</label>
+                    <input
+                        id="password"
+                        ref="passwordInput"
+                        v-model="form.password"
+                        type="password"
+                        class="form-control"
+                        autocomplete="new-password"
+                    >
+                    <InputError class="mt-1" :message="form.errors.password" />
+                </div>
+                <div class="profile-field">
+                    <label class="profile-label" for="password_confirmation">Confirm new password</label>
+                    <input
+                        id="password_confirmation"
+                        v-model="form.password_confirmation"
+                        type="password"
+                        class="form-control"
+                        autocomplete="new-password"
+                    >
+                    <InputError class="mt-1" :message="form.errors.password_confirmation" />
+                </div>
             </div>
-            <div class="col-md-6">
-                <label for="password_confirmation" class="form-label">Confirm password</label>
-                <input id="password_confirmation" v-model="form.password_confirmation" type="password" class="form-control" autocomplete="new-password">
-                <InputError class="mt-2" :message="form.errors.password_confirmation" />
-            </div>
-            <div class="col-12 d-flex align-items-center gap-3">
-                <button type="submit" class="btn btn-primary" :disabled="form.processing">Update password</button>
-                <span v-if="form.recentlySuccessful" class="text-success">Saved.</span>
+
+            <div class="profile-actions">
+                <button type="submit" class="btn btn-primary" :disabled="form.processing">
+                    {{ form.processing ? 'Updating…' : 'Update password' }}
+                </button>
             </div>
         </form>
     </section>
 </template>
+
+<style scoped>
+.profile-section-head {
+    margin-bottom: 1.1rem;
+}
+
+.profile-section-head h6 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--shell-panel-text, #343747);
+}
+
+.profile-section-head p {
+    margin: 0.25rem 0 0;
+    font-size: 0.82rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.profile-label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+}
+
+.profile-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 0.25rem;
+    border-top: 1px solid var(--shell-panel-border, #e6e8ee);
+}
+
+@media (max-width: 575.98px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-actions {
+        justify-content: stretch;
+    }
+
+    .profile-actions .btn {
+        width: 100%;
+    }
+}
+</style>

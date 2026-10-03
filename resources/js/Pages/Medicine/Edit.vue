@@ -328,13 +328,13 @@ const props = defineProps({
 
 const mapOptions = (items, valueKey = 'id', labelKey = 'name') => [...(items || [])]
     .sort((a, b) => String(a[labelKey] || '').localeCompare(String(b[labelKey] || '')))
-    .map((item) => ({ value: item[valueKey], label: item[labelKey] }))
+    .map((item) => ({ value: item[valueKey] ?? item.id, label: item[labelKey] }))
 
-const categoryOptions = computed(() => mapOptions(props.categories))
-const manufacturerOptions = computed(() => mapOptions(props.manufacturers))
-const genericOptions = computed(() => mapOptions(props.generics))
-const typeOptions = computed(() => mapOptions(props.medicineTypes))
-const dosageFormOptions = computed(() => mapOptions(props.dosageForms))
+const categoryOptions = computed(() => mapOptions(props.categories, 'category_id'))
+const manufacturerOptions = computed(() => mapOptions(props.manufacturers, 'manufacturer_id'))
+const genericOptions = computed(() => mapOptions(props.generics, 'generic_id'))
+const typeOptions = computed(() => mapOptions(props.medicineTypes, 'medicine_type_id'))
+const dosageFormOptions = computed(() => mapOptions(props.dosageForms, 'dosage_form_id'))
 const unitOptions = computed(() => {
     const options = mapOptions(props.units, 'name', 'name')
     const current = props.medicine.unit
@@ -471,8 +471,9 @@ const validate = () => {
 const submitForm = () => {
     if (!validate()) return
 
+    // Multipart PUT/PATCH bodies are not parsed by PHP; POST + method spoof keeps all fields intact.
     form.transform((data) => {
-        const payload = { ...data }
+        const payload = { ...data, _method: 'put' }
         if (!discountApplied.value) payload.discount_percent = 0
         if (!(payload.image instanceof File)) delete payload.image
         payload.box_size = Math.max(1, Number(payload.box_size) || 1)
@@ -483,7 +484,7 @@ const submitForm = () => {
         payload.is_controlled = payload.is_controlled ? 1 : 0
         payload.is_narcotic = payload.is_narcotic ? 1 : 0
         return payload
-    }).put(route('medicines.update', props.medicine.id), {
+    }).post(route('medicines.update', props.medicine.id), {
         forceFormData: true,
         preserveScroll: true,
         onFinish: () => form.transform((data) => data),

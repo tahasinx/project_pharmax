@@ -1,14 +1,14 @@
 import { clearToasts, pushToast } from '@/toast';
 
 export function useToastNotifications() {
-    const showSuccess = (message) => pushToast(message, 'success');
-    const showError = (message) => pushToast(message, 'danger', 7000);
-    const showWarning = (message) => pushToast(message, 'warning', 6000);
-    const showInfo = (message) => pushToast(message, 'info');
+    const showSuccess = (message, title = 'Success') => pushToast(message, 'success', 5000, title);
+    const showError = (message, title = 'Error') => pushToast(message, 'danger', 7000, title);
+    const showWarning = (message, title = 'Warning') => pushToast(message, 'warning', 6000, title);
+    const showInfo = (message, title = 'Notice') => pushToast(message, 'info', 5000, title);
 
     const showValidationErrors = (errors) => {
         if (typeof errors === 'string') {
-            showError(errors);
+            showError(errors, 'Validation');
             return;
         }
 
@@ -18,7 +18,7 @@ export function useToastNotifications() {
 
         const lines = Object.values(errors).flat().map((message) => String(message)).filter(Boolean);
         if (lines.length) {
-            showError(lines.join(' '));
+            showError(lines.join(' '), 'Validation');
         }
     };
 

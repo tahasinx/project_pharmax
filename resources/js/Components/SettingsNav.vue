@@ -9,7 +9,7 @@ defineProps({
 });
 
 const items = [
-    { key: 'general', label: 'General', href: 'settings.index', hint: 'Company, invoice, mail' },
+    { key: 'general', label: 'General', href: 'settings.index', hint: 'Company, brand, mail' },
     { key: 'theme', label: 'Theme', href: 'settings.theme', hint: 'Color, shape, type' },
 ];
 </script>

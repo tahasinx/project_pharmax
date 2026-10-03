@@ -1,61 +1,128 @@
 <script setup>
-import LunaTable from '@/Components/LunaTable.vue'
-
+import { computed } from 'vue';
+import LunaTable from '@/Components/LunaTable.vue';
+import BillingNav from '@/Components/Platform/BillingNav.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
+import StatusBadge from '@/Components/Platform/StatusBadge.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import Layout from '../Layout.vue';
 
-defineProps({ invoices: Array, subscriptions: Array, currency: String });
+const props = defineProps({
+    invoices: Array,
+    subscriptions: Array,
+    currency: String,
+    invoiceFooter: { type: String, default: '' },
+});
 const form = useForm({ platform_subscription_id: '', amount: '', issued_on: '', notes: '' });
+
+const subscriptionOptions = computed(() => [
+    { value: '', label: 'Select subscription' },
+    ...(props.subscriptions || []).map((row) => ({
+        value: row.id,
+        label: `${row.company?.name || 'Pharmacy'} #${row.id}`,
+    })),
+]);
 </script>
 
 <template>
     <Head title="Invoices" />
     <Layout>
-        <section class="overflow-hidden rounded-xl border border-[#e4e4e7] bg-white">
-            <div class="border-b border-[#f4f4f5] px-5 py-4">
-                <h1>Invoices</h1>
-                <p class="mt-1 text-sm text-[#71717a]">{{ invoices.length }} invoice{{ invoices.length === 1 ? '' : 's' }}</p>
+        <template #header>
+            <div class="min-w-0">
+                <h4 class="mb-1 font-size-18">Invoices</h4>
+                <p class="text-muted mb-0 font-size-13">{{ invoices.length }} issued document{{ invoices.length === 1 ? '' : 's' }}</p>
             </div>
-            <form class="flex flex-wrap items-end gap-3 border-b border-[#f4f4f5] px-5 py-4" @submit.prevent="form.post('/platform/invoices')">
-                <label class="text-sm"><span class="mb-1 block text-[#71717a]">Subscription</span>
-                    <select v-model="form.platform_subscription_id" class="min-w-48" required>
-                        <option value="">Select</option>
-                        <option v-for="row in subscriptions" :key="row.id" :value="row.id">{{ row.company?.name }} #{{ row.id }}</option>
-                    </select>
-                </label>
-                <label class="text-sm"><span class="mb-1 block text-[#71717a]">Amount</span><input v-model="form.amount" type="number" step="0.01" class="w-28" required></label>
-                <label class="text-sm"><span class="mb-1 block text-[#71717a]">Issued</span><input v-model="form.issued_on" type="date" required></label>
-                <label class="text-sm"><span class="mb-1 block text-[#71717a]">Notes</span><input v-model="form.notes" class="w-48"></label>
-                <button class="rounded-md bg-[#17342b] px-3 py-2 text-sm font-medium text-white">Create</button>
-            </form>
+        </template>
+
+        <BillingNav />
+
+        <section class="pf-card mb-3">
+            <div class="pf-card-head">
+                <div>
+                    <h2>Issue invoice</h2>
+                    <p>Create a charge against an existing subscription.</p>
+                </div>
+            </div>
+            <div class="pf-card-body">
+                <form @submit.prevent="form.post('/platform/invoices')">
+                    <div class="pf-composer">
+                        <label class="pf-field pf-span-5">
+                            <span>Subscription</span>
+                            <SearchableSelect
+                                v-model="form.platform_subscription_id"
+                                :options="subscriptionOptions"
+                                placeholder="Select subscription…"
+                                required
+                            />
+                        </label>
+                        <label class="pf-field pf-span-2">
+                            <span>Amount</span>
+                            <input v-model="form.amount" type="number" step="0.01" min="0" required>
+                        </label>
+                        <label class="pf-field pf-span-2">
+                            <span>Issued</span>
+                            <input v-model="form.issued_on" type="date" required>
+                        </label>
+                        <label class="pf-field pf-span-3">
+                            <span>Notes</span>
+                            <input v-model="form.notes" placeholder="Optional">
+                        </label>
+                    </div>
+                    <p v-if="invoiceFooter" class="small text-muted mt-2 mb-0">
+                        Invoice footer from Settings is appended automatically:
+                        <span class="fst-italic">{{ invoiceFooter }}</span>
+                    </p>
+                    <div class="d-flex justify-content-end mt-3">
+                        <button type="submit" class="btn btn-primary btn-sm" :disabled="form.processing">
+                            {{ form.processing ? 'Creating…' : 'Create invoice' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section class="pf-card">
             <LunaTable title="Invoices">
-<table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>Number</th>
-                        <th>Pharmacy</th>
-                        <th>Amount</th>
-                        <th>Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-if="!invoices.length">
-                        <td colspan="5" class="py-10 text-center text-sm text-[#71717a]">No invoices yet.</td>
-                    </tr>
-                    <tr v-for="invoice in invoices" :key="invoice.id">
-                        <td class="font-medium">{{ invoice.number }}</td>
-                        <td>{{ invoice.company?.name }}</td>
-                        <td>{{ invoice.amount }} {{ invoice.currency || currency }}</td>
-                        <td>{{ invoice.status }}</td>
-                        <td class="text-right">
-                            <button class="text-sm font-medium text-[#17342b]" @click="$inertia.post(`/platform/invoices/${invoice.id}/toggle`)">{{ invoice.status === 'paid' ? 'Mark unpaid' : 'Mark paid' }}</button>
-                            <button class="ml-3 text-sm text-[#b91c1c]" @click="$inertia.delete(`/platform/invoices/${invoice.id}`)">Delete</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-</LunaTable>
+                <table class="table table-hover mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>Number</th>
+                            <th>Pharmacy</th>
+                            <th>Amount</th>
+                            <th>Notes</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-if="!invoices.length">
+                            <td colspan="6">
+                                <div class="pf-empty">
+                                    <i class="bi bi-receipt" />
+                                    <strong>No invoices yet</strong>
+                                    <span>Issue the first invoice from a pharmacy subscription.</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-for="invoice in invoices" :key="invoice.id">
+                            <td class="fw-semibold">{{ invoice.number }}</td>
+                            <td>{{ invoice.company?.name }}</td>
+                            <td>
+                                <span class="pf-money">{{ invoice.amount }}</span>
+                                <span class="text-muted small ms-1">{{ invoice.currency || currency }}</span>
+                            </td>
+                            <td class="small text-muted" style="max-width: 14rem; white-space: pre-line;">{{ invoice.notes || '—' }}</td>
+                            <td><StatusBadge :status="invoice.status" /></td>
+                            <td class="text-end text-nowrap">
+                                <button type="button" class="btn btn-sm btn-soft-primary" @click="$inertia.post(`/platform/invoices/${invoice.id}/toggle`)">
+                                    {{ invoice.status === 'paid' ? 'Mark unpaid' : 'Mark paid' }}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-soft-danger ms-1" @click="$inertia.delete(`/platform/invoices/${invoice.id}`)">Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </LunaTable>
         </section>
     </Layout>
 </template>

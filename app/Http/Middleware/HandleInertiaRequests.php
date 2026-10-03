@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Domain\Organization\BranchContext;
 use App\Models\Menu;
+use App\Models\Setting;
 use App\Services\Platform\PlatformSettingsStore;
 use App\Services\Tenant\TenantThemeStore;
 use App\Support\StagingDeployHost;
@@ -46,15 +47,16 @@ class HandleInertiaRequests extends Middleware
                     'user' => $request->user(),
                 ],
                 'platform' => [
-                    'central' => $isCentral,
-                    'deploy'  => StagingDeployHost::matches(),
-                    'theme'   => $isInstallRoute ? null : $this->appTheme(),
+                    'central'  => $isCentral,
+                    'deploy'   => StagingDeployHost::matches(),
+                    'theme'    => $isInstallRoute ? null : $this->appTheme(),
+                    'identity' => $isInstallRoute ? null : $this->platformIdentity($isCentral),
                 ],
                 'branch' => fn () => $request->user() && ! $isCentral && ! $isInstallRoute
                     ? BranchContext::shared($request->user())
                     : null,
                 'app' => [
-                    'name'    => $isInstallRoute ? config('app.name', 'Epharma') : $this->platformName(),
+                    'name'    => $isInstallRoute ? config('app.name', 'Epharma') : $this->appDisplayName(),
                     'logo'    => $isInstallRoute ? '' : $this->brandMedia()['logo'],
                     'favicon' => $isInstallRoute ? '' : $this->brandMedia()['favicon'],
                 ],
@@ -121,13 +123,84 @@ class HandleInertiaRequests extends Middleware
         }
     }
 
+    /**
+     * Identity fields from platform admin settings (central chrome + invoice defaults).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function platformIdentity(bool $isCentral): ?array
+    {
+        try {
+            $all = app(PlatformSettingsStore::class)->all();
+
+            return [
+                'name'             => (string) ($all['name'] ?? 'Epharma'),
+                'tagline'          => (string) ($all['tagline'] ?? ''),
+                'support_email'    => (string) ($all['support_email'] ?? ''),
+                'support_phone'    => (string) ($all['support_phone'] ?? ''),
+                'address'          => (string) ($all['address'] ?? ''),
+                'default_currency' => (string) ($all['default_currency'] ?? 'BDT'),
+                'invoice_footer'   => (string) ($all['invoice_footer'] ?? ''),
+                // Tenants keep their own brand colors; typography always follows platform.
+                'controls_theme'   => $isCentral,
+            ];
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function appDisplayName(): string
+    {
+        try {
+            $isCentral = request()->attributes->get('tenant.mode') === 'central';
+            if (! $isCentral) {
+                $title = Setting::query()->value('title');
+                if (is_string($title) && trim($title) !== '') {
+                    return trim($title);
+                }
+            }
+
+            return $this->platformName();
+        } catch (\Throwable) {
+            return config('app.name', 'Epharma');
+        }
+    }
+
     private function brandMedia(): array
     {
         try {
-            return app(PlatformSettingsStore::class)->media();
+            $isCentral = request()->attributes->get('tenant.mode') === 'central';
+            $platform = app(PlatformSettingsStore::class)->media();
+
+            if ($isCentral) {
+                return $platform;
+            }
+
+            $setting = Setting::query()->first();
+            $logo = $this->publicMediaUrl($setting?->logo);
+            $favicon = $this->publicMediaUrl($setting?->favicon);
+
+            return [
+                'logo'    => $logo !== '' ? $logo : ($platform['logo'] ?? ''),
+                'favicon' => $favicon !== '' ? $favicon : ($platform['favicon'] ?? ''),
+            ];
         } catch (\Throwable) {
             return ['logo' => '', 'favicon' => ''];
         }
+    }
+
+    private function publicMediaUrl(?string $path): string
+    {
+        $path = trim((string) $path);
+        if ($path === '' || str_contains($path, '..')) {
+            return '';
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, '/')) {
+            return $path;
+        }
+
+        return asset('storage/'.$path);
     }
 
     private function getUserMenus($user)

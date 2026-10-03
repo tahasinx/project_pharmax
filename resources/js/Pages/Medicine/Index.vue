@@ -97,9 +97,6 @@
                                         Generic Name
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Strength
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Manufacturer
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -129,14 +126,17 @@
                                             <div v-if="medicineImageUrl(medicine.image)" class="flex-shrink-0 h-10 w-10">
                                                 <img class="h-10 w-10 rounded-full" :src="medicineImageUrl(medicine.image)" :alt="medicine.name">
                                             </div>
-                                            <div class="ml-4">
-                                                <div>
-                                                    <button v-if="medicine.medex_id && medicine.medex_name"
+                                            <div class="ml-4 min-w-0">
+                                                <div class="d-flex align-items-baseline gap-2 flex-wrap">
+                                                    <button v-if="medicine.medex_id"
+                                                            type="button"
                                                             @click="openMedexDetailsForMedicine(medicine)"
-                                                            class="text-sm font-semibold text-blue-700 hover:underline">
+                                                            class="text-sm font-semibold text-blue-700 hover:underline"
+                                                            title="Open linked API reference details">
                                                         {{ medicine.name }}
                                                     </button>
                                                     <div v-else class="text-sm font-medium text-gray-900">{{ medicine.name }}</div>
+                                                    <span v-if="medicine.strength" class="text-muted font-size-12">{{ medicine.strength }}</span>
                                                 </div>
                                                 <div class="text-sm text-gray-500">{{ medicine.medicine_type?.name }}</div>
                                             </div>
@@ -144,9 +144,6 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900">{{ medicine.generic_name }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {{ medicine.strength || '—' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {{ medicine.manufacturer?.name || '—' }}
@@ -174,8 +171,15 @@
                                     <td class="whitespace-nowrap">
                                         <div class="dt-actions">
                                             <Link :href="route('medicines.show', medicine.id)" class="btn btn-sm btn-icon btn-soft-primary" title="View"><i class="bi bi-journal-richtext"></i></Link>
+                                            <button
+                                                v-if="medicine.medex_id"
+                                                type="button"
+                                                class="btn btn-sm btn-icon btn-soft-info"
+                                                title="API reference details"
+                                                @click="openMedexDetailsForMedicine(medicine)"
+                                            ><i class="bi bi-cloud"></i></button>
                                             <Link :href="route('medicines.edit', medicine.id)" class="btn btn-sm btn-icon btn-soft-secondary" title="Edit"><i class="bi bi-pencil"></i></Link>
-                                            <Link :href="route('medicines.codes', medicine.id)" class="btn btn-sm btn-icon btn-soft-success" title="Codes"><i class="bi bi-journal-code"></i></Link>
+                                            <Link :href="route('medicines.codes', medicine.id)" class="btn btn-sm btn-icon btn-soft-success" title="Codes"><i class="bi bi-upc"></i></Link>
                                             <button type="button" class="btn btn-sm btn-icon btn-soft-danger" title="Delete" @click="deleteMedicine(medicine.id)"><i class="bi bi-trash"></i></button>
                                         </div>
                                     </td>
@@ -224,15 +228,22 @@
                         <div v-else-if="apiResults.length" class="api-result-list">
                             <button
                                 v-for="res in apiResults"
-                                :key="res.link"
+                                :key="res.link || res.medex_id || res.name"
                                 type="button"
                                 class="api-result-item"
-                                :class="{ active: apiSelectedLink === res.link }"
+                                :class="{ active: apiSelectedLink === res.link, 'is-added': res.exists }"
                                 @click="selectApiResult(res)"
                             >
                                 <span class="api-result-copy">
-                                    <strong>{{ res.name }}</strong>
-                                    <small>{{ [res.form, res.strength].filter(Boolean).join(' · ') || 'Reference product' }}</small>
+                                    <strong>
+                                        {{ res.name }}
+                                        <span v-if="res.strength" class="api-result-strength">{{ res.strength }}</span>
+                                    </strong>
+                                    <small>{{ res.form || 'Reference product' }}</small>
+                                </span>
+                                <span v-if="res.exists" class="api-added-chip" title="Already in your database">
+                                    <i class="bi bi-check2-circle" />
+                                    Added
                                 </span>
                                 <i class="bi bi-chevron-right api-result-chevron" />
                             </button>
@@ -263,7 +274,10 @@
                                     <span v-if="savingApi" class="spinner-border spinner-border-sm me-1" role="status" />
                                     {{ savingApi ? 'Saving…' : 'Save to database' }}
                                 </button>
-                                <span v-else class="badge bg-success align-self-start">In database</span>
+                                <span v-else class="api-added-chip api-added-chip--lg align-self-start">
+                                    <i class="bi bi-check2-circle" />
+                                    Already in database
+                                </span>
                             </div>
                             <div v-if="apiFacts.length" class="api-facts">
                                 <div v-for="fact in apiFacts" :key="fact.label" class="api-fact">
@@ -294,21 +308,40 @@
                         <span class="text-muted font-size-12">Page {{ brandPage }}</span>
                         <button type="button" class="btn btn-sm btn-light" :disabled="brandLoading || !brandRows.length" @click="loadBrands(brandPage + 1)">Next</button>
                         <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="syncingDirectory" @click="queueSync('brands')">{{ syncingDirectory ? 'Queuing…' : 'Sync A–Z' }}</button>
-                        <button type="button" class="btn btn-sm btn-primary ms-auto" :disabled="brandLoading || importingDirectory || !brandRows.length" @click="importBrands">{{ importingDirectory ? 'Importing…' : 'Index page' }}</button>
+                        <button type="button" class="btn btn-sm btn-primary ms-auto" :disabled="brandLoading || importingDirectory || !brandRows.length" @click="importBrands">{{ importingDirectory ? 'Saving…' : 'Save brands to catalog' }}</button>
                     </div>
                     <div v-if="directoryNote" class="alert alert-success py-2 mb-2">{{ directoryNote }}</div>
                     <div v-if="brandLoading" class="api-hint">Loading…</div>
                     <div v-else class="table-responsive">
                         <table class="table table-sm align-middle mb-0 api-table">
-                            <thead><tr><th>Product</th><th>Form</th><th>Strength</th><th>Generic</th><th>Manufacturer</th><th /></tr></thead>
+                            <thead><tr><th>Product</th><th>Form</th><th>Generic</th><th>Manufacturer</th><th>Status</th><th /></tr></thead>
                             <tbody>
-                                <tr v-for="row in brandRows" :key="row.link || row.name">
-                                    <td class="fw-medium">{{ row.name }}</td>
+                                <tr v-for="row in brandRows" :key="row.link || row.medex_id || row.name" :class="{ 'api-row-added': row.exists }">
+                                    <td class="fw-medium">
+                                        <div class="d-flex align-items-baseline gap-2 flex-wrap">
+                                            <span>{{ row.name }}</span>
+                                            <span v-if="row.strength" class="text-muted font-size-12 fw-normal">{{ row.strength }}</span>
+                                            <span v-if="row.exists" class="api-added-chip" title="Already in your database">
+                                                <i class="bi bi-check2-circle" />
+                                                Added
+                                            </span>
+                                        </div>
+                                    </td>
                                     <td>{{ row.form || '—' }}</td>
-                                    <td>{{ row.strength || '—' }}</td>
                                     <td>{{ row.generic || '—' }}</td>
                                     <td>{{ row.manufacturer || '—' }}</td>
-                                    <td><button v-if="row.link" type="button" class="btn btn-sm btn-soft-primary" @click="selectApiResult({ link: row.link, name: row.name })">Open</button></td>
+                                    <td>
+                                        <span v-if="row.exists" class="text-success font-size-12 fw-semibold">In database</span>
+                                        <span v-else class="text-muted font-size-12">Not saved</span>
+                                    </td>
+                                    <td>
+                                        <button
+                                            v-if="row.link || row.medex_id"
+                                            type="button"
+                                            class="btn btn-sm btn-soft-primary"
+                                            @click="openApiDetailsFromRow(row)"
+                                        >View details</button>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -835,14 +868,34 @@ const debouncedApiSearch = () => {
     }, 350)
 }
 
+const medexUrlFromParts = (id, slug = null) => {
+    if (!id) return ''
+    const cleanSlug = slug ? String(slug).replace(/^\/+|\/+$/g, '') : ''
+    return cleanSlug
+        ? `https://medex.com.bd/brands/${id}/${cleanSlug}`
+        : `https://medex.com.bd/brands/${id}`
+}
+
+const resolveApiLink = (row = {}) => {
+    if (row.link) return row.link
+    if (row.medex_path) {
+        return row.medex_path.startsWith('http')
+            ? row.medex_path
+            : `https://medex.com.bd${row.medex_path.startsWith('/') ? '' : '/'}${row.medex_path}`
+    }
+    return medexUrlFromParts(row.medex_id, row.medex_slug || row.medex_name || null)
+}
+
 const selectApiResult = async (res) => {
+    const link = resolveApiLink(res)
+    if (!link) return
     apiTab.value = 'medicine'
-    apiSelectedLink.value = res.link || ''
+    apiSelectedLink.value = link
     apiDetails.value = null
     const seq = ++apiProductSeq
     apiDetailsLoading.value = true
     try {
-        const url = `${route('api.medex.product')}?url=${encodeURIComponent(res.link)}`
+        const url = `${route('api.medex.product')}?url=${encodeURIComponent(link)}`
         const r = await fetch(url)
         const data = await r.json().catch(() => ({}))
         if (seq !== apiProductSeq) return
@@ -850,13 +903,29 @@ const selectApiResult = async (res) => {
             apiDetails.value = null
             return
         }
-        apiDetails.value = { ...data, _medex: { id: res.link, name: res.name } }
+        apiDetails.value = {
+            ...data,
+            exists: data.exists ?? Boolean(res.exists),
+            medicine_id: data.medicine_id ?? res.medicine_id ?? null,
+            _medex: { id: link, name: res.name || data.name },
+        }
     } catch {
         if (seq !== apiProductSeq) return
         apiDetails.value = null
     } finally {
         if (seq === apiProductSeq) apiDetailsLoading.value = false
     }
+}
+
+const openApiDetailsFromRow = (row) => {
+    selectApiResult({
+        link: resolveApiLink(row),
+        name: row.name,
+        exists: row.exists,
+        medicine_id: row.medicine_id,
+        medex_id: row.medex_id,
+        medex_slug: row.medex_slug || row.medex_name,
+    })
 }
 
 const csrfHeaders = () => {
@@ -969,17 +1038,17 @@ const saveFromApi = async () => {
     if (!apiDetails.value) return
     savingApi.value = true
     try {
-        const link = apiDetails.value.url || apiDetails.value._medex?.id || ''
+        const link = apiDetails.value.url || apiDetails.value._medex?.id || apiSelectedLink.value || ''
         let medexId = apiDetails.value.medex_id || null
         let medexName = apiDetails.value.medex_name || null
-        if (!medexId) {
+        if (!medexId || !medexName) {
             try {
                 const u = new URL(link)
                 const parts = u.pathname.split('/').filter(Boolean)
                 const idx = parts.indexOf('brands')
-                if (idx !== -1 && parts[idx+1]) {
-                    medexId = parts[idx+1]
-                    medexName = parts[idx+2] || null
+                if (idx !== -1 && parts[idx + 1]) {
+                    medexId = medexId || parts[idx + 1]
+                    medexName = medexName || parts[idx + 2] || null
                 }
             } catch {}
         }
@@ -1038,6 +1107,19 @@ const saveFromApi = async () => {
             return
         }
         if (data.status === 'created' || data.status === 'duplicate') {
+            if (apiDetails.value) {
+                apiDetails.value = { ...apiDetails.value, exists: true, medicine_id: data.id || apiDetails.value.medicine_id }
+            }
+            apiResults.value = apiResults.value.map((row) => (
+                (medexId && row.medex_id === medexId) || row.link === link
+                    ? { ...row, exists: true, medicine_id: data.id || row.medicine_id }
+                    : row
+            ))
+            brandRows.value = brandRows.value.map((row) => (
+                (medexId && row.medex_id === medexId) || row.link === link
+                    ? { ...row, exists: true, medicine_id: data.id || row.medicine_id }
+                    : row
+            ))
             closeApiModal()
             router.visit(route('medicines.index'))
         }
@@ -1059,26 +1141,17 @@ onMounted(() => {
 })
 
 const openMedexDetailsForMedicine = async (medicine) => {
+    if (!medicine?.medex_id) return
     resetApiModalState()
     showApiModal.value = true
-    apiTab.value = 'medicine'
-    const medexUrl = `https://medex.com.bd/brands/${medicine.medex_id}/${medicine.medex_name}`
-    apiSelectedLink.value = medexUrl
-    const seq = ++apiProductSeq
-    apiDetailsLoading.value = true
-    try {
-        const url = `${route('api.medex.product')}?url=${encodeURIComponent(medexUrl)}`
-        const r = await fetch(url)
-        const data = await r.json().catch(() => ({}))
-        if (seq !== apiProductSeq) return
-        if (!r.ok || data?.error) {
-            apiDetails.value = null
-            return
-        }
-        apiDetails.value = { ...data, _medex: { id: medexUrl, name: medicine.name } }
-    } finally {
-        if (seq === apiProductSeq) apiDetailsLoading.value = false
-    }
+    await selectApiResult({
+        link: medexUrlFromParts(medicine.medex_id, medicine.medex_name),
+        name: medicine.name,
+        exists: true,
+        medicine_id: medicine.id,
+        medex_id: medicine.medex_id,
+        medex_slug: medicine.medex_name,
+    })
 }
 </script>
 
@@ -1244,6 +1317,13 @@ const openMedexDetailsForMedicine = async (medicine) => {
     text-overflow: ellipsis;
 }
 
+.api-result-strength {
+    margin-left: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--shell-panel-muted, #74788d);
+}
+
 .api-result-item small {
     display: block;
     color: var(--shell-panel-muted, #74788d);
@@ -1262,6 +1342,43 @@ const openMedexDetailsForMedicine = async (medicine) => {
 
 .api-result-item.active .api-result-chevron {
     color: var(--bs-primary, #5156be);
+}
+
+.api-result-item.is-added {
+    border-color: rgba(25, 135, 84, 0.18);
+}
+
+.api-added-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    flex-shrink: 0;
+    padding: 0.12rem 0.42rem;
+    border-radius: 999px;
+    background: rgba(25, 135, 84, 0.12);
+    color: #146c43;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.api-added-chip i {
+    font-size: 0.72rem;
+}
+
+.api-added-chip--lg {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.74rem;
+}
+
+.api-added-chip--lg i {
+    font-size: 0.85rem;
+}
+
+.api-row-added td {
+    background: rgba(25, 135, 84, 0.035);
 }
 
 .api-detail-head {

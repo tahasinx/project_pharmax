@@ -84,22 +84,12 @@ class OperationsController extends Controller
             return back()->with('error', 'Turn on outbound email, save the SMTP host, and set a from address before sending a test.');
         }
 
-        config([
-            'mail.default'                 => 'smtp',
-            'mail.mailers.smtp.transport'  => 'smtp',
-            'mail.mailers.smtp.host'       => $mail['host'],
-            'mail.mailers.smtp.port'       => $mail['port'] ?: 587,
-            'mail.mailers.smtp.encryption' => $mail['encryption'] ?: null,
-            'mail.mailers.smtp.username'   => $mail['username'],
-            'mail.mailers.smtp.password'   => $mail['password'],
-            'mail.from.address'            => $mail['from_address'],
-            'mail.from.name'               => $mail['from_name'] ?: $settings->all()['name'],
-        ]);
+        $settings->applyMailer();
 
         try {
             Mail::purge('smtp');
-            Mail::raw('This is a test from the Epharma platform mailer.', function ($message) use ($data) {
-                $message->to($data['email_test_to'])->subject('Epharma mail test');
+            Mail::raw('This is a test from the Epharma platform mailer.', function ($message) use ($data, $settings) {
+                $message->to($data['email_test_to'])->subject($settings->all()['name'].' mail test');
             });
         } catch (Throwable $e) {
             return back()->with('error', 'The test did not send. '.$e->getMessage());

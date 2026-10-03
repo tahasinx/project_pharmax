@@ -17,26 +17,34 @@ body.minia-app *:not(.bi):not([class^="bi-"]):not([class*=" bi-"]):not(.fa):not(
 
 body.minia-app {
     font-size: var(--pf-size, 0.875rem);
-    font-weight: var(--pf-weight, 400);
+    font-weight: var(--pf-weight, 400) !important;
 }
 
+/* Default UI text follows theme weight (400 stays 400 — not bumped to 600). */
 body.minia-app button,
 body.minia-app .btn,
 body.minia-app .header-item,
 body.minia-app .breadcrumb,
-body.minia-app .navbar-header {
-    font-weight: var(--pf-weight, 400) !important;
-}
-
+body.minia-app .navbar-header,
+body.minia-app label,
+body.minia-app .form-label,
 body.minia-app #sidebar-menu ul li a,
-body.minia-app .menu-title {
-    font-weight: var(--pf-weight-strong, 500) !important;
+body.minia-app .menu-title,
+body.minia-app .nav-link,
+body.minia-app .dropdown-item,
+body.minia-app .table,
+body.minia-app .pf-field > span,
+body.minia-app .pf-ops-tab,
+body.minia-app .pf-card-head h2,
+body.minia-app .pf-card-head h5,
+body.minia-app .pf-card-head h6 {
+    font-weight: var(--pf-weight, 400) !important;
 }
 
 body.minia-app .sidebar-brand .logo-txt,
 body.minia-app .logo-txt {
     font-family: var(--pf-font, "IBM Plex Sans", sans-serif) !important;
-    font-weight: var(--pf-weight-strong, 700) !important;
+    font-weight: var(--pf-weight-strong, 600) !important;
     font-size: calc(var(--pf-size, 16px) + 2px);
 }
 
@@ -46,16 +54,22 @@ body.minia-app h3,
 body.minia-app h4,
 body.minia-app h5,
 body.minia-app h6,
-body.minia-app .card-title,
-body.minia-app .font-semibold,
-body.minia-app .font-bold {
-    font-family: "IBM Plex Sans", sans-serif !important;
-    font-weight: 600 !important;
+body.minia-app .card-title {
+    font-family: var(--pf-font, "IBM Plex Sans", sans-serif) !important;
+    font-weight: var(--pf-weight, 400) !important;
 }
 
+/* Explicit emphasis utilities only — relative to theme base. */
 body.minia-app .font-medium,
-body.minia-app .fw-medium {
-    font-weight: 500 !important;
+body.minia-app .fw-medium,
+body.minia-app .fw-semibold,
+body.minia-app .font-semibold {
+    font-weight: var(--pf-weight-medium, 500) !important;
+}
+
+body.minia-app .font-bold,
+body.minia-app .fw-bold {
+    font-weight: var(--pf-weight-strong, 600) !important;
 }
 
 body.minia-app .mdi:before,
@@ -288,16 +302,16 @@ body.minia-app .branch-control {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    font-family: "IBM Plex Sans", sans-serif !important;
+    font-family: var(--pf-font, "IBM Plex Sans", sans-serif) !important;
     font-size: 13px;
-    font-weight: 500 !important;
+    font-weight: var(--pf-weight, 400) !important;
 }
 
 body.minia-app .branch-menu .dropdown-menu,
 body.minia-app .profile-menu .dropdown-menu {
-    font-family: "IBM Plex Sans", sans-serif !important;
+    font-family: var(--pf-font, "IBM Plex Sans", sans-serif) !important;
     font-size: 13px;
-    font-weight: 400;
+    font-weight: var(--pf-weight, 400);
     min-width: 190px;
     margin-top: 6px;
     padding: 8px 0;
@@ -311,9 +325,9 @@ body.minia-app .profile-menu .dropdown-menu {
 }
 
 body.minia-app .dropdown-item {
-    font-family: "IBM Plex Sans", sans-serif !important;
+    font-family: var(--pf-font, "IBM Plex Sans", sans-serif) !important;
     font-size: 13px;
-    font-weight: 400 !important;
+    font-weight: var(--pf-weight, 400) !important;
     padding: 8px 16px;
     color: #495057;
 }
@@ -1459,12 +1473,12 @@ body.minia-app .dataTables_filter label {
 
 body.minia-app .dataTables_length select,
 body.minia-app .dataTables_filter input {
-    height: 28px !important;
-    min-height: 28px !important;
-    padding: 0 8px !important;
-    font-size: 12px !important;
-    line-height: 26px !important;
-    border-radius: var(--pf-radius, 4px) !important;
+    height: 2rem !important;
+    min-height: 2rem !important;
+    padding: 0 0.55rem !important;
+    font-size: 0.82rem !important;
+    line-height: calc(2rem - 2px) !important;
+    border-radius: var(--pf-radius, 10px) !important;
     border: 1px solid var(--shell-panel-border, #ced4da);
     background: var(--shell-panel-surface, #fff);
     color: var(--shell-panel-text, #343747);
@@ -2438,8 +2452,8 @@ body.minia-app .pos-shell {
     overflow: hidden;
     background: #f8f8fb;
     color: #495057;
-    font-family: "IBM Plex Sans", sans-serif;
-    font-size: 0.875rem;
+    font-family: var(--pf-font, "IBM Plex Sans", sans-serif);
+    font-size: var(--pf-size, 0.875rem);
 }
 
 body.minia-app .pos-shell .btn,
@@ -2448,7 +2462,7 @@ body.minia-app .pos-shell .form-select,
 body.minia-app .pos-shell h1,
 body.minia-app .pos-shell h5,
 body.minia-app .pos-shell h6 {
-    font-family: "IBM Plex Sans", sans-serif;
+    font-family: var(--pf-font, "IBM Plex Sans", sans-serif);
 }
 
 body.minia-app .pos-top {
@@ -2867,7 +2881,15 @@ body.minia-app[data-app-shape="rounded"] .dataTables_length select,
 body.minia-app[data-app-shape="rounded"] .dataTables_filter input,
 body.minia-app[data-app-shape="rounded"] .pos-drug-card,
 body.minia-app[data-app-shape="rounded"] .pos-rx-thumb,
-body.minia-app[data-app-shape="rounded"] .pos-modal-card {
+body.minia-app[data-app-shape="rounded"] .pos-modal-card,
+body.minia-app[data-app-shape="rounded"] .pf-card,
+body.minia-app[data-app-shape="rounded"] .pf-ops-tab,
+body.minia-app[data-app-shape="rounded"] .pf-metric,
+body.minia-app[data-app-shape="rounded"] .pf-field input,
+body.minia-app[data-app-shape="rounded"] .pf-field select,
+body.minia-app[data-app-shape="rounded"] .pf-field textarea,
+body.minia-app[data-app-shape="rounded"] .ss-input,
+body.minia-app[data-app-shape="rounded"] .ss-menu {
     border-radius: var(--pf-radius, 10px) !important;
 }
 
@@ -2890,7 +2912,15 @@ body.minia-app[data-app-shape="default"] .dataTables_length select,
 body.minia-app[data-app-shape="default"] .dataTables_filter input,
 body.minia-app[data-app-shape="default"] .pos-drug-card,
 body.minia-app[data-app-shape="default"] .pos-rx-thumb,
-body.minia-app[data-app-shape="default"] .pos-modal-card {
+body.minia-app[data-app-shape="default"] .pos-modal-card,
+body.minia-app[data-app-shape="default"] .pf-card,
+body.minia-app[data-app-shape="default"] .pf-ops-tab,
+body.minia-app[data-app-shape="default"] .pf-metric,
+body.minia-app[data-app-shape="default"] .pf-field input,
+body.minia-app[data-app-shape="default"] .pf-field select,
+body.minia-app[data-app-shape="default"] .pf-field textarea,
+body.minia-app[data-app-shape="default"] .ss-input,
+body.minia-app[data-app-shape="default"] .ss-menu {
     border-radius: var(--pf-radius, 4px) !important;
 }
 
@@ -2913,7 +2943,15 @@ body.minia-app[data-app-shape="flat"] .dataTables_length select,
 body.minia-app[data-app-shape="flat"] .dataTables_filter input,
 body.minia-app[data-app-shape="flat"] .pos-drug-card,
 body.minia-app[data-app-shape="flat"] .pos-rx-thumb,
-body.minia-app[data-app-shape="flat"] .pos-modal-card {
+body.minia-app[data-app-shape="flat"] .pos-modal-card,
+body.minia-app[data-app-shape="flat"] .pf-card,
+body.minia-app[data-app-shape="flat"] .pf-ops-tab,
+body.minia-app[data-app-shape="flat"] .pf-metric,
+body.minia-app[data-app-shape="flat"] .pf-field input,
+body.minia-app[data-app-shape="flat"] .pf-field select,
+body.minia-app[data-app-shape="flat"] .pf-field textarea,
+body.minia-app[data-app-shape="flat"] .ss-input,
+body.minia-app[data-app-shape="flat"] .ss-menu {
     border-radius: 0 !important;
 }
 
@@ -2997,6 +3035,18 @@ body.minia-app .theme-shape,
 body.minia-app .settings-nav,
 body.minia-app .app-float-modal-content,
 body.minia-app .status-chip,
+body.minia-app .pf-badge,
+body.minia-app .pf-card,
+body.minia-app .pf-metric,
+body.minia-app .pf-ops-nav,
+body.minia-app .pf-ops-tab,
+body.minia-app .pf-toolbar,
+body.minia-app .pf-alert,
+body.minia-app .ss-input,
+body.minia-app .ss-menu,
+body.minia-app .create-tabs,
+body.minia-app .create-tab,
+body.minia-app .create-panel,
 body.minia-app .switch,
 body.minia-app .epharma-confirm,
 body.minia-app .epharma-confirm .swal2-icon,
@@ -3043,6 +3093,18 @@ body.minia-app[data-app-shape="flat"] .theme-shape,
 body.minia-app[data-app-shape="flat"] .settings-nav,
 body.minia-app[data-app-shape="flat"] .app-float-modal-content,
 body.minia-app[data-app-shape="flat"] .status-chip,
+body.minia-app[data-app-shape="flat"] .pf-badge,
+body.minia-app[data-app-shape="flat"] .pf-card,
+body.minia-app[data-app-shape="flat"] .pf-metric,
+body.minia-app[data-app-shape="flat"] .pf-ops-nav,
+body.minia-app[data-app-shape="flat"] .pf-ops-tab,
+body.minia-app[data-app-shape="flat"] .pf-toolbar,
+body.minia-app[data-app-shape="flat"] .pf-alert,
+body.minia-app[data-app-shape="flat"] .ss-input,
+body.minia-app[data-app-shape="flat"] .ss-menu,
+body.minia-app[data-app-shape="flat"] .create-tabs,
+body.minia-app[data-app-shape="flat"] .create-tab,
+body.minia-app[data-app-shape="flat"] .create-panel,
 body.minia-app[data-app-shape="flat"] .switch,
 body.minia-app[data-app-shape="flat"] .pos-drug-card,
 body.minia-app[data-app-shape="flat"] .pos-rx-thumb,
@@ -3070,6 +3132,7 @@ body.minia-app[data-app-shape="flat"] .switch {
 
 /* Status pills / badges follow corner shape */
 body.minia-app .status-chip,
+body.minia-app .pf-badge,
 body.minia-app .badge.rounded-pill,
 body.minia-app .theme-locked-badge,
 body.minia-app .rounded-full,
@@ -3079,6 +3142,7 @@ body.minia-app span.rounded-full {
 }
 
 body.minia-app[data-app-shape="rounded"] .status-chip,
+body.minia-app[data-app-shape="rounded"] .pf-badge,
 body.minia-app[data-app-shape="rounded"] .badge.rounded-pill,
 body.minia-app[data-app-shape="rounded"] .theme-locked-badge,
 body.minia-app[data-app-shape="rounded"] .rounded-full,
@@ -3088,6 +3152,7 @@ body.minia-app[data-app-shape="rounded"] span.rounded-full {
 }
 
 body.minia-app[data-app-shape="flat"] .status-chip,
+body.minia-app[data-app-shape="flat"] .pf-badge,
 body.minia-app[data-app-shape="flat"] .badge.rounded-pill,
 body.minia-app[data-app-shape="flat"] .theme-locked-badge,
 body.minia-app[data-app-shape="flat"] .rounded-full,

@@ -327,13 +327,13 @@ const props = defineProps({
 
 const mapOptions = (items, valueKey = 'id', labelKey = 'name') => [...(items || [])]
     .sort((a, b) => String(a[labelKey] || '').localeCompare(String(b[labelKey] || '')))
-    .map((item) => ({ value: item[valueKey], label: item[labelKey] }))
+    .map((item) => ({ value: item[valueKey] ?? item.id, label: item[labelKey] }))
 
-const categoryOptions = computed(() => mapOptions(props.categories))
-const manufacturerOptions = computed(() => mapOptions(props.manufacturers))
-const genericOptions = computed(() => mapOptions(props.generics))
-const typeOptions = computed(() => mapOptions(props.medicineTypes))
-const dosageFormOptions = computed(() => mapOptions(props.dosageForms))
+const categoryOptions = computed(() => mapOptions(props.categories, 'category_id'))
+const manufacturerOptions = computed(() => mapOptions(props.manufacturers, 'manufacturer_id'))
+const genericOptions = computed(() => mapOptions(props.generics, 'generic_id'))
+const typeOptions = computed(() => mapOptions(props.medicineTypes, 'medicine_type_id'))
+const dosageFormOptions = computed(() => mapOptions(props.dosageForms, 'dosage_form_id'))
 const unitOptions = computed(() => mapOptions(props.units, 'name', 'name'))
 
 const form = useForm({

@@ -36,7 +36,7 @@ class MedexCatalogService
             'searchkey'  => $q,
         ], false);
 
-        return $html ? $this->searchParser->parse($html) : [];
+        return $html ? $this->annotateExistingMedicines($this->searchParser->parse($html)) : [];
     }
 
     public function product(string $url): ?array
@@ -46,7 +46,9 @@ class MedexCatalogService
             return null;
         }
         $product = $this->productParser->parse($html, $url);
-        $product['exists'] = $this->medicineExists($product);
+        $match = $this->findExistingMedicine($product);
+        $product['exists'] = (bool) $match;
+        $product['medicine_id'] = $match?->id;
 
         return $product;
     }
@@ -66,7 +68,7 @@ class MedexCatalogService
         return [
             'page'    => $page,
             'segment' => $segment,
-            'rows'    => $this->brandListParser->parse($html),
+            'rows'    => $this->annotateExistingMedicines($this->brandListParser->parse($html)),
         ];
     }
 
@@ -356,21 +358,85 @@ class MedexCatalogService
     }
 
     /**
+     * @param  list<array<string, mixed>>  $rows
+     * @return list<array<string, mixed>>
+     */
+    private function annotateExistingMedicines(array $rows): array
+    {
+        $ids = collect($rows)
+            ->map(fn (array $row) => $row['medex_id'] ?? $this->extractMedexId($row['link'] ?? $row['medex_path'] ?? null))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $existing = $ids->isEmpty()
+            ? collect()
+            : Medicine::query()->whereIn('medex_id', $ids)->pluck('id', 'medex_id');
+
+        return array_map(function (array $row) use ($existing) {
+            $medexId = $row['medex_id'] ?? $this->extractMedexId($row['link'] ?? $row['medex_path'] ?? null);
+            $row['medex_id'] = $medexId;
+            if (empty($row['medex_slug']) && ! empty($row['link'])) {
+                $row['medex_slug'] = $this->extractMedexSlug($row['link']);
+            }
+            $row['exists'] = $medexId !== null && $existing->has($medexId);
+            $row['medicine_id'] = $medexId !== null ? ($existing[$medexId] ?? null) : null;
+
+            return $row;
+        }, $rows);
+    }
+
+    /**
      * @param  array<string, mixed>  $product
      */
     private function medicineExists(array $product): bool
     {
+        return (bool) $this->findExistingMedicine($product);
+    }
+
+    /**
+     * @param  array<string, mixed>  $product
+     */
+    private function findExistingMedicine(array $product): ?Medicine
+    {
         if (! empty($product['medex_id'])) {
-            return Medicine::query()->where('medex_id', $product['medex_id'])->exists();
+            $byMedex = Medicine::query()->where('medex_id', $product['medex_id'])->first();
+            if ($byMedex) {
+                return $byMedex;
+            }
         }
 
         if (! empty($product['name']) && ! empty($product['manufacturer'])) {
             return Medicine::query()
                 ->where('name', $product['name'])
                 ->whereHas('manufacturer', fn ($m) => $m->where('name', $product['manufacturer']))
-                ->exists();
+                ->first();
         }
 
-        return false;
+        return null;
+    }
+
+    private function extractMedexId(?string $href): ?string
+    {
+        if (! $href) {
+            return null;
+        }
+        $path = parse_url($href, PHP_URL_PATH) ?: $href;
+        $parts = array_values(array_filter(explode('/', (string) $path)));
+        $idx = array_search('brands', $parts, true);
+
+        return $idx === false ? null : ($parts[$idx + 1] ?? null);
+    }
+
+    private function extractMedexSlug(?string $href): ?string
+    {
+        if (! $href) {
+            return null;
+        }
+        $path = parse_url($href, PHP_URL_PATH) ?: $href;
+        $parts = array_values(array_filter(explode('/', (string) $path)));
+        $idx = array_search('brands', $parts, true);
+
+        return $idx === false ? null : ($parts[$idx + 2] ?? null);
     }
 }

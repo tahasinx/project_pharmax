@@ -162,7 +162,7 @@ watch(() => props.modelValue, () => {
     box-sizing: border-box;
     height: 2rem;
     min-height: 2rem;
-    border-radius: var(--pf-radius, 0.35rem);
+    border-radius: var(--pf-radius, var(--bs-border-radius, 10px));
     border: 1px solid var(--shell-panel-border, #ced4da);
     background: var(--shell-panel-surface, #fff);
     padding: 0 1.8rem 0 0.55rem;
@@ -219,14 +219,14 @@ watch(() => props.modelValue, () => {
 
 .ss-menu {
     position: absolute;
-    z-index: 40;
+    z-index: 1080;
     top: calc(100% + 0.2rem);
     left: 0;
     right: 0;
     max-height: 14rem;
     overflow: auto;
     border: 1px solid var(--shell-panel-border, #ced4da);
-    border-radius: var(--pf-radius, 0.35rem);
+    border-radius: var(--pf-radius, var(--bs-border-radius, 10px));
     background: var(--shell-panel-surface, #fff);
     box-shadow: 0 0.45rem 1rem rgba(16, 24, 40, 0.1);
     padding: 0.2rem;

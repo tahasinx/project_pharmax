@@ -153,6 +153,7 @@ class BillingController extends Controller
             'currency'                 => $settings->all()['default_currency'] ?? 'BDT',
             'status'                   => 'unpaid',
             'issued_on'                => now()->toDateString(),
+            'notes'                    => $settings->invoiceNotes(),
         ]);
 
         return redirect()->route('platform.invoices')->with('success', 'Invoice raised from the subscription.');
@@ -168,10 +169,13 @@ class BillingController extends Controller
 
     public function invoices(PlatformSettingsStore $settings): Response
     {
+        $all = $settings->all();
+
         return Inertia::render('Platform/Invoices/Index', [
             'invoices'      => PlatformInvoice::query()->with('company:id,name,slug')->latest('id')->get(),
             'subscriptions' => PlatformSubscription::query()->with('company:id,name')->where('status', 'active')->get(),
-            'currency'      => $settings->all()['default_currency'] ?? 'BDT',
+            'currency'      => $all['default_currency'] ?? 'BDT',
+            'invoiceFooter' => (string) ($all['invoice_footer'] ?? ''),
         ]);
     }
 
@@ -192,7 +196,7 @@ class BillingController extends Controller
             'currency'                 => $settings->all()['default_currency'] ?? 'BDT',
             'status'                   => 'unpaid',
             'issued_on'                => $data['issued_on'],
-            'notes'                    => $data['notes'] ?? null,
+            'notes'                    => $settings->invoiceNotes($data['notes'] ?? null),
         ]);
 
         return back()->with('success', 'Invoice created.');

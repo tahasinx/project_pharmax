@@ -4,6 +4,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import LunaTable from '@/Components/LunaTable.vue';
 import FilterDrawer from '@/Components/FilterDrawer.vue';
 import FilterSummary from '@/Components/FilterSummary.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
 import StatusBadge from '@/Components/Platform/StatusBadge.vue';
 import Layout from '../Layout.vue';
 
@@ -16,6 +17,14 @@ const props = defineProps({
 
 const showFilters = ref(false);
 const filters = reactive({ q: props.q || '', provision: props.provision || '' });
+const provisionOptions = [
+    { value: '', label: 'All' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'running', label: 'Running' },
+    { value: 'active', label: 'Active' },
+    { value: 'degraded', label: 'Degraded' },
+    { value: 'failed', label: 'Failed' },
+];
 
 const chips = computed(() => {
     const list = [];
@@ -42,19 +51,18 @@ const removeChip = (key) => {
 <template>
     <Head title="Pharmacies" />
     <Layout>
-        <div class="pf-page-head">
-            <div class="min-w-0">
-                <h1>Pharmacies</h1>
-                <p class="pf-page-sub">{{ companies.total }} tenants on this platform</p>
+        <template #header>
+            <div class="d-flex flex-column gap-2 min-w-0">
+                <h4 class="mb-0 font-size-18">Pharmacies</h4>
+                <p class="text-muted mb-0 font-size-13">{{ companies.total }} tenants on this platform</p>
                 <FilterSummary
-                    class="mt-2"
                     :chips="chips"
                     :show-button="false"
                     @clear="clear"
                     @remove="removeChip"
                 />
             </div>
-            <div class="d-flex flex-wrap gap-2">
+            <div class="page-title-right d-flex flex-wrap align-items-center gap-2">
                 <button type="button" class="btn btn-outline-secondary btn-sm" @click="showFilters = true">
                     <i class="bi bi-funnel me-1" />
                     Filters
@@ -65,7 +73,7 @@ const removeChip = (key) => {
                     New pharmacy
                 </Link>
             </div>
-        </div>
+        </template>
 
         <FilterDrawer
             :show="showFilters"
@@ -80,14 +88,7 @@ const removeChip = (key) => {
             </div>
             <div class="filter-field">
                 <label class="field-label">Provision</label>
-                <select v-model="filters.provision" class="field">
-                    <option value="">All</option>
-                    <option value="pending">Pending</option>
-                    <option value="running">Running</option>
-                    <option value="active">Active</option>
-                    <option value="degraded">Degraded</option>
-                    <option value="failed">Failed</option>
-                </select>
+                <SearchableSelect v-model="filters.provision" :options="provisionOptions" placeholder="Provision…" />
             </div>
         </FilterDrawer>
 
@@ -117,10 +118,10 @@ const removeChip = (key) => {
                             <td class="font-monospace small">{{ company.slug }}.{{ baseDomain }}</td>
                             <td class="font-monospace small">{{ company.database_name }}</td>
                             <td>
-                                <div class="d-flex flex-wrap gap-1">
-                                    <StatusBadge :status="company.status" />
-                                    <StatusBadge :status="company.provision_status" kind="provision" />
-                                </div>
+                                <StatusBadge
+                                    :status="company.status"
+                                    :provision="company.provision_status"
+                                />
                             </td>
                             <td>
                                 <div class="dt-actions justify-content-end">

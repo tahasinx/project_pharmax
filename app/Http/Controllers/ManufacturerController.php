@@ -138,7 +138,7 @@ class ManufacturerController extends Controller
             })
             ->orderBy('name')
             ->limit(10)
-            ->get(['id', 'name', 'email', 'mobile']);
+            ->get(['id', 'manufacturer_id', 'name', 'email', 'mobile']);
 
         return response()->json($manufacturers);
     }

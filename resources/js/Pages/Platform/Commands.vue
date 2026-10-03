@@ -27,37 +27,44 @@ const pick = (name) => {
 <template>
     <Head title="Commands" />
     <Layout>
-        <OpsNav />
-        <div class="pf-page-head">
-            <div>
-                <h1>Artisan commands</h1>
-                <p class="pf-page-sub">Runs one Artisan command on this host. Shell operators are rejected.</p>
+        <template #header>
+            <div class="min-w-0">
+                <h4 class="mb-1 font-size-18">Artisan commands</h4>
+                <p class="text-muted mb-0 font-size-13">Runs one Artisan command on this host. Shell operators are rejected.</p>
             </div>
-            <button type="button" class="btn btn-outline-secondary btn-sm" @click="showCatalog = true">
-                <i class="bi bi-journal-code me-1" />
-                Browse catalog
-            </button>
-        </div>
+            <div class="page-title-right">
+                <button type="button" class="btn btn-outline-secondary btn-sm" @click="showCatalog = true">
+                    <i class="bi bi-journal-code me-1" />
+                    Browse catalog
+                </button>
+            </div>
+        </template>
+        <OpsNav />
 
         <section class="pf-card mb-3">
+            <div class="pf-card-head">
+                <div>
+                    <h2>Run command</h2>
+                    <p>One Artisan invocation — no shell pipes or chaining.</p>
+                </div>
+            </div>
             <div class="pf-card-body">
-                <form class="row g-2 align-items-end" @submit.prevent="form.post('/platform/commands')">
-                    <div class="col-lg-7">
-                        <label class="pf-field mb-0">
-                            <span>Command</span>
-                            <input v-model="form.command_line" class="font-monospace" placeholder="tenants:migrate --all" required autocomplete="off">
-                        </label>
-                    </div>
-                    <div class="col-lg-3">
-                        <label class="pf-field mb-0">
-                            <span>Platform password</span>
-                            <input v-model="form.password" type="password" required autocomplete="current-password">
-                        </label>
-                    </div>
-                    <div class="col-lg-2">
-                        <button class="btn btn-primary w-100" :disabled="form.processing">Run</button>
-                    </div>
+                <form class="pf-inline-actions" @submit.prevent="form.post('/platform/commands')">
+                    <label class="pf-field" style="flex: 2 1 16rem;">
+                        <span>Command</span>
+                        <input v-model="form.command_line" class="font-monospace" placeholder="tenants:migrate --all" required autocomplete="off">
+                    </label>
+                    <label class="pf-field">
+                        <span>Platform password</span>
+                        <input v-model="form.password" type="password" required autocomplete="current-password">
+                    </label>
+                    <button class="btn btn-primary" :disabled="form.processing">
+                        {{ form.processing ? 'Running…' : 'Run' }}
+                    </button>
                 </form>
+                <p v-if="form.errors.command_line || form.errors.password" class="text-danger small mt-2 mb-0">
+                    {{ form.errors.command_line || form.errors.password }}
+                </p>
             </div>
             <pre v-if="output" class="pf-console border-top">{{ ran }} (exit {{ exitCode }})
 {{ output }}</pre>

@@ -343,11 +343,13 @@ const openReferenceTab = async () => {
     activeTab.value = 'reference'
     if (referenceFetched.value || referenceLoading.value) return
 
-    if (props.medicine.medex_id && props.medicine.medex_name) {
+    if (props.medicine.medex_id) {
         referenceLoading.value = true
         referenceError.value = ''
         try {
-            const medexUrl = `https://medex.com.bd/brands/${props.medicine.medex_id}/${props.medicine.medex_name}`
+            const medexUrl = props.medicine.medex_name
+                ? `https://medex.com.bd/brands/${props.medicine.medex_id}/${props.medicine.medex_name}`
+                : `https://medex.com.bd/brands/${props.medicine.medex_id}`
             const response = await fetch(`${route('api.medex.product')}?url=${encodeURIComponent(medexUrl)}`)
             if (!response.ok) throw new Error('lookup failed')
             referenceDetails.value = await response.json()

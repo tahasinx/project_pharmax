@@ -34,6 +34,7 @@ class ProfileTest extends TestCase
 
         $response
             ->assertSessionHasNoErrors()
+            ->assertSessionHas('success')
             ->assertRedirect('/profile');
 
         $user->refresh();
@@ -41,6 +42,29 @@ class ProfileTest extends TestCase
         $this->assertSame('Test User', $user->name);
         $this->assertSame('test@example.com', $user->email);
         $this->assertNull($user->email_verified_at);
+    }
+
+    public function test_profile_can_be_updated_via_method_spoofed_post(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->post('/profile', [
+                '_method' => 'patch',
+                'name'    => 'Spoofed User',
+                'email'   => 'spoofed@example.com',
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success')
+            ->assertRedirect('/profile');
+
+        $user->refresh();
+
+        $this->assertSame('Spoofed User', $user->name);
+        $this->assertSame('spoofed@example.com', $user->email);
     }
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void

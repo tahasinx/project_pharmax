@@ -19,21 +19,24 @@ function run(extra) {
 <template>
     <Head title="Schema" />
     <Layout>
-        <OpsNav />
-        <div class="pf-page-head">
-            <div>
-                <h1>Schema sync</h1>
-                <p class="pf-page-sub">{{ summary.in_sync }} in sync · {{ summary.needs_update }} behind · {{ summary.db_missing }} missing</p>
+        <template #header>
+            <div class="min-w-0">
+                <h4 class="mb-1 font-size-18">Schema sync</h4>
+                <p class="text-muted mb-0 font-size-13">{{ summary.in_sync }} in sync · {{ summary.needs_update }} behind · {{ summary.db_missing }} missing</p>
             </div>
-            <form class="d-flex flex-wrap align-items-end gap-2" @submit.prevent>
-                <label class="pf-field mb-0" style="min-width: 12rem;">
-                    <span>Platform password</span>
-                    <input v-model="form.password" type="password" placeholder="Your password" autocomplete="current-password">
-                </label>
-                <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="form.processing" @click="run({ central: true })">Migrate central</button>
-                <button type="button" class="btn btn-primary btn-sm" :disabled="form.processing" @click="run({ all: true })">Migrate every pharmacy</button>
-            </form>
-        </div>
+            <div class="page-title-right">
+                <form class="d-flex flex-wrap align-items-end gap-2" @submit.prevent>
+                    <label class="pf-field mb-0" style="min-width: 11rem;">
+                        <span>Platform password</span>
+                        <input v-model="form.password" type="password" placeholder="Your password" autocomplete="current-password">
+                    </label>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="form.processing" @click="run({ central: true })">Migrate central</button>
+                    <button type="button" class="btn btn-primary btn-sm" :disabled="form.processing" @click="run({ all: true })">Migrate every pharmacy</button>
+                </form>
+            </div>
+        </template>
+
+        <OpsNav />
 
         <section class="pf-card mb-3">
             <div class="pf-card-body d-flex flex-wrap justify-content-between gap-2">

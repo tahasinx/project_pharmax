@@ -152,6 +152,7 @@
                                     min="96"
                                     max="360"
                                     step="1"
+                                    @input="onQrSizeInput"
                                     @keydown.enter.prevent="commitQrSize"
                                     @blur="commitQrSize"
                                 >
@@ -176,6 +177,7 @@
                                     min="48"
                                     max="200"
                                     step="1"
+                                    @input="onBarcodeSizeInput"
                                     @keydown.enter.prevent="commitBarcodeSize"
                                     @blur="commitBarcodeSize"
                                 >
@@ -302,24 +304,67 @@ const clamp = (value, min, max, fallback) => {
     return Math.min(max, Math.max(min, Math.round(n)))
 }
 
-const setQrSize = (size) => {
+let qrSizeTimer = null
+let barcodeSizeTimer = null
+
+const setQrSize = (size, { syncDraft = true } = {}) => {
     const next = clamp(size, 96, 360, qrSize.value || 180)
-    qrSize.value = next
-    qrSizeDraft.value = String(next)
+    if (qrSize.value !== next) {
+        qrSize.value = next
+    }
+    if (syncDraft) {
+        qrSizeDraft.value = String(next)
+    }
 }
 
-const setBarcodeSize = (size) => {
+const setBarcodeSize = (size, { syncDraft = true } = {}) => {
     const next = clamp(size, 48, 200, barcodeSize.value || 88)
-    barcodeSize.value = next
-    barcodeSizeDraft.value = String(next)
+    if (barcodeSize.value !== next) {
+        barcodeSize.value = next
+    }
+    if (syncDraft) {
+        barcodeSizeDraft.value = String(next)
+    }
 }
 
 const commitQrSize = () => {
-    setQrSize(qrSizeDraft.value === '' ? qrSize.value : qrSizeDraft.value)
+    window.clearTimeout(qrSizeTimer)
+    if (qrSizeDraft.value === '') {
+        qrSizeDraft.value = String(qrSize.value)
+        return
+    }
+    // Keep typing fluid; only clamp/sync draft when value is complete enough.
+    const raw = Number(qrSizeDraft.value)
+    if (!Number.isFinite(raw)) return
+    setQrSize(raw, { syncDraft: false })
+    // Reflect clamped value once settled (blur/enter) or when out of range.
+    if (raw < 96 || raw > 360) {
+        qrSizeDraft.value = String(qrSize.value)
+    }
 }
 
 const commitBarcodeSize = () => {
-    setBarcodeSize(barcodeSizeDraft.value === '' ? barcodeSize.value : barcodeSizeDraft.value)
+    window.clearTimeout(barcodeSizeTimer)
+    if (barcodeSizeDraft.value === '') {
+        barcodeSizeDraft.value = String(barcodeSize.value)
+        return
+    }
+    const raw = Number(barcodeSizeDraft.value)
+    if (!Number.isFinite(raw)) return
+    setBarcodeSize(raw, { syncDraft: false })
+    if (raw < 48 || raw > 200) {
+        barcodeSizeDraft.value = String(barcodeSize.value)
+    }
+}
+
+const onQrSizeInput = () => {
+    window.clearTimeout(qrSizeTimer)
+    qrSizeTimer = window.setTimeout(() => commitQrSize(), 80)
+}
+
+const onBarcodeSizeInput = () => {
+    window.clearTimeout(barcodeSizeTimer)
+    barcodeSizeTimer = window.setTimeout(() => commitBarcodeSize(), 80)
 }
 
 const barcodeFormat = (type) => {
@@ -352,22 +397,32 @@ const medicinePayload = () => JSON.stringify({
     manufacturer: props.medicine.manufacturer?.name,
 })
 
+const clearCanvas = (canvas, width, height) => {
+    if (!canvas) return
+    canvas.width = Math.max(1, Math.round(width))
+    canvas.height = Math.max(1, Math.round(height))
+    const ctx = canvas.getContext('2d')
+    ctx?.clearRect(0, 0, canvas.width, canvas.height)
+}
+
 const renderCodes = async () => {
     await nextTick()
 
-    // Use committed sizes for canvas only — never write back while typing.
     const nextQrSize = clamp(qrSize.value, 96, 360, 180)
     const nextBarcodeSize = clamp(barcodeSize.value, 48, 200, 88)
 
     if ((modalType.value === 'qr' || modalType.value === 'both') && generatedQrCodeData.value && qrCodeCanvas.value) {
+        // Reset bitmap first so reducing size always redraws smaller.
+        clearCanvas(qrCodeCanvas.value, nextQrSize, nextQrSize)
         await QRCode.toCanvas(qrCodeCanvas.value, generatedQrCodeData.value, {
             width: nextQrSize,
-            margin: 2,
+            margin: 1,
             color: { dark: '#000000', light: '#FFFFFF' },
         })
     }
 
     if ((modalType.value === 'barcode' || modalType.value === 'both') && generatedBarcodeData.value && barcodeCanvas.value) {
+        clearCanvas(barcodeCanvas.value, 320, nextBarcodeSize + 40)
         const barWidth = nextBarcodeSize >= 120 ? 2.4 : 2
         JsBarcode(barcodeCanvas.value, generatedBarcodeData.value, {
             format: barcodeFormat(generatedBarcodeType.value),
@@ -423,7 +478,7 @@ watch([qrSize, barcodeSize], async () => {
     if (showPreview.value) {
         await renderCodes()
     }
-})
+}, { flush: 'post' })
 
 const generateQrCode = async () => {
     isLoading.value = true
