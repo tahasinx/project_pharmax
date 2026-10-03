@@ -1,4 +1,5 @@
 <template>
+    <Head title="Purchases" />
     <AuthenticatedLayout>
         <template #header>
             <h4 class="mb-sm-0 font-size-18">Purchases</h4>
@@ -7,176 +8,101 @@
             </div>
         </template>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <!-- Search and Filter -->
-                <div class="listing-filters bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                    <div class="p-6">
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                                <input v-model="search"
-                                       type="text"
-                                       placeholder="Search by purchase number, manufacturer..."
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <LunaTable title="Purchases" :pagination="purchases" empty-text="No purchases found">
+            <table class="table table-striped table-hover mb-0 w-100">
+                <thead>
+                    <tr>
+                        <th>Purchase #</th>
+                        <th>Manufacturer</th>
+                        <th>Date</th>
+                        <th>Items</th>
+                        <th>Grand total</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="purchase in purchases.data" :key="purchase.id">
+                        <td>
+                            <div class="fw-semibold">{{ purchase.purchase_no }}</div>
+                        </td>
+                        <td>{{ purchase.manufacturer?.name || '—' }}</td>
+                        <td>{{ formatDate(purchase.purchase_date) }}</td>
+                        <td>{{ purchase.items_count || 0 }}</td>
+                        <td>{{ money(purchase.grand_total) }}</td>
+                        <td>
+                            <span class="status-chip" :class="{ 'is-on': purchase.status }">
+                                <span class="status-dot" />
+                                {{ purchase.status ? 'Active' : 'Inactive' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="dt-actions">
+                                <Link :href="route('purchases.show', purchase.id)" class="btn btn-sm btn-icon btn-soft-primary" title="View"><i class="bi bi-eye"></i></Link>
+                                <Link :href="route('purchases.edit', purchase.id)" class="btn btn-sm btn-icon btn-soft-secondary" title="Edit"><i class="bi bi-pencil"></i></Link>
+                                <button type="button" class="btn btn-sm btn-icon btn-soft-danger" title="Delete" @click="deletePurchase(purchase.id)"><i class="bi bi-trash"></i></button>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Date From</label>
-                                <input v-model="dateFrom"
-                                       type="date"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Date To</label>
-                                <input v-model="dateTo"
-                                       type="date"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div class="flex items-end">
-                                <button @click="clearFilters"
-                                        class="w-full bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                                    Clear Filters
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Purchase List -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div v-if="purchases.data.length === 0" class="text-center py-8 text-gray-500">
-                            No purchases found
-                        </div>
-                        <div v-else class="overflow-x-auto">
-                            <LunaTable title="Purchases" :pagination="purchases">
-<table class="table table-striped table-hover min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Purchase #
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Manufacturer
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Date
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Items
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Grand Total
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Status
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr v-for="purchase in filteredPurchases" :key="purchase.id">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            {{ purchase.purchase_no }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ purchase.manufacturer?.name || 'N/A' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ formatDate(purchase.purchase_date) }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ purchase.items_count || 0 }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(purchase.grand_total).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span :class="purchase.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                                                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                                                {{ purchase.status ? 'Active' : 'Inactive' }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <div class="flex space-x-2">
-                                                <Link :href="route('purchases.show', purchase.id)"
-                                                      class="text-blue-600 hover:text-blue-900">
-                                                    View
-                                                </Link>
-                                                <Link :href="route('purchases.edit', purchase.id)"
-                                                      class="text-indigo-600 hover:text-indigo-900">
-                                                    Edit
-                                                </Link>
-                                                <button @click="deletePurchase(purchase.id)"
-                                                        class="text-red-600 hover:text-red-900">
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-</LunaTable>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </LunaTable>
     </AuthenticatedLayout>
 </template>
 
 <script setup>
-import LunaTable from '@/Components/LunaTable.vue'
-
-import { ref, computed } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
+import { Head, Link, usePage } from '@inertiajs/vue3'
 import { destroyRecord } from '@/Composables/confirmDelete'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import Pagination from '@/Components/Pagination.vue'
+import LunaTable from '@/Components/LunaTable.vue'
 
-const props = defineProps({
-    purchases: Object
+defineProps({
+    purchases: Object,
 })
 
-const search = ref('')
-const dateFrom = ref('')
-const dateTo = ref('')
+const page = usePage()
 
-const filteredPurchases = computed(() => {
-    let filtered = props.purchases.data
-
-    if (search.value) {
-        const searchLower = search.value.toLowerCase()
-        filtered = filtered.filter(purchase =>
-            purchase.purchase_no.toLowerCase().includes(searchLower) ||
-            purchase.manufacturer?.name.toLowerCase().includes(searchLower)
-        )
-    }
-
-    if (dateFrom.value) {
-        filtered = filtered.filter(purchase => purchase.purchase_date >= dateFrom.value)
-    }
-
-    if (dateTo.value) {
-        filtered = filtered.filter(purchase => purchase.purchase_date <= dateTo.value)
-    }
-
-    return filtered
-})
-
-const clearFilters = () => {
-    search.value = ''
-    dateFrom.value = ''
-    dateTo.value = ''
+const money = (value) => {
+    const amount = Number(value || 0).toFixed(2)
+    const symbol = page.props.ui?.currency_symbol || ''
+    return page.props.ui?.currency_position === 'after' ? `${amount}${symbol}` : `${symbol}${amount}`
 }
 
-const formatDate = (date) => {
-    return new Date(date).toLocaleDateString()
-}
+const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : '—')
 
 const deletePurchase = (id) => {
     destroyRecord('purchases.destroy', id, 'Delete this purchase?', 'The purchase has been deleted.')
 }
 </script>
+
+<style scoped>
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    background: var(--shell-panel-bg, #f8f9fc);
+    border-radius: var(--pf-radius, 999px);
+    padding: 0.22rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.status-chip.is-on {
+    border-color: var(--shell-panel-accent-border, #b7ebd6);
+    background: var(--shell-panel-accent-bg, #e8f8f1);
+    color: var(--shell-panel-accent-text, #1e8f68);
+}
+
+.status-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--shell-panel-muted, #adb5bd);
+}
+
+.status-chip.is-on .status-dot {
+    background: #34c38f;
+}
+</style>

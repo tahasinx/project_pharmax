@@ -93,7 +93,7 @@ const hosts = computed(() => (props.tenancy.central_hosts || []).join(', ') || '
             <section class="rounded-xl border border-[#e4e4e7] bg-white">
                 <header class="border-b border-[#f4f4f5] px-5 py-4">
                     <h1>Theme</h1>
-                    <p class="mt-1 text-sm text-[#71717a]">Accent, corner shape, and type for every screen, control, and label. Saved values apply after you refresh.</p>
+                    <p class="mt-1 text-sm text-[#71717a]">Accent, corner shape, and type for every screen. Typography here is app-admin controlled and applied to all tenant clinics.</p>
                 </header>
                 <div class="space-y-4 p-5">
                     <label class="flex items-center gap-3 text-sm">
@@ -131,8 +131,8 @@ const hosts = computed(() => (props.tenancy.central_hosts || []).join(', ') || '
                         </label>
                         <label class="block text-sm sm:col-span-3">
                             <span class="mb-1 block text-[#3f3f46]">Font link</span>
-                            <textarea v-model="form.theme_font_href" class="w-full" rows="2" placeholder="https://fonts.googleapis.com/css2?family=Inter" />
-                            <span class="mt-1 block text-xs text-[#71717a]">A Google Fonts or jsDelivr stylesheet URL. The font name must match.</span>
+                            <textarea v-model="form.theme_font_href" class="w-full" rows="2" placeholder="Leave blank for bundled IBM Plex Sans, or paste a Google Fonts / jsDelivr URL" />
+                            <span class="mt-1 block text-xs text-[#71717a]">Leave blank to use the bundled app font. Otherwise the font name must match the stylesheet.</span>
                         </label>
                     </div>
                 </div>

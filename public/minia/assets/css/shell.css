@@ -12,12 +12,12 @@ body.minia-app:not([data-bs-theme="dark"]) {
 
 body.minia-app,
 body.minia-app *:not(.bi):not([class^="bi-"]):not([class*=" bi-"]):not(.fa):not(.fas):not(.far):not(.fab):not([class^="fa-"]):not([class*=" fa-"]):not(.mdi):not([class^="mdi-"]):not([class*=" mdi-"]):not(.bx):not([class^="bx-"]):not([class*=" bx-"]):not([class*="dripicons"]) {
-    font-family: "IBM Plex Sans", sans-serif !important;
+    font-family: var(--pf-font, "IBM Plex Sans", sans-serif) !important;
 }
 
 body.minia-app {
-    font-size: 0.875rem;
-    font-weight: 400;
+    font-size: var(--pf-size, 0.875rem);
+    font-weight: var(--pf-weight, 400);
 }
 
 body.minia-app button,
@@ -25,19 +25,19 @@ body.minia-app .btn,
 body.minia-app .header-item,
 body.minia-app .breadcrumb,
 body.minia-app .navbar-header {
-    font-weight: 400 !important;
+    font-weight: var(--pf-weight, 400) !important;
 }
 
 body.minia-app #sidebar-menu ul li a,
 body.minia-app .menu-title {
-    font-weight: 500 !important;
+    font-weight: var(--pf-weight-strong, 500) !important;
 }
 
 body.minia-app .sidebar-brand .logo-txt,
 body.minia-app .logo-txt {
-    font-family: "IBM Plex Sans", sans-serif !important;
-    font-weight: 700 !important;
-    font-size: 18px;
+    font-family: var(--pf-font, "IBM Plex Sans", sans-serif) !important;
+    font-weight: var(--pf-weight-strong, 700) !important;
+    font-size: calc(var(--pf-size, 16px) + 2px);
 }
 
 body.minia-app h1,
@@ -452,11 +452,6 @@ body.minia-app #sidebar-menu {
     padding-top: 4px !important;
 }
 
-body.minia-app #sidebar-menu .has-arrow[aria-expanded="true"]:after,
-body.minia-app #sidebar-menu li.mm-active > .has-arrow:after {
-    transform: rotate(90deg);
-}
-
 body.minia-app #sidebar-menu ul li ul.sub-menu.mm-show {
     border-left: 1px solid #e1e4ea;
     margin-left: 36px;
@@ -602,6 +597,55 @@ body.minia-app #page-topbar .theme-menu > .header-icon .bi::before {
     }
 }
 
+body.minia-app #sidebar-menu #side-menu > li > a {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+}
+
+body.minia-app #sidebar-menu #side-menu > li > a.has-arrow {
+    position: relative;
+    padding-right: 2.15rem !important;
+}
+
+body.minia-app #sidebar-menu #side-menu > li > a.has-arrow > span {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* Flex layout cancels float:right — pin chevrons to a shared right edge */
+body.minia-app #sidebar-menu .has-arrow:after {
+    position: absolute !important;
+    right: 1.15rem;
+    top: 50%;
+    float: none !important;
+    display: block !important;
+    margin: 0 !important;
+    line-height: 1;
+    transform: translateY(-50%);
+    transition: transform 0.2s ease;
+}
+
+body.minia-app #sidebar-menu .has-arrow[aria-expanded="true"]:after,
+body.minia-app #sidebar-menu li.mm-active > .has-arrow:after {
+    transform: translateY(-50%) rotate(90deg);
+}
+
+body.minia-app #sidebar-menu #side-menu > li > a > .bi {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.625rem;
+    font-size: 16px;
+    line-height: 1;
+    color: #545a6d;
+}
+
+body.minia-app #sidebar-menu #side-menu > li.mm-active > a > .bi,
+body.minia-app #sidebar-menu #side-menu > li > a.active > .bi {
+    color: #5156be;
+}
+
 body.minia-app #sidebar-menu .sub-section {
     margin: 0;
     padding: 0;
@@ -625,6 +669,40 @@ body.minia-app #sidebar-menu .sub-section .bi {
 body.minia-app #sidebar-menu .sub-section li.mm-active .bi,
 body.minia-app #sidebar-menu .sub-section a.active .bi {
     color: #5156be;
+}
+
+/* Keep page toolbar fields/buttons the same height as Medicine forms */
+body.minia-app .med-panel {
+    --app-control-h: 2rem;
+}
+
+body.minia-app .med-panel .field,
+body.minia-app .med-panel input.field,
+body.minia-app .med-panel select.field {
+    height: var(--app-control-h) !important;
+    min-height: var(--app-control-h) !important;
+    padding: 0 0.65rem !important;
+    font-size: 0.82rem !important;
+    line-height: calc(var(--app-control-h) - 2px) !important;
+}
+
+body.minia-app .med-panel textarea.field {
+    height: auto !important;
+    min-height: 4.5rem !important;
+    padding: 0.45rem 0.65rem !important;
+    line-height: 1.35 !important;
+}
+
+body.minia-app .med-panel .btn,
+body.minia-app .med-panel .btn-sm {
+    height: var(--app-control-h) !important;
+    min-height: var(--app-control-h) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    line-height: 1 !important;
 }
 
 body.minia-app .minia-spark {
@@ -789,7 +867,7 @@ body.minia-app .dataTables_wrapper table.dataTable .dt-fit {
 
 body.minia-app .dataTables_wrapper {
     max-width: 100%;
-    overflow-x: hidden;
+    overflow: visible;
 }
 
 body.minia-app .dataTables_wrapper table.dataTable {
@@ -802,8 +880,46 @@ body.minia-app .dataTables_wrapper table.dataTable td {
     box-sizing: border-box !important;
 }
 
-body.minia-app .dataTables_wrapper td.dataTables_empty {
+body.minia-app .dataTables_wrapper table.dataTable tbody td.dataTables_empty,
+body.minia-app .dataTables_wrapper table.dataTable tbody td.dt-empty-cell,
+body.minia-app .dataTables_wrapper table.dataTable tbody td.dataTables_empty:last-child,
+body.minia-app .dataTables_wrapper table.dataTable tbody td.dt-empty-cell:last-child {
+    width: auto !important;
+    white-space: normal !important;
     text-align: center !important;
+    vertical-align: middle !important;
+    padding: 2.5rem 1rem !important;
+    border-bottom: 0 !important;
+}
+
+body.minia-app .dt-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 7rem;
+    margin: 0 auto;
+    color: #f46a6a;
+}
+
+body.minia-app .dt-empty i {
+    font-size: 1.35rem;
+    opacity: 0.9;
+}
+
+body.minia-app .dt-empty strong {
+    display: block;
+    font-size: 0.92rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+body.minia-app .dt-empty span {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #f09191;
 }
 
 body.minia-app .screen-modal {
@@ -853,6 +969,417 @@ body.minia-app[data-bs-theme="dark"] .screen-modal-panel {
     background: var(--shell-card-bg);
     border-color: var(--shell-border);
     color: var(--shell-text);
+}
+
+/* Content-area floating modal: leaves topbar, sidebar, footer alone */
+body.minia-app.app-content-modal-open {
+    overflow: hidden;
+}
+
+body.minia-app .app-float-modal,
+body.minia-app .app-float-modal-backdrop {
+    position: fixed !important;
+    top: 70px !important;
+    left: 250px !important;
+    right: 0 !important;
+    bottom: 60px !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+body.minia-app .app-float-modal {
+    z-index: 1000;
+    display: block !important;
+}
+
+body.minia-app .app-float-modal-backdrop {
+    z-index: 999;
+    background: rgba(15, 18, 28, 0.45);
+}
+
+body.minia-app .app-float-modal.is-in,
+body.minia-app .app-float-modal-backdrop.is-in {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+body.minia-app .app-float-modal.is-enter,
+body.minia-app .app-float-modal.is-leave,
+body.minia-app .app-float-modal-backdrop.is-enter,
+body.minia-app .app-float-modal-backdrop.is-leave {
+    opacity: 0;
+    pointer-events: none;
+}
+
+body.minia-app .app-float-modal .app-float-modal-dialog {
+    transform: translateY(12px) scale(0.985);
+    transition: transform 0.22s ease;
+}
+
+body.minia-app .app-float-modal.is-in .app-float-modal-dialog {
+    transform: none;
+}
+
+body.minia-app .app-float-modal.is-leave .app-float-modal-dialog {
+    transform: translateY(10px) scale(0.985);
+}
+
+body.minia-app[data-sidebar-size="sm"] .app-float-modal,
+body.minia-app[data-sidebar-size="sm"] .app-float-modal-backdrop {
+    left: 70px !important;
+}
+
+@media (max-width: 991.98px) {
+    body.minia-app .app-float-modal,
+    body.minia-app .app-float-modal-backdrop,
+    body.minia-app[data-sidebar-size="sm"] .app-float-modal,
+    body.minia-app[data-sidebar-size="sm"] .app-float-modal-backdrop {
+        left: 0 !important;
+    }
+}
+
+body.minia-app .app-float-modal-dialog {
+    margin: 1rem auto;
+    max-width: calc(100% - 2rem);
+}
+
+body.minia-app .app-float-modal-dialog--fs {
+    width: calc(100% - 2rem);
+    max-width: none;
+    height: calc(100% - 2rem);
+    margin: 1rem;
+}
+
+body.minia-app .app-float-modal-content {
+    height: 100%;
+    border: 0;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(16, 24, 40, 0.18);
+    overflow: hidden;
+}
+
+body.minia-app .app-float-modal .modal-header,
+body.minia-app .app-float-modal .modal-footer {
+    flex-shrink: 0;
+}
+
+body.minia-app {
+    --shell-panel-bg: #f8f9fc;
+    --shell-panel-surface: #ffffff;
+    --shell-panel-border: #e6e8ee;
+    --shell-panel-text: #343747;
+    --shell-panel-muted: #74788d;
+    --shell-panel-accent-bg: #e8f8f1;
+    --shell-panel-accent-border: #b7ebd6;
+    --shell-panel-accent-text: #1e8f68;
+    --shell-panel-canvas: #fafbfc;
+}
+
+body.minia-app .app-float-modal .modal-body {
+    overflow-y: auto;
+    padding: 1rem 1.15rem;
+    background: var(--shell-panel-surface);
+    color: var(--shell-panel-text);
+}
+
+body.minia-app .app-float-modal .modal-header {
+    padding: 0.85rem 1.15rem;
+}
+
+body.minia-app .app-float-modal .modal-footer {
+    padding: 0.75rem 1.15rem;
+    gap: 0.5rem;
+}
+
+body.minia-app.app-content-modal-open .footer {
+    position: fixed !important;
+    left: 250px !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 1001;
+    height: 60px;
+    display: flex;
+    align-items: center;
+}
+
+body.minia-app.app-content-modal-open[data-sidebar-size="sm"] .footer {
+    left: 70px !important;
+}
+
+@media (max-width: 991.98px) {
+    body.minia-app.app-content-modal-open .footer,
+    body.minia-app.app-content-modal-open[data-sidebar-size="sm"] .footer {
+        left: 0 !important;
+    }
+}
+
+body.minia-app[data-bs-theme="dark"] .app-float-modal-content,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .modal-header,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .modal-footer,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .modal-body {
+    background: var(--shell-card-bg);
+    border-color: var(--shell-border);
+    color: var(--shell-text);
+}
+
+body.minia-app[data-bs-theme="dark"] .app-float-modal .modal-title,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .modal-body,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .modal-body h1,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .modal-body h2,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .modal-body h3,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .modal-body h4,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .modal-body h5,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .modal-body h6 {
+    color: var(--shell-text);
+}
+
+body.minia-app .app-float-modal .app-float-close {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    display: inline-block !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0.1rem 0.2rem !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    color: #74788d !important;
+    font-family: inherit !important;
+    font-size: 1.55rem !important;
+    font-weight: 400 !important;
+    line-height: 1 !important;
+    letter-spacing: 0 !important;
+    text-decoration: none !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    opacity: 0.85;
+    cursor: pointer;
+}
+
+body.minia-app .app-float-modal .app-float-close:hover,
+body.minia-app .app-float-modal .app-float-close:focus,
+body.minia-app .app-float-modal .app-float-close:focus-visible,
+body.minia-app .app-float-modal .app-float-close:active {
+    background: transparent !important;
+    background-image: none !important;
+    border: 0 !important;
+    color: #f46a6a !important;
+    opacity: 1;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+body.minia-app .app-float-modal .app-float-close:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+body.minia-app[data-bs-theme="dark"] .app-float-modal .app-float-close {
+    border: 0 !important;
+    color: #98a2b3 !important;
+    background: transparent !important;
+    background-image: none !important;
+    filter: none;
+}
+
+body.minia-app[data-bs-theme="dark"] .app-float-modal .app-float-close:hover,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .app-float-close:focus,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .app-float-close:focus-visible,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .app-float-close:active {
+    background: transparent !important;
+    background-image: none !important;
+    border: 0 !important;
+    color: #f46a6a !important;
+}
+
+/* Uniform control heights inside content modals */
+body.minia-app .app-float-modal {
+    --app-control-h: 2rem;
+}
+
+body.minia-app .app-float-modal .modal-footer .btn,
+body.minia-app .app-float-modal .modal-header .btn:not(.app-float-close),
+body.minia-app .app-float-modal .btn-sm {
+    height: var(--app-control-h) !important;
+    min-height: var(--app-control-h) !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8125rem !important;
+    line-height: 1 !important;
+}
+
+body.minia-app .app-float-modal .field,
+body.minia-app .app-float-modal .ss-input,
+body.minia-app .app-float-modal input.field,
+body.minia-app .app-float-modal select.field,
+body.minia-app .app-float-modal .form-control,
+body.minia-app .app-float-modal .form-select {
+    height: var(--app-control-h) !important;
+    min-height: var(--app-control-h) !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    font-size: 0.82rem !important;
+    line-height: calc(var(--app-control-h) - 2px) !important;
+}
+
+body.minia-app .app-float-modal textarea.field,
+body.minia-app .app-float-modal textarea.form-control {
+    height: auto !important;
+    min-height: 4.5rem !important;
+    padding-top: 0.4rem !important;
+    padding-bottom: 0.4rem !important;
+    line-height: 1.35 !important;
+}
+
+body.minia-app .app-float-modal input[type="file"].field,
+body.minia-app .app-float-modal .field-file {
+    height: var(--app-control-h) !important;
+    min-height: var(--app-control-h) !important;
+    padding: 0.2rem 0.4rem !important;
+    line-height: 1.2 !important;
+    font-size: 0.75rem !important;
+}
+
+body.minia-app .app-float-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
+    min-height: 14rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+body.minia-app .app-float-loading p {
+    margin: 0;
+    font-size: 0.84rem;
+    font-weight: 500;
+}
+
+body.minia-app .app-float-spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid rgba(var(--pf-accent-rgb, 81, 86, 190), 0.18);
+    border-top-color: var(--pf-accent, #5156be);
+    border-radius: 50%;
+    animation: app-float-spin 0.7s linear infinite;
+}
+
+@keyframes app-float-spin {
+    to { transform: rotate(360deg); }
+}
+
+body.minia-app[data-bs-theme="dark"] .app-float-modal .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+body.minia-app[data-bs-theme="dark"] .app-float-modal .btn-outline-secondary,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .btn-secondary {
+    color: var(--shell-text);
+    border-color: var(--shell-border);
+    background: transparent;
+}
+
+body.minia-app[data-bs-theme="dark"] .app-float-modal .btn-outline-secondary:hover,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .btn-secondary:hover {
+    background: var(--shell-btn-hover);
+    border-color: var(--shell-border);
+    color: #fff;
+}
+
+body.minia-app[data-bs-theme="dark"] .app-float-modal .form-control,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .form-select,
+body.minia-app[data-bs-theme="dark"] .app-float-modal input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+body.minia-app[data-bs-theme="dark"] .app-float-modal select,
+body.minia-app[data-bs-theme="dark"] .app-float-modal textarea {
+    background: var(--shell-input-bg);
+    border-color: var(--shell-input-border);
+    color: var(--shell-text);
+}
+
+body.minia-app[data-bs-theme="dark"] .app-float-modal .med-panel,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .code-size-field,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .code-empty,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .code-card,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .med-metric,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .field,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .status-chip {
+    background: var(--shell-panel-bg) !important;
+    border-color: var(--shell-panel-border) !important;
+    color: var(--shell-panel-text) !important;
+}
+
+body.minia-app[data-bs-theme="dark"] .app-float-modal .med-panel-notes,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .code-card-foot,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .code-card-canvas,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .med-metric:not(.accent) {
+    background: var(--shell-panel-surface) !important;
+}
+
+body.minia-app[data-bs-theme="dark"] .app-float-modal .med-panel-head,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .code-card-head,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .code-card-meta,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .code-card-foot,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .med-facts-tight {
+    border-color: var(--shell-panel-border) !important;
+}
+
+body.minia-app[data-bs-theme="dark"] .app-float-modal .med-panel-head h6,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .med-fact dd,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .med-metric-value,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .code-card-title,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .code-card-meta dd {
+    color: var(--shell-panel-text) !important;
+}
+
+body.minia-app[data-bs-theme="dark"] .app-float-modal .med-panel-head p,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .med-fact dt,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .med-metric-label,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .code-chip,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .code-empty,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .code-size-field > span,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .code-card-meta dt {
+    color: var(--shell-panel-muted) !important;
+}
+
+body.minia-app[data-bs-theme="dark"] .app-float-modal .code-chip,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .status-chip:not(.is-on) {
+    background: var(--shell-panel-surface) !important;
+    border-color: var(--shell-panel-border) !important;
+}
+
+body.minia-app[data-bs-theme="dark"] .app-float-modal .med-metric.accent,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .status-chip.is-on {
+    background: var(--shell-panel-accent-bg) !important;
+    border-color: var(--shell-panel-accent-border) !important;
+    color: var(--shell-panel-accent-text) !important;
+}
+
+body.minia-app[data-bs-theme="dark"] .app-float-modal .med-metric.accent .med-metric-value,
+body.minia-app[data-bs-theme="dark"] .app-float-modal .status-chip.is-on {
+    color: var(--shell-panel-accent-text) !important;
+}
+
+@media (max-width: 767.98px) {
+    body.minia-app .app-float-modal-dialog,
+    body.minia-app .app-float-modal-dialog--fs {
+        width: calc(100% - 1.5rem);
+        max-width: none;
+        height: calc(100% - 1.5rem);
+        margin: 0.75rem;
+    }
 }
 
 body.minia-app .dataTables_wrapper table.dataTable thead th,
@@ -909,10 +1436,51 @@ body.minia-app .dt-toolbar .dt-filter {
     margin-left: auto;
 }
 
+body.minia-app .dataTables_length,
+body.minia-app .dataTables_filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 12px;
+    line-height: 1;
+}
+
+body.minia-app .dataTables_length label,
+body.minia-app .dataTables_filter label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+body.minia-app .dataTables_length select,
+body.minia-app .dataTables_filter input {
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 0 8px !important;
+    font-size: 12px !important;
+    line-height: 26px !important;
+    border-radius: var(--pf-radius, 4px) !important;
+    border: 1px solid var(--shell-panel-border, #ced4da);
+    background: var(--shell-panel-surface, #fff);
+    color: var(--shell-panel-text, #343747);
+    box-shadow: none !important;
+}
+
 body.minia-app .dataTables_length select {
-    min-width: 76px;
-    width: 76px !important;
-    margin: 0 6px;
+    min-width: 64px;
+    width: 64px !important;
+    margin: 0 !important;
+    padding-right: 22px !important;
+}
+
+body.minia-app .dataTables_filter input {
+    width: 180px;
+    margin: 0 !important;
 }
 
 body.minia-app .dt-buttons.btn-group,
@@ -943,6 +1511,14 @@ body.minia-app .dataTables_wrapper .page-link {
     padding: 0 6px;
     font-size: 12px;
     line-height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--shell-panel-text, #495057);
+}
+
+body.minia-app .dataTables_wrapper .page-item.active .page-link {
+    color: #fff !important;
 }
 
 body.minia-app .dt-foot {
@@ -1188,11 +1764,11 @@ body.minia-app .dataTables_wrapper .rounded-full {
 body.minia-app .epharma-confirm {
     width: 320px;
     padding: 22px 22px 18px;
-    border: 0;
-    border-radius: 14px;
-    background: #fff;
-    color: #1f2430;
-    font-family: "IBM Plex Sans", sans-serif;
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    border-radius: var(--pf-radius, 10px) !important;
+    background: var(--shell-panel-surface, #fff);
+    color: var(--shell-panel-text, #1f2430);
+    font-family: inherit;
     box-shadow: 0 18px 50px rgba(16, 24, 40, 0.18);
 }
 
@@ -1201,8 +1777,8 @@ body.minia-app .epharma-confirm .epharma-confirm-icon {
     width: 44px;
     height: 44px;
     margin: 2px auto 10px;
-    border: 0;
-    border-radius: 12px;
+    border: 0 !important;
+    border-radius: var(--pf-radius, 10px) !important;
     background: #fff1f3;
     color: #e11d48;
     line-height: 44px;
@@ -1215,16 +1791,41 @@ body.minia-app .epharma-confirm .swal2-icon .swal2-icon-content {
     font-size: 18px;
 }
 
-body.minia-app .epharma-confirm .swal2-close {
-    width: 28px;
-    height: 28px;
-    color: #98a2b3;
-    font-size: 22px;
+body.minia-app .epharma-confirm .swal2-close,
+body.minia-app .epharma-confirm-close {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    top: 8px;
+    right: 10px;
+    width: auto !important;
+    height: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    margin: 0;
+    padding: 0.1rem 0.2rem;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    color: var(--shell-panel-muted, #74788d) !important;
+    font-size: 1.45rem !important;
+    font-weight: 400 !important;
+    line-height: 1 !important;
+    box-shadow: none !important;
+    opacity: 0.85;
+}
+
+body.minia-app .epharma-confirm .swal2-close:hover,
+body.minia-app .epharma-confirm-close:hover {
+    background: transparent !important;
+    border: 0 !important;
+    color: #f46a6a !important;
+    opacity: 1;
 }
 
 body.minia-app .epharma-confirm-title {
     padding: 0;
-    color: #1f2430;
+    color: var(--shell-panel-text, #1f2430);
     font-size: 16px;
     font-weight: 600;
     line-height: 1.3;
@@ -1232,7 +1833,7 @@ body.minia-app .epharma-confirm-title {
 
 body.minia-app .epharma-confirm-text {
     margin: 6px 0 0;
-    color: #98a2b3;
+    color: var(--shell-panel-muted, #98a2b3);
     font-size: 13px;
     line-height: 1.45;
 }
@@ -1245,21 +1846,23 @@ body.minia-app .epharma-confirm-actions {
 }
 
 body.minia-app .epharma-confirm-cancel,
-body.minia-app .epharma-confirm-delete {
+body.minia-app .epharma-confirm-delete,
+body.minia-app .epharma-confirm-ok {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
     min-width: 96px;
-    height: 36px;
+    height: 34px;
     margin: 0;
-    border: 0;
-    border-radius: 8px;
+    border: 1px solid transparent;
+    border-radius: var(--pf-radius, 10px) !important;
     font-size: 13px;
     font-weight: 600;
 }
 
 body.minia-app .epharma-confirm-cancel {
+    border-color: #f5c2c7;
     background: #fff1f3;
     color: #e11d48;
 }
@@ -1284,18 +1887,37 @@ body.minia-app .epharma-confirm .epharma-confirm-icon.is-error {
 }
 
 body.minia-app .epharma-confirm-ok {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
     min-width: 88px;
-    height: 36px;
-    margin: 0;
-    border: 0;
-    border-radius: 8px;
-    background: #5156be;
+    background: var(--pf-accent, #5156be);
     color: #fff;
-    font-size: 13px;
-    font-weight: 600;
+}
+
+body.minia-app[data-bs-theme="dark"] .epharma-confirm {
+    background: var(--shell-panel-surface, #20242d);
+    border-color: var(--shell-border, #303642);
+    color: var(--bs-heading-color, #f3f5f8);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+
+body.minia-app[data-bs-theme="dark"] .epharma-confirm-title {
+    color: var(--bs-heading-color, #f3f5f8);
+}
+
+body.minia-app[data-bs-theme="dark"] .epharma-confirm .swal2-close,
+body.minia-app[data-bs-theme="dark"] .epharma-confirm-close {
+    border-color: var(--shell-border, #303642);
+    color: var(--shell-muted, #98a2b3) !important;
+}
+
+body.minia-app[data-app-shape="flat"] .epharma-confirm,
+body.minia-app[data-app-shape="flat"] .epharma-confirm .swal2-icon,
+body.minia-app[data-app-shape="flat"] .epharma-confirm .epharma-confirm-icon,
+body.minia-app[data-app-shape="flat"] .epharma-confirm .swal2-close,
+body.minia-app[data-app-shape="flat"] .epharma-confirm-close,
+body.minia-app[data-app-shape="flat"] .epharma-confirm-cancel,
+body.minia-app[data-app-shape="flat"] .epharma-confirm-delete,
+body.minia-app[data-app-shape="flat"] .epharma-confirm-ok {
+    border-radius: 0 !important;
 }
 
 body.minia-app .dt-wrap thead th.dt-sort {
@@ -1334,9 +1956,17 @@ body.minia-app .page-content .overflow-x-auto:has(.dataTables_wrapper) {
     overflow-x: visible !important;
 }
 
-body.minia-app .dt-card {
-    max-width: 100%;
-    overflow: hidden;
+body.minia-app .dt-card,
+body.minia-app .dt-card > .card-body,
+body.minia-app .dataTables_wrapper,
+body.minia-app .dt-toolbar,
+body.minia-app .dt-tools,
+body.minia-app .dt-buttons {
+    overflow: visible !important;
+}
+
+body.minia-app div.dt-button-collection {
+    z-index: 2000 !important;
 }
 
 body.minia-app[data-bs-theme="dark"] {
@@ -1371,6 +2001,15 @@ body.minia-app[data-bs-theme="dark"] {
     --shell-card-bg: #20242d;
     --shell-text: #d8dee9;
     --shell-border: #303642;
+    --shell-panel-bg: #1b1f27;
+    --shell-panel-surface: #252a34;
+    --shell-panel-border: #303642;
+    --shell-panel-text: #d8dee9;
+    --shell-panel-muted: #98a2b3;
+    --shell-panel-accent-bg: rgba(52, 195, 143, 0.14);
+    --shell-panel-accent-border: rgba(52, 195, 143, 0.35);
+    --shell-panel-accent-text: #34c38f;
+    --shell-panel-canvas: #1f2430;
 }
 
 body.minia-app #layout-wrapper[data-layout-mode="dark"] {
@@ -1739,7 +2378,6 @@ body.minia-app[data-bs-theme="dark"] :is(.hover\:bg-gray-50, .hover\:bg-gray-100
     color: #fff;
 }
 
-body.minia-app[data-bs-theme="dark"] .dt-wrap .dt-buttons .btn,
 body.minia-app[data-bs-theme="dark"] .dataTables_paginate .paginate_button {
     background: var(--shell-input-bg) !important;
     color: var(--shell-text) !important;
@@ -1843,6 +2481,7 @@ body.minia-app .pos-catalog {
     padding: 1rem 1.25rem 1.25rem;
 }
 
+/* ===== Pharmacy POS ===== */
 body.minia-app .pos-search {
     position: relative;
 }
@@ -1858,38 +2497,13 @@ body.minia-app .pos-search .bi {
 
 body.minia-app .pos-search .form-control {
     padding-left: 2.25rem;
-    height: 38px;
+    height: 2rem;
 }
 
-body.minia-app .pos-grid {
-    margin-top: 1rem;
-    flex: 1;
-    min-height: 0;
-    overflow: auto;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-    gap: 1rem;
-    align-content: start;
-    padding-right: 2px;
-}
-
-body.minia-app .pos-product .card-body {
-    padding: 1rem;
-}
-
-body.minia-app .pos-ticket {
-    width: 380px;
-    flex: 0 0 380px;
-    background: #fff;
-    border-left: 1px solid #e9e9ef;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-}
-
-body.minia-app .pos-ticket-block {
-    padding: 1rem 1rem 0.75rem;
-    border-bottom: 1px solid #e9e9ef;
+body.minia-app .pos-speed .btn-sm {
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
 }
 
 body.minia-app .pos-suggest {
@@ -1905,7 +2519,7 @@ body.minia-app .pos-suggest {
 body.minia-app .pos-lines {
     flex: 1;
     overflow: auto;
-    padding: 0 1rem;
+    max-height: 280px;
 }
 
 body.minia-app .pos-line {
@@ -1922,11 +2536,6 @@ body.minia-app .pos-qty {
 body.minia-app .pos-qty-value {
     min-width: 1.25rem;
     text-align: center;
-}
-
-body.minia-app .pos-ticket-foot {
-    border-top: 1px solid #e9e9ef;
-    padding: 0.9rem 1rem 1rem;
 }
 
 body.minia-app .pos-totals {
@@ -1949,6 +2558,21 @@ body.minia-app .pos-grand {
     font-weight: 600;
     font-size: 1rem;
     padding-top: 0.35rem;
+}
+
+body.minia-app .pos-discount-group .form-control,
+body.minia-app .pos-discount-group .btn {
+    height: 2rem;
+}
+
+body.minia-app .pos-stage-ticket .form-control,
+body.minia-app .pos-stage-ticket .form-select,
+body.minia-app .pos-stage-ticket .btn-sm {
+    height: 2rem;
+}
+
+body.minia-app .pos-stage-ticket .btn-primary.w-100 {
+    height: 2.35rem;
 }
 
 body.minia-app .pos-modal {
@@ -1980,44 +2604,56 @@ body.minia-app .pos-video {
     object-fit: contain;
 }
 
-@media (max-width: 991.98px) {
-    body.minia-app .pos-shell {
-        height: auto;
-        min-height: 100vh;
-        overflow: auto;
-    }
-
-    body.minia-app .pos-body {
-        flex-direction: column;
-    }
-
-    body.minia-app .pos-grid {
-        max-height: none;
-    }
-
-    body.minia-app .pos-ticket {
-        width: 100%;
-        flex-basis: auto;
-        border-left: 0;
-        border-top: 1px solid #e9e9ef;
-    }
+body.minia-app .pos-rx-placeholder {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.25rem;
+    background: #111;
+    color: #c9cdd8;
+    border-radius: 6px;
 }
 
-body.minia-app[data-bs-theme="dark"] .pos-shell,
-body.minia-app[data-bs-theme="dark"] .pos-top,
-body.minia-app[data-bs-theme="dark"] .pos-ticket {
-    background: var(--bs-body-bg, #171a21);
-    color: var(--bs-body-color, #d8dee9);
-    border-color: var(--bs-border-color, #303642);
+body.minia-app .pos-rx-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
 }
 
-body.minia-app[data-bs-theme="dark"] .pos-grand {
-    color: inherit;
+body.minia-app .pos-rx-thumb {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: var(--pf-radius, 10px);
+    border: 1px solid #e1e4ec;
+    background: #f6f7fb;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #8a91a3;
+    padding: 0;
+    flex: 0 0 3.25rem;
 }
 
-body.minia-app .pos-speed .form-control {
-    height: 31px;
-    font-size: 0.875rem;
+body.minia-app .pos-rx-thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+body.minia-app .pos-rx-thumb.is-empty {
+    pointer-events: none;
+}
+
+body.minia-app .pos-rx-large {
+    max-width: 100%;
+    max-height: 70vh;
+    border-radius: 0.5rem;
 }
 
 body.minia-app .pos-screen {
@@ -2028,6 +2664,20 @@ body.minia-app .pos-screen {
     flex-direction: column;
     background: #f8f8fb;
     overflow: hidden;
+}
+
+body.minia-app .pos-top {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    background: #fff;
+    border-bottom: 1px solid #e9e9ef;
+}
+
+body.minia-app .pos-title {
+    font-size: 1.05rem;
+    font-weight: 700;
 }
 
 body.minia-app .pos-screen > .card,
@@ -2052,15 +2702,56 @@ body.minia-app .pos-stage .card-body {
     height: 100%;
 }
 
+body.minia-app .pos-stage-list .card-body {
+    overflow: auto;
+}
+
 body.minia-app .pos-stage-ticket .card-body {
     display: flex;
     flex-direction: column;
     overflow: auto;
 }
 
-body.minia-app .pos-screen .pos-list {
-    max-height: none;
-    height: 100%;
+body.minia-app .pos-drug-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+    align-content: start;
+}
+
+body.minia-app .pos-drug-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 0.85rem;
+    border: 1px solid #e7e9f0;
+    border-radius: var(--pf-radius, 10px);
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(35, 42, 70, 0.04);
+}
+
+body.minia-app .pos-drug-card.is-out {
+    opacity: 0.72;
+}
+
+body.minia-app .pos-drug-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+body.minia-app .pos-drug-foot {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: auto;
+}
+
+body.minia-app .pos-drug-foot .btn {
+    height: 2rem;
+    min-width: 3.4rem;
 }
 
 @media (max-width: 991.98px) {
@@ -2076,31 +2767,363 @@ body.minia-app .pos-screen .pos-list {
     }
 
     body.minia-app .pos-stage .card,
-    body.minia-app .pos-stage .card-body,
-    body.minia-app .pos-screen .pos-list {
+    body.minia-app .pos-stage .card-body {
         height: auto;
+    }
+
+    body.minia-app .pos-drug-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     }
 }
 
-body.minia-app[data-bs-theme="dark"] .pos-screen {
+body.minia-app[data-bs-theme="dark"] .pos-screen,
+body.minia-app[data-bs-theme="dark"] .pos-top,
+body.minia-app[data-bs-theme="dark"] .pos-drug-card {
     background: var(--bs-body-bg, #171a21);
+    color: var(--bs-body-color, #d8dee9);
+    border-color: var(--bs-border-color, #303642);
 }
 
-body.minia-app .pos-list {
-    max-height: calc(100vh - 320px);
+body.minia-app[data-bs-theme="dark"] .pos-grand {
+    color: inherit;
 }
 
-body.minia-app .pos-list thead th {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background: #f8f9fc;
+/* Tenant theme: accent + shape tokens */
+body.minia-app .btn-primary,
+body.minia-app .bg-primary,
+body.minia-app .badge.bg-primary {
+    background-color: var(--pf-accent, #5156be) !important;
+    border-color: var(--pf-accent, #5156be) !important;
 }
 
-body.minia-app[data-bs-theme="dark"] .pos-list thead th {
-    background: var(--bs-card-bg, #20242d);
+body.minia-app .btn-outline-primary {
+    color: var(--pf-accent, #5156be) !important;
+    border-color: var(--pf-accent, #5156be) !important;
 }
 
-body.minia-app .pos-lines {
-    max-height: 280px;
+body.minia-app .btn-outline-primary:hover,
+body.minia-app .btn-outline-primary:focus {
+    background-color: var(--pf-accent, #5156be) !important;
+    color: #fff !important;
+}
+
+body.minia-app .text-primary,
+body.minia-app a.text-primary {
+    color: var(--pf-accent, #5156be) !important;
+}
+
+body.minia-app .page-item.active .page-link,
+body.minia-app .nav-pills .nav-link.active,
+body.minia-app .form-check-input:checked {
+    background-color: var(--pf-accent, #5156be) !important;
+    border-color: var(--pf-accent, #5156be) !important;
+}
+
+body.minia-app .page-item.active .page-link,
+body.minia-app .dataTables_wrapper .page-item.active .page-link,
+body.minia-app .dataTables_paginate .paginate_button.current,
+body.minia-app .dataTables_paginate .paginate_button.current:hover {
+    color: #fff !important;
+}
+
+body.minia-app .dataTables_wrapper .page-link,
+body.minia-app .pagination .page-link {
+    color: var(--shell-panel-text, #495057);
+}
+
+body.minia-app .form-control:focus,
+body.minia-app .form-select:focus,
+body.minia-app .field:focus {
+    border-color: var(--pf-accent, #5156be) !important;
+    box-shadow: 0 0 0 0.15rem rgba(var(--pf-accent-rgb, 81, 86, 190), 0.18) !important;
+}
+
+body.minia-app #sidebar-menu ul li a.active,
+body.minia-app #sidebar-menu ul li.mm-active > a,
+body.minia-app #sidebar-menu ul li ul.sub-menu li a.active {
+    color: var(--pf-accent, #5156be) !important;
+}
+
+body.minia-app #sidebar-menu ul li ul.sub-menu.mm-show > li > a.active {
+    box-shadow: inset 2px 0 0 var(--pf-accent, #5156be) !important;
+}
+
+body.minia-app[data-app-shape="rounded"] .btn,
+body.minia-app[data-app-shape="rounded"] .form-control,
+body.minia-app[data-app-shape="rounded"] .form-select,
+body.minia-app[data-app-shape="rounded"] .card,
+body.minia-app[data-app-shape="rounded"] .modal-content,
+body.minia-app[data-app-shape="rounded"] .dropdown-menu,
+body.minia-app[data-app-shape="rounded"] .alert,
+body.minia-app[data-app-shape="rounded"] .app-float-modal-content,
+body.minia-app[data-app-shape="rounded"] .med-panel,
+body.minia-app[data-app-shape="rounded"] .theme-panel,
+body.minia-app[data-app-shape="rounded"] .settings-nav,
+body.minia-app[data-app-shape="rounded"] .epharma-confirm,
+body.minia-app[data-app-shape="rounded"] .epharma-confirm-cancel,
+body.minia-app[data-app-shape="rounded"] .epharma-confirm-delete,
+body.minia-app[data-app-shape="rounded"] .epharma-confirm-ok,
+body.minia-app[data-app-shape="rounded"] .dataTables_length select,
+body.minia-app[data-app-shape="rounded"] .dataTables_filter input,
+body.minia-app[data-app-shape="rounded"] .pos-drug-card,
+body.minia-app[data-app-shape="rounded"] .pos-rx-thumb,
+body.minia-app[data-app-shape="rounded"] .pos-modal-card {
+    border-radius: var(--pf-radius, 10px) !important;
+}
+
+body.minia-app[data-app-shape="default"] .btn,
+body.minia-app[data-app-shape="default"] .form-control,
+body.minia-app[data-app-shape="default"] .form-select,
+body.minia-app[data-app-shape="default"] .card,
+body.minia-app[data-app-shape="default"] .modal-content,
+body.minia-app[data-app-shape="default"] .dropdown-menu,
+body.minia-app[data-app-shape="default"] .alert,
+body.minia-app[data-app-shape="default"] .app-float-modal-content,
+body.minia-app[data-app-shape="default"] .med-panel,
+body.minia-app[data-app-shape="default"] .theme-panel,
+body.minia-app[data-app-shape="default"] .settings-nav,
+body.minia-app[data-app-shape="default"] .epharma-confirm,
+body.minia-app[data-app-shape="default"] .epharma-confirm-cancel,
+body.minia-app[data-app-shape="default"] .epharma-confirm-delete,
+body.minia-app[data-app-shape="default"] .epharma-confirm-ok,
+body.minia-app[data-app-shape="default"] .dataTables_length select,
+body.minia-app[data-app-shape="default"] .dataTables_filter input,
+body.minia-app[data-app-shape="default"] .pos-drug-card,
+body.minia-app[data-app-shape="default"] .pos-rx-thumb,
+body.minia-app[data-app-shape="default"] .pos-modal-card {
+    border-radius: var(--pf-radius, 4px) !important;
+}
+
+body.minia-app[data-app-shape="flat"] .btn,
+body.minia-app[data-app-shape="flat"] .form-control,
+body.minia-app[data-app-shape="flat"] .form-select,
+body.minia-app[data-app-shape="flat"] .card,
+body.minia-app[data-app-shape="flat"] .modal-content,
+body.minia-app[data-app-shape="flat"] .dropdown-menu,
+body.minia-app[data-app-shape="flat"] .alert,
+body.minia-app[data-app-shape="flat"] .app-float-modal-content,
+body.minia-app[data-app-shape="flat"] .med-panel,
+body.minia-app[data-app-shape="flat"] .theme-panel,
+body.minia-app[data-app-shape="flat"] .settings-nav,
+body.minia-app[data-app-shape="flat"] .epharma-confirm,
+body.minia-app[data-app-shape="flat"] .epharma-confirm-cancel,
+body.minia-app[data-app-shape="flat"] .epharma-confirm-delete,
+body.minia-app[data-app-shape="flat"] .epharma-confirm-ok,
+body.minia-app[data-app-shape="flat"] .dataTables_length select,
+body.minia-app[data-app-shape="flat"] .dataTables_filter input,
+body.minia-app[data-app-shape="flat"] .pos-drug-card,
+body.minia-app[data-app-shape="flat"] .pos-rx-thumb,
+body.minia-app[data-app-shape="flat"] .pos-modal-card {
+    border-radius: 0 !important;
+}
+
+body.minia-app .settings-shell {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+@media (max-width: 991.98px) {
+    body.minia-app .settings-shell {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Broad theme compliance: accent, radius, type */
+body.minia-app {
+    font-size: var(--pf-size, 0.875rem) !important;
+    font-weight: var(--pf-weight, 400) !important;
+}
+
+body.minia-app .btn-primary:hover,
+body.minia-app .btn-primary:focus,
+body.minia-app .btn-primary:active,
+body.minia-app .btn-primary.active,
+body.minia-app .btn-check:checked + .btn-primary {
+    background-color: color-mix(in srgb, var(--pf-accent, #5156be) 88%, #000) !important;
+    border-color: color-mix(in srgb, var(--pf-accent, #5156be) 88%, #000) !important;
+}
+
+body.minia-app .btn-soft-primary,
+body.minia-app .bg-soft-primary {
+    color: var(--pf-accent, #5156be) !important;
+    background-color: rgba(var(--pf-accent-rgb, 81, 86, 190), 0.12) !important;
+}
+
+body.minia-app .border-primary {
+    border-color: var(--pf-accent, #5156be) !important;
+}
+
+body.minia-app a:not(.btn):not(.dropdown-item):not(.nav-link):not(.list-group-item):not(.page-link) {
+    color: var(--pf-accent, #5156be);
+}
+
+body.minia-app .table thead th,
+body.minia-app .dataTables_wrapper table.dataTable thead th {
+    font-family: var(--pf-font, "IBM Plex Sans", sans-serif) !important;
+}
+
+body.minia-app .dt-card,
+body.minia-app .card,
+body.minia-app .modal-content,
+body.minia-app .dropdown-menu,
+body.minia-app .list-group-item,
+body.minia-app .page-link,
+body.minia-app .badge,
+body.minia-app .alert,
+body.minia-app .toast,
+body.minia-app .popover,
+body.minia-app .tooltip-inner,
+body.minia-app .input-group-text,
+body.minia-app .form-control,
+body.minia-app .form-select,
+body.minia-app .form-check-input,
+body.minia-app .btn,
+body.minia-app .nav-pills .nav-link,
+body.minia-app .progress,
+body.minia-app .progress-bar,
+body.minia-app .offcanvas,
+body.minia-app .accordion-item,
+body.minia-app .accordion-button,
+body.minia-app .pagination .page-link,
+body.minia-app .select2-container--default .select2-selection--single,
+body.minia-app .field,
+body.minia-app .med-panel,
+body.minia-app .med-metric,
+body.minia-app .theme-panel,
+body.minia-app .theme-preview-card,
+body.minia-app .theme-shape,
+body.minia-app .settings-nav,
+body.minia-app .app-float-modal-content,
+body.minia-app .status-chip,
+body.minia-app .switch,
+body.minia-app .epharma-confirm,
+body.minia-app .epharma-confirm .swal2-icon,
+body.minia-app .epharma-confirm .epharma-confirm-icon,
+body.minia-app .epharma-confirm .swal2-close,
+body.minia-app .epharma-confirm-close,
+body.minia-app .epharma-confirm-cancel,
+body.minia-app .epharma-confirm-delete,
+body.minia-app .epharma-confirm-ok,
+body.minia-app .dataTables_length select,
+body.minia-app .dataTables_filter input,
+body.minia-app .pos-drug-card,
+body.minia-app .pos-rx-thumb,
+body.minia-app .pos-modal-card {
+    border-radius: var(--pf-radius, 10px) !important;
+}
+
+body.minia-app[data-app-shape="flat"] .dt-card,
+body.minia-app[data-app-shape="flat"] .card,
+body.minia-app[data-app-shape="flat"] .modal-content,
+body.minia-app[data-app-shape="flat"] .dropdown-menu,
+body.minia-app[data-app-shape="flat"] .list-group-item,
+body.minia-app[data-app-shape="flat"] .page-link,
+body.minia-app[data-app-shape="flat"] .badge,
+body.minia-app[data-app-shape="flat"] .alert,
+body.minia-app[data-app-shape="flat"] .toast,
+body.minia-app[data-app-shape="flat"] .input-group-text,
+body.minia-app[data-app-shape="flat"] .form-control,
+body.minia-app[data-app-shape="flat"] .form-select,
+body.minia-app[data-app-shape="flat"] .form-check-input,
+body.minia-app[data-app-shape="flat"] .btn,
+body.minia-app[data-app-shape="flat"] .nav-pills .nav-link,
+body.minia-app[data-app-shape="flat"] .progress,
+body.minia-app[data-app-shape="flat"] .offcanvas,
+body.minia-app[data-app-shape="flat"] .accordion-item,
+body.minia-app[data-app-shape="flat"] .accordion-button,
+body.minia-app[data-app-shape="flat"] .pagination .page-link,
+body.minia-app[data-app-shape="flat"] .field,
+body.minia-app[data-app-shape="flat"] .med-panel,
+body.minia-app[data-app-shape="flat"] .med-metric,
+body.minia-app[data-app-shape="flat"] .theme-panel,
+body.minia-app[data-app-shape="flat"] .theme-preview-card,
+body.minia-app[data-app-shape="flat"] .theme-shape,
+body.minia-app[data-app-shape="flat"] .settings-nav,
+body.minia-app[data-app-shape="flat"] .app-float-modal-content,
+body.minia-app[data-app-shape="flat"] .status-chip,
+body.minia-app[data-app-shape="flat"] .switch,
+body.minia-app[data-app-shape="flat"] .pos-drug-card,
+body.minia-app[data-app-shape="flat"] .pos-rx-thumb,
+body.minia-app[data-app-shape="flat"] .pos-modal-card,
+body.minia-app[data-app-shape="flat"] .epharma-confirm,
+body.minia-app[data-app-shape="flat"] .epharma-confirm .swal2-icon,
+body.minia-app[data-app-shape="flat"] .epharma-confirm .epharma-confirm-icon,
+body.minia-app[data-app-shape="flat"] .epharma-confirm .swal2-close,
+body.minia-app[data-app-shape="flat"] .epharma-confirm-close,
+body.minia-app[data-app-shape="flat"] .epharma-confirm-cancel,
+body.minia-app[data-app-shape="flat"] .epharma-confirm-delete,
+body.minia-app[data-app-shape="flat"] .epharma-confirm-ok,
+body.minia-app[data-app-shape="flat"] .dataTables_length select,
+body.minia-app[data-app-shape="flat"] .dataTables_filter input {
+    border-radius: 0 !important;
+}
+
+body.minia-app .switch {
+    border-radius: 999px !important;
+}
+
+body.minia-app[data-app-shape="flat"] .switch {
+    border-radius: 999px !important;
+}
+
+/* Status pills / badges follow corner shape */
+body.minia-app .status-chip,
+body.minia-app .badge.rounded-pill,
+body.minia-app .theme-locked-badge,
+body.minia-app .rounded-full,
+body.minia-app .rounded-pill,
+body.minia-app span.rounded-full {
+    border-radius: var(--pf-radius, 10px) !important;
+}
+
+body.minia-app[data-app-shape="rounded"] .status-chip,
+body.minia-app[data-app-shape="rounded"] .badge.rounded-pill,
+body.minia-app[data-app-shape="rounded"] .theme-locked-badge,
+body.minia-app[data-app-shape="rounded"] .rounded-full,
+body.minia-app[data-app-shape="rounded"] .rounded-pill,
+body.minia-app[data-app-shape="rounded"] span.rounded-full {
+    border-radius: 999px !important;
+}
+
+body.minia-app[data-app-shape="flat"] .status-chip,
+body.minia-app[data-app-shape="flat"] .badge.rounded-pill,
+body.minia-app[data-app-shape="flat"] .theme-locked-badge,
+body.minia-app[data-app-shape="flat"] .rounded-full,
+body.minia-app[data-app-shape="flat"] .rounded-pill,
+body.minia-app[data-app-shape="flat"] span.rounded-full {
+    border-radius: 0 !important;
+}
+
+/* Profile / avatar marks follow corner shape */
+body.minia-app .logo-mark,
+body.minia-app .header-profile-user,
+body.minia-app .rounded-circle,
+body.minia-app .avatar-title.rounded-circle {
+    border-radius: var(--pf-radius, 10px) !important;
+}
+
+body.minia-app[data-app-shape="rounded"] .logo-mark,
+body.minia-app[data-app-shape="rounded"] .header-profile-user,
+body.minia-app[data-app-shape="rounded"] .rounded-circle,
+body.minia-app[data-app-shape="rounded"] .avatar-title.rounded-circle {
+    border-radius: 50% !important;
+}
+
+body.minia-app[data-app-shape="flat"] .logo-mark,
+body.minia-app[data-app-shape="flat"] .header-profile-user,
+body.minia-app[data-app-shape="flat"] .rounded-circle,
+body.minia-app[data-app-shape="flat"] .avatar-title.rounded-circle {
+    border-radius: 0 !important;
+}
+
+body.minia-app .navbar-header .header-item.btn,
+body.minia-app #vertical-menu-btn {
+    border-radius: var(--pf-radius, 10px) !important;
+}
+
+body.minia-app[data-app-shape="flat"] .navbar-header .header-item.btn,
+body.minia-app[data-app-shape="flat"] #vertical-menu-btn {
+    border-radius: 0 !important;
 }

@@ -2,15 +2,91 @@
     <Head title="Medicine List" />
     <AuthenticatedLayout>
         <template #header>
-            <h4 class="mb-sm-0 font-size-18">Medicine List</h4>
+            <div class="d-flex flex-column gap-2 min-w-0">
+                <h4 class="mb-0 font-size-18">Medicine List</h4>
+                <FilterSummary
+                    :chips="filterChips"
+                    :show-button="false"
+                    @clear="resetFilters"
+                    @remove="removeFilter"
+                />
+            </div>
             <div class="page-title-right d-flex flex-wrap align-items-center gap-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" @click="showFilters = true">
+                    <i class="bi bi-funnel me-1" />
+                    Filters
+                    <span v-if="filterChips.length" class="badge bg-primary ms-1">{{ filterChips.length }}</span>
+                </button>
                 <Link :href="route('medicines.create')" class="btn btn-primary btn-sm">Add Medicine</Link>
                 <button type="button" class="btn btn-success btn-sm" @click="showImportModal = true">Import CSV</button>
-                <button type="button" class="btn btn-primary btn-sm" @click="openApiModal">Search Medicine [API]</button>
+                <button type="button" class="btn btn-primary btn-sm" @click="openApiModal">
+                    <i class="bi bi-cloud-download me-1" />
+                    Reference Catalog
+                </button>
             </div>
         </template>
 
-        <LunaTable title="Medicines" :pagination="medicines">
+        <FilterDrawer
+            :show="showFilters"
+            title="Medicine filters"
+            @close="showFilters = false"
+            @apply="applyFilters"
+            @clear="resetFilters"
+        >
+            <div class="filter-field">
+                <label class="field-label">Search</label>
+                <input v-model="listFilters.search" type="search" class="field" placeholder="Name, form, barcode…">
+            </div>
+            <div class="filter-field">
+                <label class="field-label">Brand</label>
+                <SearchableSelect
+                    v-model="listFilters.brand_id"
+                    :options="brandSelectOptions"
+                    placeholder="Search brand…"
+                />
+            </div>
+            <div class="filter-field">
+                <label class="field-label">Generic</label>
+                <SearchableSelect
+                    v-model="listFilters.generic_id"
+                    :options="genericSelectOptions"
+                    placeholder="Search generic…"
+                />
+            </div>
+            <div class="filter-field">
+                <label class="field-label">Manufacturer</label>
+                <SearchableSelect
+                    v-model="listFilters.manufacturer_id"
+                    :options="manufacturerSelectOptions"
+                    placeholder="Search manufacturer…"
+                />
+            </div>
+            <div class="filter-field">
+                <label class="field-label">Status</label>
+                <SearchableSelect
+                    v-model="listFilters.status"
+                    :options="statusSelectOptions"
+                    placeholder="Search status…"
+                />
+            </div>
+            <div class="filter-field">
+                <label class="field-label">Segment</label>
+                <SearchableSelect
+                    v-model="listFilters.segment"
+                    :options="segmentSelectOptions"
+                    placeholder="Search segment…"
+                />
+            </div>
+            <div class="filter-field">
+                <label class="field-label">Price range (Box MRP)</label>
+                <div class="d-flex gap-2">
+                    <input v-model="listFilters.price_min" type="number" min="0" step="0.01" class="field" placeholder="Min">
+                    <input v-model="listFilters.price_max" type="number" min="0" step="0.01" class="field" placeholder="Max">
+                </div>
+            </div>
+        </FilterDrawer>
+
+        <LunaTable title="Medicines" :pagination="medicines" empty-text="No medicines found">
 <table class="table table-striped table-hover mb-0">
                             <thead class="bg-gray-50">
                                 <tr>
@@ -19,6 +95,12 @@
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Generic Name
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Strength
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Manufacturer
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         P. Price
@@ -44,8 +126,8 @@
                                 <tr v-for="medicine in filteredMedicines" :key="medicine.id">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
-                                            <div v-if="medicine.image" class="flex-shrink-0 h-10 w-10">
-                                                <img class="h-10 w-10 rounded-full" :src="medicine.image" :alt="medicine.name">
+                                            <div v-if="medicineImageUrl(medicine.image)" class="flex-shrink-0 h-10 w-10">
+                                                <img class="h-10 w-10 rounded-full" :src="medicineImageUrl(medicine.image)" :alt="medicine.name">
                                             </div>
                                             <div class="ml-4">
                                                 <div>
@@ -62,7 +144,12 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900">{{ medicine.generic_name }}</div>
-                                        <div class="text-sm text-gray-500">{{ medicine.strength }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ medicine.strength || '—' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ medicine.manufacturer?.name || '—' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ medicine.manufacturer_price }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
@@ -86,9 +173,9 @@
                                     </td>
                                     <td class="whitespace-nowrap">
                                         <div class="dt-actions">
-                                            <Link :href="route('medicines.show', medicine.id)" class="btn btn-sm btn-icon btn-soft-primary" title="View"><i class="bi bi-eye"></i></Link>
+                                            <Link :href="route('medicines.show', medicine.id)" class="btn btn-sm btn-icon btn-soft-primary" title="View"><i class="bi bi-journal-richtext"></i></Link>
                                             <Link :href="route('medicines.edit', medicine.id)" class="btn btn-sm btn-icon btn-soft-secondary" title="Edit"><i class="bi bi-pencil"></i></Link>
-                                            <Link :href="route('medicines.codes', medicine.id)" class="btn btn-sm btn-icon btn-soft-success" title="Codes"><i class="bi bi-upc"></i></Link>
+                                            <Link :href="route('medicines.codes', medicine.id)" class="btn btn-sm btn-icon btn-soft-success" title="Codes"><i class="bi bi-journal-code"></i></Link>
                                             <button type="button" class="btn btn-sm btn-icon btn-soft-danger" title="Delete" @click="deleteMedicine(medicine.id)"><i class="bi bi-trash"></i></button>
                                         </div>
                                     </td>
@@ -97,189 +184,279 @@
                         </table>
 </LunaTable>
 
-        <!-- API Modal -->
-        <div v-if="showApiModal" class="fixed inset-0 z-[9999]">
-            <div class="absolute inset-0 bg-black/50" @click="closeApiModal"></div>
-            <div class="absolute inset-0 flex items-stretch p-3">
-                <div class="card d-flex flex-column w-100" style="max-height: 100%;">
-                    <div class="card-header d-flex align-items-center justify-content-between">
-                        <div>
-                            <h5 class="mb-1">Medicine reference</h5>
-                            <div class="text-muted font-size-12">Search a product, or import brands and manufacturers from MedEx.</div>
+        <FormScreen v-if="showApiModal" title="Product Reference Catalog" @close="closeApiModal">
+            <template #header-actions>
+                <div class="api-segment">
+                    <button type="button" class="api-segment-btn" :class="{ active: medexSegment === 'allopathic' }" @click="setSegment('allopathic')">Allopathic</button>
+                    <button type="button" class="api-segment-btn" :class="{ active: medexSegment === 'herbal' }" @click="setSegment('herbal')">Herbal</button>
+                </div>
+            </template>
+
+            <div class="api-shell">
+                <p class="api-shell-lead">Search external product directories, review full monograph details, then save into your database.</p>
+
+                <div class="api-platform-toolbar">
+                    <nav class="api-tabs">
+                        <button type="button" class="api-tab" :class="{ active: apiTab === 'medicine' }" @click="apiTab = 'medicine'">Products</button>
+                        <button type="button" class="api-tab" :class="{ active: apiTab === 'brands' }" @click="loadBrands(1)">Brand index</button>
+                        <button type="button" class="api-tab" :class="{ active: apiTab === 'companies' }" @click="loadCompanies(1)">Manufacturers</button>
+                        <button type="button" class="api-tab" :class="{ active: apiTab === 'generics' }" @click="loadGenerics(1)">Generics</button>
+                        <button type="button" class="api-tab" :class="{ active: apiTab === 'forms' }" @click="loadDosageForms">Dosage forms</button>
+                    </nav>
+                </div>
+
+                <div v-if="apiTab === 'medicine'" class="api-products">
+                    <aside class="api-search-pane">
+                        <label class="api-label" for="api-medicine-search">Medicine name</label>
+                        <div class="api-search-wrap">
+                            <i class="bi bi-search" />
+                            <input
+                                id="api-medicine-search"
+                                v-model="apiSearch"
+                                type="search"
+                                class="api-search-input"
+                                placeholder="Brand, generic, or strength"
+                                autofocus
+                                @input="debouncedApiSearch"
+                            >
                         </div>
-                        <button type="button" class="btn btn-sm btn-light" @click="closeApiModal">Close</button>
-                    </div>
-                    <div class="px-3 pt-3">
-                        <div class="btn-group btn-group-sm">
-                            <button type="button" class="btn" :class="apiTab === 'medicine' ? 'btn-primary' : 'btn-light'" @click="apiTab = 'medicine'">Medicines</button>
-                            <button type="button" class="btn" :class="apiTab === 'brands' ? 'btn-primary' : 'btn-light'" @click="apiTab = 'brands'">Brands</button>
-                            <button type="button" class="btn" :class="apiTab === 'companies' ? 'btn-primary' : 'btn-light'" @click="apiTab = 'companies'">Manufacturers</button>
+                        <div v-if="apiSearchLoading" class="api-hint">Searching…</div>
+                        <div v-else-if="apiResults.length" class="api-result-list">
+                            <button
+                                v-for="res in apiResults"
+                                :key="res.link"
+                                type="button"
+                                class="api-result-item"
+                                :class="{ active: apiSelectedLink === res.link }"
+                                @click="selectApiResult(res)"
+                            >
+                                <span class="api-result-copy">
+                                    <strong>{{ res.name }}</strong>
+                                    <small>{{ [res.form, res.strength].filter(Boolean).join(' · ') || 'Reference product' }}</small>
+                                </span>
+                                <i class="bi bi-chevron-right api-result-chevron" />
+                            </button>
                         </div>
-                    </div>
-                    <div class="card-body overflow-auto">
-                        <div v-if="apiTab === 'medicine'" class="row g-3">
-                            <div class="col-lg-4">
-                                <input v-model="apiSearch" class="form-control" placeholder="Brand, generic, or strength" @input="debouncedApiSearch">
-                                <div v-if="apiSearchLoading" class="text-muted font-size-12 mt-2">Searching MedEx...</div>
-                                <div v-if="apiResults.length" class="list-group mt-2">
-                                    <button v-for="res in apiResults" :key="res.link" type="button" class="list-group-item list-group-item-action d-flex gap-2 align-items-center" @click="selectApiResult(res)">
-                                        <img v-if="res.img" :src="res.img" alt="" width="28" height="28">
-                                        <span>
-                                            <span class="d-block fw-medium">{{ res.name }}</span>
-                                            <span class="d-block text-muted font-size-12">{{ res.form }} · {{ res.strength }}</span>
-                                        </span>
-                                    </button>
+                        <div v-else-if="apiSearch && !apiSearchLoading" class="api-hint">No matching products.</div>
+                        <div v-else class="api-hint">Type at least 2 characters to search.</div>
+                    </aside>
+
+                    <section class="api-detail-pane">
+                        <div v-if="apiDetailsLoading" class="api-empty">Loading reference details…</div>
+                        <template v-else-if="apiDetails">
+                            <div class="api-detail-head">
+                                <div class="api-detail-identity">
+                                    <img v-if="apiDetails.image || apiDetails.img" :src="apiDetails.image || apiDetails.img" alt="" class="api-detail-thumb">
+                                    <div class="min-w-0">
+                                        <h4 class="api-detail-name">{{ apiDetails.name }}</h4>
+                                        <p class="api-detail-meta">{{ [apiDetails.generic, apiDetails.form, apiDetails.strength].filter(Boolean).join(' · ') }}</p>
+                                        <p class="api-detail-meta">{{ apiDetails.manufacturer }}</p>
+                                    </div>
                                 </div>
-                                <div v-else-if="apiSearch && !apiSearchLoading" class="text-muted font-size-12 mt-2">No matching products.</div>
+                                <button
+                                    v-if="!apiDetails.exists"
+                                    type="button"
+                                    class="btn btn-primary btn-sm"
+                                    :disabled="savingApi"
+                                    @click="saveFromApi"
+                                >
+                                    <span v-if="savingApi" class="spinner-border spinner-border-sm me-1" role="status" />
+                                    {{ savingApi ? 'Saving…' : 'Save to database' }}
+                                </button>
+                                <span v-else class="badge bg-success align-self-start">In database</span>
                             </div>
-                            <div class="col-lg-8">
-                                <div v-if="apiDetailsLoading" class="text-muted">Loading the product record...</div>
-                                <div v-else-if="apiDetails">
-                                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-                                        <div>
-                                            <h4 class="mb-1">{{ apiDetails.name }}</h4>
-                                            <div class="text-muted">{{ apiDetails.generic }} · {{ apiDetails.form }} · {{ apiDetails.strength }}</div>
-                                            <div class="text-muted font-size-12">{{ apiDetails.manufacturer }}</div>
-                                        </div>
-                                        <button v-if="!apiDetails.exists" type="button" class="btn btn-primary" :disabled="savingApi" @click="saveFromApi">{{ savingApi ? 'Saving...' : 'Save record' }}</button>
-                                        <span v-else class="badge bg-success">Already in catalog</span>
-                                    </div>
-                                    <div class="row g-2 mb-3">
-                                        <div v-for="fact in apiFacts" :key="fact.label" class="col-md-4">
-                                            <div class="border rounded p-2 h-100">
-                                                <div class="text-muted font-size-12">{{ fact.label }}</div>
-                                                <div>{{ fact.value }}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div v-for="section in apiSections" :key="section.label" class="mb-3">
-                                        <div class="fw-medium mb-1">{{ section.label }}</div>
-                                        <div v-if="section.html" class="font-size-13" v-html="section.value"></div>
-                                        <div v-else class="font-size-13" style="white-space: pre-line;">{{ section.value }}</div>
-                                    </div>
+                            <div v-if="apiFacts.length" class="api-facts">
+                                <div v-for="fact in apiFacts" :key="fact.label" class="api-fact">
+                                    <span>{{ fact.label }}</span>
+                                    <strong>{{ fact.value }}</strong>
                                 </div>
-                                <div v-else class="text-muted">Search, then choose a product to review the full record before saving.</div>
                             </div>
-                        </div>
-                        <div v-else-if="apiTab === 'brands'">
-                            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
-                                <select v-model="brandLetter" class="form-select" style="width: 120px;" @change="loadBrands(1)">
-                                    <option value="">All</option>
-                                    <option v-for="letter in letters" :key="letter" :value="letter">{{ letter.toUpperCase() }}</option>
-                                </select>
-                                <button type="button" class="btn btn-light" :disabled="brandPage <= 1 || brandLoading" @click="loadBrands(brandPage - 1)">Previous</button>
-                                <span class="text-muted">Page {{ brandPage }}</span>
-                                <button type="button" class="btn btn-light" :disabled="brandLoading || !brandRows.length" @click="loadBrands(brandPage + 1)">Next</button>
-                                <button type="button" class="btn btn-primary ms-auto" :disabled="brandLoading || importingDirectory || !brandRows.length" @click="importBrands">{{ importingDirectory ? 'Importing...' : 'Import this page' }}</button>
+                            <div v-for="section in apiSections" :key="section.label" class="api-section">
+                                <h6>{{ section.label }}</h6>
+                                <div v-if="section.html" class="api-section-body" v-html="section.value" />
+                                <div v-else class="api-section-body" style="white-space: pre-line;">{{ section.value }}</div>
                             </div>
-                            <div v-if="directoryNote" class="alert alert-success py-2">{{ directoryNote }}</div>
-                            <div v-if="brandLoading" class="text-muted">Loading brands...</div>
-                            <table v-else class="table table-sm align-middle mb-0">
-                                <thead><tr><th>Brand</th><th>Strength</th><th>Generic</th><th>Manufacturer</th></tr></thead>
-                                <tbody>
-                                    <tr v-for="row in brandRows" :key="row.link"><td>{{ row.name }}</td><td>{{ row.strength }}</td><td>{{ row.generic }}</td><td>{{ row.manufacturer }}</td></tr>
-                                </tbody>
-                            </table>
+                        </template>
+                        <div v-else class="api-empty">
+                            <i class="bi bi-journal-richtext" />
+                            <p>Search a medicine name, then select a result to view direct reference details.</p>
                         </div>
-                        <div v-else>
-                            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
-                                <select v-model="companyLetter" class="form-select" style="width: 120px;" @change="loadCompanies(1)">
-                                    <option value="">All</option>
-                                    <option v-for="letter in letters" :key="letter" :value="letter">{{ letter.toUpperCase() }}</option>
-                                </select>
-                                <button type="button" class="btn btn-light" :disabled="companyPage <= 1 || companyLoading" @click="loadCompanies(companyPage - 1)">Previous</button>
-                                <span class="text-muted">Page {{ companyPage }}</span>
-                                <button type="button" class="btn btn-light" :disabled="companyLoading || !companyRows.length" @click="loadCompanies(companyPage + 1)">Next</button>
-                                <button type="button" class="btn btn-primary ms-auto" :disabled="companyLoading || importingDirectory || !companyRows.length" @click="importCompanies">{{ importingDirectory ? 'Importing...' : 'Import this page' }}</button>
-                            </div>
-                            <div v-if="directoryNote" class="alert alert-success py-2">{{ directoryNote }}</div>
-                            <div v-if="companyLoading" class="text-muted">Loading manufacturers...</div>
-                            <table v-else class="table table-sm align-middle mb-0">
-                                <thead><tr><th>Manufacturer</th><th>Catalog</th></tr></thead>
-                                <tbody>
-                                    <tr v-for="row in companyRows" :key="row.link"><td>{{ row.name }}</td><td>{{ row.details }}</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    </section>
+                </div>
+
+                <div v-else-if="apiTab === 'brands'" class="api-directory">
+                    <div class="api-directory-bar">
+                        <select v-model="brandLetter" class="form-select form-select-sm" style="width: 5.5rem;" @change="loadBrands(1)">
+                            <option value="">All</option>
+                            <option v-for="letter in letters" :key="letter" :value="letter">{{ letter.toUpperCase() }}</option>
+                        </select>
+                        <button type="button" class="btn btn-sm btn-light" :disabled="brandPage <= 1 || brandLoading" @click="loadBrands(brandPage - 1)">Prev</button>
+                        <span class="text-muted font-size-12">Page {{ brandPage }}</span>
+                        <button type="button" class="btn btn-sm btn-light" :disabled="brandLoading || !brandRows.length" @click="loadBrands(brandPage + 1)">Next</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="syncingDirectory" @click="queueSync('brands')">{{ syncingDirectory ? 'Queuing…' : 'Sync A–Z' }}</button>
+                        <button type="button" class="btn btn-sm btn-primary ms-auto" :disabled="brandLoading || importingDirectory || !brandRows.length" @click="importBrands">{{ importingDirectory ? 'Importing…' : 'Index page' }}</button>
+                    </div>
+                    <div v-if="directoryNote" class="alert alert-success py-2 mb-2">{{ directoryNote }}</div>
+                    <div v-if="brandLoading" class="api-hint">Loading…</div>
+                    <div v-else class="table-responsive">
+                        <table class="table table-sm align-middle mb-0 api-table">
+                            <thead><tr><th>Product</th><th>Form</th><th>Strength</th><th>Generic</th><th>Manufacturer</th><th /></tr></thead>
+                            <tbody>
+                                <tr v-for="row in brandRows" :key="row.link || row.name">
+                                    <td class="fw-medium">{{ row.name }}</td>
+                                    <td>{{ row.form || '—' }}</td>
+                                    <td>{{ row.strength || '—' }}</td>
+                                    <td>{{ row.generic || '—' }}</td>
+                                    <td>{{ row.manufacturer || '—' }}</td>
+                                    <td><button v-if="row.link" type="button" class="btn btn-sm btn-soft-primary" @click="selectApiResult({ link: row.link, name: row.name })">Open</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div v-else-if="apiTab === 'companies'" class="api-directory">
+                    <div class="api-directory-bar">
+                        <select v-model="companyLetter" class="form-select form-select-sm" style="width: 5.5rem;" @change="loadCompanies(1)">
+                            <option value="">All</option>
+                            <option v-for="letter in letters" :key="letter" :value="letter">{{ letter.toUpperCase() }}</option>
+                        </select>
+                        <button type="button" class="btn btn-sm btn-light" :disabled="companyPage <= 1 || companyLoading" @click="loadCompanies(companyPage - 1)">Prev</button>
+                        <span class="text-muted font-size-12">Page {{ companyPage }}</span>
+                        <button type="button" class="btn btn-sm btn-light" :disabled="companyLoading || !companyRows.length" @click="loadCompanies(companyPage + 1)">Next</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="syncingDirectory" @click="queueSync('companies')">{{ syncingDirectory ? 'Queuing…' : 'Sync A–Z' }}</button>
+                        <button type="button" class="btn btn-sm btn-primary ms-auto" :disabled="companyLoading || importingDirectory || !companyRows.length" @click="importCompanies">{{ importingDirectory ? 'Importing…' : 'Import page' }}</button>
+                    </div>
+                    <div v-if="directoryNote" class="alert alert-success py-2 mb-2">{{ directoryNote }}</div>
+                    <div v-if="companyLoading" class="api-hint">Loading…</div>
+                    <div v-else class="table-responsive">
+                        <table class="table table-sm align-middle mb-0 api-table">
+                            <thead><tr><th>Manufacturer</th><th>Catalog</th></tr></thead>
+                            <tbody>
+                                <tr v-for="row in companyRows" :key="row.link || row.name"><td class="fw-medium">{{ row.name }}</td><td>{{ row.details }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div v-else-if="apiTab === 'generics'" class="api-directory">
+                    <div class="api-directory-bar">
+                        <select v-model="genericLetter" class="form-select form-select-sm" style="width: 5.5rem;" @change="loadGenerics(1)">
+                            <option value="">All</option>
+                            <option v-for="letter in letters" :key="letter" :value="letter">{{ letter.toUpperCase() }}</option>
+                        </select>
+                        <button type="button" class="btn btn-sm btn-light" :disabled="genericPage <= 1 || genericLoading" @click="loadGenerics(genericPage - 1)">Prev</button>
+                        <span class="text-muted font-size-12">Page {{ genericPage }}</span>
+                        <button type="button" class="btn btn-sm btn-light" :disabled="genericLoading || !genericRows.length" @click="loadGenerics(genericPage + 1)">Next</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="syncingDirectory" @click="queueSync('generics')">{{ syncingDirectory ? 'Queuing…' : 'Sync A–Z' }}</button>
+                        <button type="button" class="btn btn-sm btn-primary ms-auto" :disabled="genericLoading || importingDirectory || !genericRows.length" @click="importGenerics">{{ importingDirectory ? 'Importing…' : 'Import page' }}</button>
+                    </div>
+                    <div v-if="directoryNote" class="alert alert-success py-2 mb-2">{{ directoryNote }}</div>
+                    <div v-if="genericLoading" class="api-hint">Loading…</div>
+                    <div v-else class="table-responsive">
+                        <table class="table table-sm align-middle mb-0 api-table">
+                            <thead><tr><th>Generic</th><th>Brands</th></tr></thead>
+                            <tbody>
+                                <tr v-for="row in genericRows" :key="row.link || row.name"><td class="fw-medium">{{ row.name }}</td><td>{{ row.brand_count || 0 }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div v-else-if="apiTab === 'forms'" class="api-directory">
+                    <div class="api-directory-bar">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="syncingDirectory" @click="queueSync('dosage-forms')">{{ syncingDirectory ? 'Queuing…' : 'Sync forms' }}</button>
+                        <button type="button" class="btn btn-sm btn-primary ms-auto" :disabled="formLoading || importingDirectory || !formRows.length" @click="importDosageForms">{{ importingDirectory ? 'Importing…' : 'Import all' }}</button>
+                    </div>
+                    <div v-if="directoryNote" class="alert alert-success py-2 mb-2">{{ directoryNote }}</div>
+                    <div v-if="formLoading" class="api-hint">Loading…</div>
+                    <div v-else class="table-responsive">
+                        <table class="table table-sm align-middle mb-0 api-table">
+                            <thead><tr><th>Dosage form</th><th>Brand count</th></tr></thead>
+                            <tbody>
+                                <tr v-for="row in formRows" :key="row.name"><td class="fw-medium">{{ row.name }}</td><td>{{ row.brand_count || 0 }}</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-        </div>
-        <!-- Import Modal -->
-        <div v-if="showImportModal" class="fixed inset-0 z-[9999]">
-            <!-- Backdrop -->
-            <div class="absolute inset-0 bg-black/60" @click="closeImportModal"></div>
-            <!-- Dialog -->
-            <div class="absolute inset-0 flex items-center justify-center p-4 overflow-y-auto">
-                <div class="w-full max-w-2xl bg-white rounded-lg shadow-2xl">
-                    <div class="px-6 py-4 border-b flex items-center justify-between">
-                        <h3 class="text-lg font-medium text-gray-900">Import Medicines from CSV</h3>
-                        <button @click="closeImportModal" class="text-gray-500 hover:text-gray-700">✖</button>
+
+            <template #footer="{ close }">
+                <button type="button" class="btn btn-outline-danger" @click="close">Close</button>
+            </template>
+        </FormScreen>
+        <!-- Import CSV -->
+        <div v-if="showImportModal" class="import-platform-root">
+            <div class="import-platform-backdrop" @click="!isImporting && closeImportModal()" />
+            <div class="import-platform" role="dialog" aria-modal="true" aria-labelledby="import-csv-title">
+                <header class="import-platform-head">
+                    <div>
+                        <h5 id="import-csv-title" class="import-platform-title">Import CSV</h5>
+                        <p class="import-platform-sub">Upload a product file to add medicines in bulk.</p>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light" :disabled="isImporting" aria-label="Close" @click="closeImportModal">
+                        <i class="bi bi-x-lg" />
+                    </button>
+                </header>
+
+                <form class="import-platform-body" enctype="multipart/form-data" @submit.prevent="importMedicines">
+                    <section class="import-card">
+                        <div class="import-card-label">Required columns</div>
+                        <p class="import-card-help">Order does not matter. Header names must match exactly.</p>
+                        <div class="import-chips">
+                            <span v-for="h in requiredHeaders" :key="h" class="import-chip">{{ h }}</span>
+                        </div>
+                    </section>
+
+                    <section class="import-card">
+                        <div class="import-card-label">File</div>
+                        <button
+                            type="button"
+                            class="import-dropzone"
+                            :class="{ 'has-file': !!selectedFile }"
+                            @dragover.prevent
+                            @drop.prevent="onDrop"
+                            @click="triggerFile"
+                        >
+                            <input ref="fileInput" name="file" type="file" accept=".csv,.xlsx,.xls" class="d-none" @change="onFileChange">
+                            <template v-if="!selectedFile">
+                                <i class="bi bi-cloud-arrow-up import-drop-icon" />
+                                <p class="import-drop-title">Drop your CSV here</p>
+                                <p class="import-drop-help">or click to browse · Max 5MB · .csv</p>
+                            </template>
+                            <template v-else>
+                                <i class="bi bi-file-earmark-spreadsheet import-drop-icon is-file" />
+                                <p class="import-drop-title">{{ selectedFile.name }}</p>
+                                <p class="import-drop-help">{{ (selectedFile.size / 1024).toFixed(1) }} KB · click to change</p>
+                            </template>
+                        </button>
+                        <button type="button" class="btn btn-link btn-sm px-0 import-sample" @click="downloadSampleCsv">
+                            <i class="bi bi-download me-1" />
+                            Download sample.csv
+                        </button>
+                    </section>
+
+                    <div v-if="csvErrors.length" class="import-errors">
+                        <div class="import-errors-title">Fix these before importing</div>
+                        <ul>
+                            <li v-for="(err, idx) in csvErrors" :key="idx">{{ err }}</li>
+                        </ul>
                     </div>
 
-                    <form @submit.prevent="importMedicines" enctype="multipart/form-data">
-                        <div class="px-6 py-5 space-y-4">
-                            <div class="text-sm text-gray-600">
-                                Required columns (order not important):
-                                <div class="mt-1 flex flex-wrap gap-2">
-                                    <span v-for="h in requiredHeaders" :key="h" class="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-gray-800">{{ h }}</span>
-                                </div>
-                            </div>
-
-                            <!-- Dropzone -->
-                            <label class="block">
-                                <span class="block text-sm font-medium text-gray-700 mb-2">CSV File</span>
-                                <div class="border-2 border-dashed rounded-md px-4 py-8 text-center cursor-pointer hover:border-blue-400"
-                                     @dragover.prevent
-                                     @drop.prevent="onDrop">
-                                    <input ref="fileInput" name="file" type="file" accept=".csv,.xlsx,.xls" class="hidden" @change="onFileChange">
-                                    <div v-if="!selectedFile" class="text-gray-500">
-                                        <p>Drag and drop your .csv here, or
-                                            <span class="text-blue-600 hover:underline" @click.prevent="triggerFile">browse</span>
-                                        </p>
-                                        <p class="text-xs mt-1">Max 5MB. Only .csv supported.</p>
-                                    </div>
-                                    <div v-else class="text-left">
-                                        <p class="font-medium">Selected: {{ selectedFile.name }}</p>
-                                        <p class="text-xs text-gray-500">{{ (selectedFile.size/1024).toFixed(1) }} KB</p>
-                                    </div>
-                                </div>
-                            </label>
-
-                            <!-- Validation -->
-                            <div v-if="csvErrors.length" class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                                <ul class="list-disc list-inside space-y-1">
-                                    <li v-for="(err, idx) in csvErrors" :key="idx">{{ err }}</li>
-                                </ul>
-                            </div>
-
-                            <div class="pt-2">
-                                <div class="mb-3">
-                                    <button type="button" @click="downloadSampleCsv" class="text-blue-600 hover:underline">
-                                        Download sample.csv
-                                    </button>
-                                </div>
-                                <div class="flex items-center justify-end gap-2">
-                                    <button type="button"
-                                            @click="closeImportModal"
-                                            :disabled="isImporting"
-                                            class="bg-gray-500 hover:bg-gray-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded">
-                                        Cancel
-                                    </button>
-                                    <button type="submit"
-                                            :disabled="isImporting || !selectedFile || csvErrors.length > 0"
-                                            class="bg-blue-500 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded inline-flex items-center">
-                                        <svg v-if="isImporting" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                                        </svg>
-                                        <span>{{ isImporting ? 'Importing...' : 'Import' }}</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
+                    <footer class="import-platform-foot">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="isImporting" @click="closeImportModal">
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            class="btn btn-primary btn-sm"
+                            :disabled="isImporting || !selectedFile || csvErrors.length > 0"
+                        >
+                            <span v-if="isImporting" class="spinner-border spinner-border-sm me-1" role="status" />
+                            {{ isImporting ? 'Importing…' : 'Import medicines' }}
+                        </button>
+                    </footer>
+                </form>
             </div>
         </div>
     </AuthenticatedLayout>
@@ -288,22 +465,123 @@
 <script setup>
 import LunaTable from '@/Components/LunaTable.vue'
 
-import { ref, computed } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
 import { Link, router, Head } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import FormScreen from '@/Components/FormScreen.vue'
 import SearchableSelect from '@/Components/SearchableSelect.vue'
 import Pagination from '@/Components/Pagination.vue'
+import FilterDrawer from '@/Components/FilterDrawer.vue'
+import FilterSummary from '@/Components/FilterSummary.vue'
 import { destroyRecord } from '@/Composables/confirmDelete'
 
 const props = defineProps({
     medicines: Object,
     categories: Array,
-    manufacturers: Array
+    manufacturers: Array,
+    brands: { type: Array, default: () => [] },
+    dosageForms: { type: Array, default: () => [] },
+    generics: { type: Array, default: () => [] },
+    filters: { type: Object, default: () => ({}) },
 })
 
 const search = ref('')
 const categoryFilter = ref('')
 const manufacturerFilter = ref('')
+const showFilters = ref(false)
+const emptyFilters = () => ({
+    search: '',
+    brand_id: '',
+    generic_id: '',
+    manufacturer_id: '',
+    status: '',
+    segment: '',
+    price_min: '',
+    price_max: '',
+})
+const listFilters = reactive({
+    ...emptyFilters(),
+    search: props.filters?.search || '',
+    brand_id: props.filters?.brand_id || '',
+    generic_id: props.filters?.generic_id || '',
+    manufacturer_id: props.filters?.manufacturer_id || '',
+    status: props.filters?.status || '',
+    segment: props.filters?.segment || '',
+    price_min: props.filters?.price_min || '',
+    price_max: props.filters?.price_max || '',
+})
+const withAll = (options, allLabel) => [{ value: '', label: allLabel }, ...options]
+
+const brandSelectOptions = computed(() => withAll(
+    [...(props.brands || [])]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((b) => ({ value: b.brand_id || b.id, label: b.name })),
+    'All brands',
+))
+const genericSelectOptions = computed(() => withAll(
+    [...(props.generics || [])]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((g) => ({ value: g.generic_id || g.id, label: g.name })),
+    'All generics',
+))
+const manufacturerSelectOptions = computed(() => withAll(
+    [...(props.manufacturers || [])]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((m) => ({ value: m.manufacturer_id || m.id, label: m.name })),
+    'All manufacturers',
+))
+const statusSelectOptions = [
+    { value: '', label: 'All statuses' },
+    { value: 'active', label: 'Active' },
+    { value: 'inactive', label: 'Inactive' },
+]
+const segmentSelectOptions = [
+    { value: '', label: 'All segments' },
+    { value: 'allopathic', label: 'Allopathic' },
+    { value: 'herbal', label: 'Herbal' },
+    { value: 'device', label: 'Device' },
+]
+
+const labelFor = (options, value) => options.find((row) => String(row.value) === String(value))?.label || value
+
+const filterChips = computed(() => {
+    const chips = []
+    if (listFilters.search) chips.push({ key: 'search', label: 'Search', value: listFilters.search })
+    if (listFilters.brand_id) chips.push({ key: 'brand_id', label: 'Brand', value: labelFor(brandSelectOptions.value, listFilters.brand_id) })
+    if (listFilters.generic_id) chips.push({ key: 'generic_id', label: 'Generic', value: labelFor(genericSelectOptions.value, listFilters.generic_id) })
+    if (listFilters.manufacturer_id) {
+        chips.push({ key: 'manufacturer_id', label: 'Manufacturer', value: labelFor(manufacturerSelectOptions.value, listFilters.manufacturer_id) })
+    }
+    if (listFilters.status) chips.push({ key: 'status', label: 'Status', value: labelFor(statusSelectOptions, listFilters.status) })
+    if (listFilters.segment) chips.push({ key: 'segment', label: 'Segment', value: labelFor(segmentSelectOptions, listFilters.segment) })
+    if (listFilters.price_min || listFilters.price_max) {
+        const min = listFilters.price_min || '0'
+        const max = listFilters.price_max || '∞'
+        chips.push({ key: 'price', label: 'Price', value: `${min} – ${max}` })
+    }
+    return chips
+})
+
+const applyFilters = () => {
+    showFilters.value = false
+    const query = Object.fromEntries(
+        Object.entries({ ...listFilters }).filter(([, value]) => value !== '' && value !== null && value !== undefined)
+    )
+    router.get(route('medicines.index'), query, { preserveState: true, replace: true })
+}
+const resetFilters = () => {
+    Object.assign(listFilters, emptyFilters())
+    applyFilters()
+}
+const removeFilter = (key) => {
+    if (key === 'price') {
+        listFilters.price_min = ''
+        listFilters.price_max = ''
+    } else if (key in listFilters) {
+        listFilters[key] = ''
+    }
+    applyFilters()
+}
 const showImportModal = ref(false)
 const fileInput = ref(null)
 const selectedFile = ref(null)
@@ -315,9 +593,11 @@ const apiSearch = ref('')
 const apiResults = ref([])
 const apiSearchLoading = ref(false)
 const apiDetails = ref(null)
+const apiSelectedLink = ref('')
 const savingApi = ref(false)
 const apiDetailsLoading = ref(false)
 const apiTab = ref('medicine')
+const medexSegment = ref('allopathic')
 const letters = 'abcdefghijklmnopqrstuvwxyz'.split('')
 const brandLetter = ref('')
 const brandPage = ref(1)
@@ -327,7 +607,14 @@ const companyLetter = ref('')
 const companyPage = ref(1)
 const companyRows = ref([])
 const companyLoading = ref(false)
+const genericLetter = ref('')
+const genericPage = ref(1)
+const genericRows = ref([])
+const genericLoading = ref(false)
+const formRows = ref([])
+const formLoading = ref(false)
 const importingDirectory = ref(false)
+const syncingDirectory = ref(false)
 const directoryNote = ref('')
 const apiFacts = computed(() => {
     const details = apiDetails.value
@@ -344,17 +631,23 @@ const apiSections = computed(() => {
     const details = apiDetails.value
     if (!details) return []
     return [
-        ['Indications', details.indications],
-        ['Pharmacology', details.pharmacology],
-        ['Dosage', details.dosage, true],
-        ['Interaction', details.interaction],
-        ['Contraindications', details.contraindications],
-        ['Side effects', details.side_effects],
-        ['Pregnancy and lactation', details.pregnancy_lactation],
-        ['Precautions', details.precautions],
-        ['Overdose', details.overdose],
+        ['Indications', details.indications, details.indications_html],
+        ['Pharmacology', details.pharmacology, details.pharmacology_html],
+        ['Dosage', details.dosage, details.dosage_html ?? true],
+        ['Interaction', details.interaction, details.interaction_html],
+        ['Contraindications', details.contraindications, details.contraindications_html],
+        ['Side effects', details.side_effects, details.side_effects_html],
+        ['Pregnancy and lactation', details.pregnancy_lactation || details.pregnancy, details.pregnancy_html],
+        ['Precautions', details.precautions, details.precautions_html],
+        ['Overdose', details.overdose, details.overdose_html],
     ].filter((item) => item[1]).map(([label, value, html]) => ({ label, value, html: Boolean(html) }))
 })
+
+const medicineImageUrl = (path) => {
+    if (!path) return ''
+    if (/^https?:\/\//i.test(path) || path.startsWith('/storage/') || path.startsWith('blob:')) return path
+    return `/storage/${String(path).replace(/^\/+/, '')}`
+}
 const requiredHeaders = [
     'name',
     'generic_name',
@@ -362,32 +655,6 @@ const requiredHeaders = [
     'manufacturer',
     'price'
 ]
-
-// Formatted categories for SearchableSelect
-const categoryOptions = computed(() => {
-    let categories = [...props.categories]
-
-    // Sort by name
-    categories.sort((a, b) => a.name.localeCompare(b.name))
-
-    return categories.map(category => ({
-        value: category.id,
-        label: category.name
-    }))
-})
-
-// Formatted manufacturers for SearchableSelect
-const manufacturerOptions = computed(() => {
-    let manufacturers = [...props.manufacturers]
-
-    // Sort by name
-    manufacturers.sort((a, b) => a.name.localeCompare(b.name))
-
-    return manufacturers.map(manufacturer => ({
-        value: manufacturer.id,
-        label: manufacturer.name
-    }))
-})
 
 const filteredMedicines = computed(() => {
     let filtered = props.medicines.data
@@ -516,69 +783,131 @@ const importMedicines = () => {
 }
 
 // API modal methods
-const openApiModal = () => {
-    showApiModal.value = true
+let apiSearchTimeout = null
+let apiSearchSeq = 0
+let apiProductSeq = 0
+
+const resetApiModalState = () => {
+    clearTimeout(apiSearchTimeout)
+    apiSearchSeq += 1
+    apiProductSeq += 1
     apiSearch.value = ''
     apiResults.value = []
     apiDetails.value = null
+    apiSelectedLink.value = ''
+    apiSearchLoading.value = false
+    apiDetailsLoading.value = false
+    savingApi.value = false
+}
+
+const openApiModal = () => {
+    resetApiModalState()
+    showApiModal.value = true
 }
 const closeApiModal = () => {
     showApiModal.value = false
+    resetApiModalState()
 }
 
-let apiSearchTimeout = null
 const debouncedApiSearch = () => {
     clearTimeout(apiSearchTimeout)
     apiDetails.value = null
+    apiSelectedLink.value = ''
     if (!apiSearch.value || apiSearch.value.length < 2) {
         apiResults.value = []
+        apiSearchLoading.value = false
         return
     }
+    const seq = ++apiSearchSeq
     apiSearchTimeout = setTimeout(async () => {
         apiSearchLoading.value = true
         try {
             const res = await fetch(`${route('api.medex.search')}?q=${encodeURIComponent(apiSearch.value)}`)
-            apiResults.value = await res.json()
+            const data = await res.json().catch(() => [])
+            if (seq !== apiSearchSeq) return
+            apiResults.value = Array.isArray(data) ? data : []
         } catch (e) {
+            if (seq !== apiSearchSeq) return
             apiResults.value = []
         } finally {
-            apiSearchLoading.value = false
+            if (seq === apiSearchSeq) apiSearchLoading.value = false
         }
     }, 350)
 }
 
 const selectApiResult = async (res) => {
+    apiTab.value = 'medicine'
+    apiSelectedLink.value = res.link || ''
     apiDetails.value = null
+    const seq = ++apiProductSeq
     apiDetailsLoading.value = true
     try {
         const url = `${route('api.medex.product')}?url=${encodeURIComponent(res.link)}`
         const r = await fetch(url)
-        apiDetails.value = await r.json()
-        // keep reference to medex info
-        apiDetails.value._medex = { id: res.link, name: res.name }
-    } catch {}
-    finally {
-        apiDetailsLoading.value = false
+        const data = await r.json().catch(() => ({}))
+        if (seq !== apiProductSeq) return
+        if (!r.ok || data?.error) {
+            apiDetails.value = null
+            return
+        }
+        apiDetails.value = { ...data, _medex: { id: res.link, name: res.name } }
+    } catch {
+        if (seq !== apiProductSeq) return
+        apiDetails.value = null
+    } finally {
+        if (seq === apiProductSeq) apiDetailsLoading.value = false
     }
 }
 
-const postDirectory = async (name, rows) => {
+const csrfHeaders = () => {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+    if (!token) throw new Error('Missing CSRF token')
+    return {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': token,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+    }
+}
+const herbalQuery = () => (medexSegment.value === 'herbal' ? '&herbal=1' : '')
+const setSegment = (segment) => {
+    medexSegment.value = segment
+    if (apiTab.value === 'brands') loadBrands(1)
+    else if (apiTab.value === 'companies') loadCompanies(1)
+    else if (apiTab.value === 'generics') loadGenerics(1)
+}
+const postDirectory = async (name, rows, extra = {}) => {
     importingDirectory.value = true
     directoryNote.value = ''
     try {
         const response = await fetch(route(name), {
             method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ rows }),
+            headers: csrfHeaders(),
+            body: JSON.stringify({ rows, segment: medexSegment.value, herbal: medexSegment.value === 'herbal', ...extra }),
         })
         const data = await response.json()
-        directoryNote.value = `${data.created || 0} new records saved from ${data.received || rows.length} rows.`
+        const created = data.created ?? data.indexed ?? 0
+        const updated = data.updated ?? data.brands ?? 0
+        directoryNote.value = `${created} new / ${updated} updated from ${data.received || rows.length} rows (${medexSegment.value}).`
     } finally {
         importingDirectory.value = false
+    }
+}
+const queueSync = async (directory) => {
+    syncingDirectory.value = true
+    directoryNote.value = ''
+    try {
+        const response = await fetch(route('api.medex.sync', directory), {
+            method: 'POST',
+            headers: csrfHeaders(),
+            body: JSON.stringify({ segment: medexSegment.value, herbal: medexSegment.value === 'herbal' }),
+        })
+        const data = await response.json()
+        directoryNote.value = data.queued
+            ? `Queued ${directory} sync for ${medexSegment.value}.`
+            : (data.message || 'Could not queue sync.')
+    } finally {
+        syncingDirectory.value = false
     }
 }
 const loadBrands = async (page = 1) => {
@@ -587,45 +916,73 @@ const loadBrands = async (page = 1) => {
     directoryNote.value = ''
     brandPage.value = page
     try {
-        const response = await fetch(`${route('api.medex.brands')}?page=${page}&letter=${brandLetter.value}`)
+        const response = await fetch(`${route('api.medex.brands')}?page=${page}&letter=${brandLetter.value}${herbalQuery()}`)
         const data = await response.json()
         brandRows.value = data.rows || []
     } finally {
         brandLoading.value = false
     }
 }
-const importBrands = () => postDirectory('api.medex.brands.import', brandRows.value.map((row) => ({ name: row.name })))
+const importBrands = () => postDirectory('api.medex.brands.import', brandRows.value)
 const loadCompanies = async (page = 1) => {
     apiTab.value = 'companies'
     companyLoading.value = true
     directoryNote.value = ''
     companyPage.value = page
     try {
-        const response = await fetch(`${route('api.medex.companies')}?page=${page}&letter=${companyLetter.value}`)
+        const response = await fetch(`${route('api.medex.companies')}?page=${page}&letter=${companyLetter.value}${herbalQuery()}`)
         const data = await response.json()
         companyRows.value = data.rows || []
     } finally {
         companyLoading.value = false
     }
 }
-const importCompanies = () => postDirectory('api.medex.companies.import', companyRows.value.map((row) => ({ name: row.name, details: row.details })))
+const importCompanies = () => postDirectory('api.medex.companies.import', companyRows.value)
+const loadGenerics = async (page = 1) => {
+    apiTab.value = 'generics'
+    genericLoading.value = true
+    directoryNote.value = ''
+    genericPage.value = page
+    try {
+        const response = await fetch(`${route('api.medex.generics')}?page=${page}&letter=${genericLetter.value}${herbalQuery()}`)
+        const data = await response.json()
+        genericRows.value = data.rows || []
+    } finally {
+        genericLoading.value = false
+    }
+}
+const importGenerics = () => postDirectory('api.medex.generics.import', genericRows.value)
+const loadDosageForms = async () => {
+    apiTab.value = 'forms'
+    formLoading.value = true
+    directoryNote.value = ''
+    try {
+        const response = await fetch(route('api.medex.dosage-forms'))
+        const data = await response.json()
+        formRows.value = data.rows || []
+    } finally {
+        formLoading.value = false
+    }
+}
+const importDosageForms = () => postDirectory('api.medex.dosage-forms.import', formRows.value)
 const saveFromApi = async () => {
     if (!apiDetails.value) return
     savingApi.value = true
     try {
-        const link = apiDetails.value._medex?.id || ''
-        // Extract medex_id and medex_name from URL like /brands/{id}/{slug}
-        let medexId = null
-        let medexName = null
-        try {
-            const u = new URL(link)
-            const parts = u.pathname.split('/').filter(Boolean)
-            const idx = parts.indexOf('brands')
-            if (idx !== -1 && parts[idx+1]) {
-                medexId = parts[idx+1]
-                medexName = parts[idx+2] || null
-            }
-        } catch {}
+        const link = apiDetails.value.url || apiDetails.value._medex?.id || ''
+        let medexId = apiDetails.value.medex_id || null
+        let medexName = apiDetails.value.medex_name || null
+        if (!medexId) {
+            try {
+                const u = new URL(link)
+                const parts = u.pathname.split('/').filter(Boolean)
+                const idx = parts.indexOf('brands')
+                if (idx !== -1 && parts[idx+1]) {
+                    medexId = parts[idx+1]
+                    medexName = parts[idx+2] || null
+                }
+            } catch {}
+        }
 
         const parsePrice = (s) => {
             if (!s) return null
@@ -633,7 +990,13 @@ const saveFromApi = async () => {
             const n = parseFloat(m)
             return isNaN(n) ? null : n
         }
-        const numericPrice = apiDetails.value.numeric_unit_price ?? apiDetails.value.numeric_strip_price ?? parsePrice(apiDetails.value.unit_price) ?? parsePrice(apiDetails.value.strip_price)
+        const pricesBlob = Array.isArray(apiDetails.value.prices) ? apiDetails.value.prices.join(' ') : ''
+        const numericPrice = apiDetails.value.numeric_unit_price
+            ?? apiDetails.value.numeric_strip_price
+            ?? parsePrice(apiDetails.value.unit_price)
+            ?? parsePrice(apiDetails.value.strip_price)
+            ?? parsePrice(pricesBlob)
+            ?? parsePrice(apiDetails.value.pack_size)
 
         const payload = {
             name: apiDetails.value.name,
@@ -645,6 +1008,7 @@ const saveFromApi = async () => {
             price: numericPrice,
             medex_id: medexId,
             medex_name: medexName,
+            segment: medexSegment.value,
             details: {
                 indications: apiDetails.value.indications,
                 pharmacology: apiDetails.value.pharmacology,
@@ -652,7 +1016,7 @@ const saveFromApi = async () => {
                 interaction: apiDetails.value.interaction,
                 contraindications: apiDetails.value.contraindications,
                 side_effects: apiDetails.value.side_effects,
-                pregnancy: apiDetails.value.pregnancy_lactation,
+                pregnancy: apiDetails.value.pregnancy_lactation || apiDetails.value.pregnancy,
                 precautions: apiDetails.value.precautions,
                 special_populations: apiDetails.value.special_populations,
                 overdose: apiDetails.value.overdose,
@@ -664,14 +1028,15 @@ const saveFromApi = async () => {
         }
         const res = await fetch(route('api.medicines.storeExternal'), {
             method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Content-Type': 'application/json'
-            },
+            headers: csrfHeaders(),
             body: JSON.stringify(payload)
         })
-        const data = await res.json()
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) {
+            const firstError = data?.errors ? Object.values(data.errors).flat()[0] : null
+            window.alert(firstError || data?.message || 'Could not save medicine to the database.')
+            return
+        }
         if (data.status === 'created' || data.status === 'duplicate') {
             closeApiModal()
             router.visit(route('medicines.index'))
@@ -681,21 +1046,521 @@ const saveFromApi = async () => {
     }
 }
 
-// Open MedEx details from existing medicine row
+onMounted(() => {
+    try {
+        const params = new URLSearchParams(window.location.search)
+        if (params.get('open_api') === '1' || params.get('open_medex') === '1') {
+            showApiModal.value = true
+            apiTab.value = 'medicine'
+        }
+    } catch {
+        // ignore
+    }
+})
+
 const openMedexDetailsForMedicine = async (medicine) => {
+    resetApiModalState()
     showApiModal.value = true
-    apiSearch.value = ''
-    apiResults.value = []
-    apiDetails.value = null
+    apiTab.value = 'medicine'
+    const medexUrl = `https://medex.com.bd/brands/${medicine.medex_id}/${medicine.medex_name}`
+    apiSelectedLink.value = medexUrl
+    const seq = ++apiProductSeq
     apiDetailsLoading.value = true
     try {
-        const medexUrl = `https://medex.com.bd/brands/${medicine.medex_id}/${medicine.medex_name}`
         const url = `${route('api.medex.product')}?url=${encodeURIComponent(medexUrl)}`
         const r = await fetch(url)
-        apiDetails.value = await r.json()
-        apiDetails.value._medex = { id: medexUrl, name: medicine.name }
+        const data = await r.json().catch(() => ({}))
+        if (seq !== apiProductSeq) return
+        if (!r.ok || data?.error) {
+            apiDetails.value = null
+            return
+        }
+        apiDetails.value = { ...data, _medex: { id: medexUrl, name: medicine.name } }
     } finally {
-        apiDetailsLoading.value = false
+        if (seq === apiProductSeq) apiDetailsLoading.value = false
     }
 }
 </script>
+
+<style scoped>
+.api-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    min-height: calc(100vh - 12rem);
+}
+
+.api-shell-lead {
+    margin: 0;
+    font-size: 0.84rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.api-platform-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.45rem;
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    border-radius: var(--pf-radius, 0.65rem);
+    background: var(--shell-panel-bg, #f8f9fc);
+}
+
+.api-tabs,
+.api-segment {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0.15rem;
+    border-radius: var(--pf-radius, 0.55rem);
+    background: rgba(15, 23, 42, 0.04);
+}
+
+.api-tab,
+.api-segment-btn {
+    border: 0;
+    background: transparent;
+    color: var(--shell-panel-muted, #74788d);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.35rem 0.7rem;
+    border-radius: calc(var(--pf-radius, 0.55rem) - 0.1rem);
+}
+
+.api-tab.active,
+.api-segment-btn.active {
+    background: var(--bs-primary, #5156be);
+    color: #fff;
+}
+
+.api-products {
+    display: grid;
+    grid-template-columns: minmax(220px, 280px) 1fr;
+    gap: 0.85rem;
+    flex: 1;
+    min-height: 0;
+}
+
+.api-search-pane,
+.api-detail-pane {
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    border-radius: var(--pf-radius, 0.65rem);
+    background: var(--shell-panel-bg, #f8f9fc);
+    padding: 0.85rem;
+    min-height: 0;
+}
+
+.api-detail-pane {
+    background: var(--shell-panel-surface, #fff);
+}
+
+.api-label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.api-search-wrap {
+    position: relative;
+}
+
+.api-search-wrap > i {
+    position: absolute;
+    left: 0.7rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--shell-panel-muted, #74788d);
+    font-size: 0.85rem;
+}
+
+.api-search-input {
+    width: 100%;
+    border: 1px solid var(--shell-panel-border, #ced4da);
+    border-radius: var(--pf-radius, 0.45rem);
+    padding: 0.5rem 0.7rem 0.5rem 2rem;
+    background: var(--shell-panel-surface, #fff);
+    color: var(--shell-panel-text, #343747);
+    font-size: 0.86rem;
+}
+
+.api-search-input:focus {
+    outline: none;
+    border-color: var(--bs-primary, #5156be);
+    box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb, 81, 86, 190), 0.15);
+}
+
+.api-hint {
+    margin-top: 0.7rem;
+    font-size: 0.76rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.api-result-list {
+    margin-top: 0.55rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    max-height: calc(100vh - 20rem);
+    overflow: auto;
+}
+
+.api-result-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    width: 100%;
+    text-align: left;
+    border: 1px solid transparent;
+    border-radius: var(--pf-radius, 0.4rem);
+    background: transparent;
+    color: var(--shell-panel-text, #343747);
+    padding: 0.38rem 0.5rem;
+    transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.api-result-item:hover,
+.api-result-item.active {
+    border-color: rgba(var(--bs-primary-rgb, 81, 86, 190), 0.28);
+    background: rgba(var(--bs-primary-rgb, 81, 86, 190), 0.06);
+}
+
+.api-result-copy {
+    min-width: 0;
+    flex: 1;
+}
+
+.api-result-item strong {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 650;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.api-result-item small {
+    display: block;
+    color: var(--shell-panel-muted, #74788d);
+    font-size: 0.68rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.api-result-chevron {
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    color: var(--shell-panel-muted, #adb5bd);
+}
+
+.api-result-item.active .api-result-chevron {
+    color: var(--bs-primary, #5156be);
+}
+
+.api-detail-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--shell-panel-border, #e6e8ee);
+}
+
+.api-detail-identity {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.api-detail-thumb {
+    width: 3.25rem;
+    height: 3.25rem;
+    object-fit: contain;
+    border-radius: var(--pf-radius, 0.45rem);
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    background: var(--shell-panel-bg, #f8f9fc);
+    flex-shrink: 0;
+}
+
+.api-detail-name {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 650;
+    color: var(--shell-panel-text, #343747);
+}
+
+.api-detail-meta {
+    margin: 0.15rem 0 0;
+    font-size: 0.8rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.api-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 0.85rem;
+}
+
+.api-fact {
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    border-radius: var(--pf-radius, 0.45rem);
+    padding: 0.55rem 0.65rem;
+    background: var(--shell-panel-bg, #f8f9fc);
+}
+
+.api-fact span {
+    display: block;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.api-fact strong {
+    font-size: 0.86rem;
+    color: var(--shell-panel-text, #343747);
+}
+
+.api-section {
+    margin-bottom: 0.85rem;
+}
+
+.api-section h6 {
+    margin: 0 0 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.api-section-body {
+    font-size: 0.84rem;
+    line-height: 1.55;
+    color: var(--shell-panel-text, #343747);
+}
+
+.api-empty {
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--shell-panel-muted, #74788d);
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.api-empty i {
+    font-size: 1.6rem;
+    opacity: 0.55;
+}
+
+.api-directory-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.75rem;
+}
+
+.api-table th {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+@media (max-width: 900px) {
+    .api-products { grid-template-columns: 1fr; }
+    .api-result-list { max-height: 14rem; }
+}
+
+.import-platform-root {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.import-platform-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.48);
+}
+
+.import-platform {
+    position: relative;
+    z-index: 1;
+    width: min(32rem, 100%);
+    background: var(--shell-panel-surface, #fff);
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    border-radius: calc(var(--pf-radius, 0.65rem) + 0.1rem);
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
+    overflow: hidden;
+}
+
+.import-platform-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem 1.15rem;
+    border-bottom: 1px solid var(--shell-panel-border, #e6e8ee);
+}
+
+.import-platform-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 650;
+    color: var(--shell-panel-text, #343747);
+}
+
+.import-platform-sub {
+    margin: 0.2rem 0 0;
+    font-size: 0.78rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.import-platform-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 1rem 1.15rem 1.15rem;
+}
+
+.import-card {
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    border-radius: var(--pf-radius, 0.55rem);
+    background: var(--shell-panel-bg, #f8f9fc);
+    padding: 0.85rem 0.95rem;
+}
+
+.import-card-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.import-card-help {
+    margin: 0.25rem 0 0.55rem;
+    font-size: 0.78rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.import-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.import-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: var(--shell-panel-surface, #fff);
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--shell-panel-text, #343747);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.import-dropzone {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    min-height: 8.5rem;
+    margin-top: 0.55rem;
+    border: 1px dashed color-mix(in srgb, var(--bs-primary, #5156be) 35%, var(--shell-panel-border, #ced4da));
+    border-radius: var(--pf-radius, 0.55rem);
+    background: var(--shell-panel-surface, #fff);
+    color: var(--shell-panel-text, #343747);
+    padding: 1.1rem 0.85rem;
+    text-align: center;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.import-dropzone:hover,
+.import-dropzone.has-file {
+    border-color: var(--bs-primary, #5156be);
+    background: rgba(var(--bs-primary-rgb, 81, 86, 190), 0.04);
+}
+
+.import-drop-icon {
+    font-size: 1.55rem;
+    color: var(--bs-primary, #5156be);
+    opacity: 0.85;
+    margin-bottom: 0.15rem;
+}
+
+.import-drop-icon.is-file {
+    opacity: 1;
+}
+
+.import-drop-title {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 650;
+    color: var(--shell-panel-text, #343747);
+}
+
+.import-drop-help {
+    margin: 0;
+    font-size: 0.76rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.import-sample {
+    margin-top: 0.45rem;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.import-errors {
+    border: 1px solid rgba(220, 53, 69, 0.25);
+    background: rgba(220, 53, 69, 0.06);
+    border-radius: var(--pf-radius, 0.45rem);
+    padding: 0.7rem 0.85rem;
+    color: #b02a37;
+    font-size: 0.82rem;
+}
+
+.import-errors-title {
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+}
+
+.import-errors ul {
+    margin: 0;
+    padding-left: 1.1rem;
+}
+
+.import-platform-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding-top: 0.25rem;
+}
+</style>
+

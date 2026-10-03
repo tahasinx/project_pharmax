@@ -1,26 +1,34 @@
 <template>
-    <div class="sheet-select relative" :class="{ 'is-open': showDropdown }">
+    <div class="ss" :class="{ 'is-open': showDropdown, 'is-invalid': invalid, 'is-disabled': disabled }">
         <input
             :value="displayText"
             type="text"
             :placeholder="placeholder"
-            class="sheet-field w-full pr-8"
-            @focus="showDropdown = true"
+            :disabled="disabled"
+            :required="required"
+            class="ss-input"
+            autocomplete="off"
+            role="combobox"
+            :aria-expanded="showDropdown"
+            :aria-invalid="invalid ? 'true' : 'false'"
+            @focus="open"
             @blur="handleBlur"
             @keydown="handleKeydown"
             @input="handleInput"
-        />
-        <span class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[#8a8175]">
-            <i class="bi bi-chevron-down text-[11px]" aria-hidden="true" />
+        >
+        <span class="ss-caret" aria-hidden="true">
+            <i class="bi bi-chevron-down" />
         </span>
-        <div v-show="showDropdown" class="sheet-select__menu">
-            <p v-if="filteredOptions.length === 0" class="px-2 py-1.5 text-[12px] text-[#8a8175]">No matches</p>
+        <div v-show="showDropdown" class="ss-menu" role="listbox">
+            <p v-if="filteredOptions.length === 0" class="ss-empty">No matches</p>
             <button
                 v-for="(option, index) in filteredOptions"
-                :key="option.value"
+                :key="String(option.value)"
                 type="button"
-                class="sheet-select__option"
-                :class="{ 'is-on': hoveredIndex === index || selectedValue === option.value }"
+                class="ss-option"
+                :class="{ 'is-on': hoveredIndex === index || isSelected(option.value) }"
+                role="option"
+                :aria-selected="isSelected(option.value)"
                 @mousedown.prevent="selectOption(option)"
                 @mouseenter="hoveredIndex = index"
             >
@@ -31,58 +39,55 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
 const props = defineProps({
-    modelValue: [String, Number],
-    options: {
-        type: Array,
-        required: true
-    },
-    placeholder: {
-        type: String,
-        default: 'Select an option'
-    },
-    searchable: {
-        type: Boolean,
-        default: true
-    }
+    modelValue: { type: [String, Number], default: '' },
+    options: { type: Array, required: true },
+    placeholder: { type: String, default: 'Select…' },
+    searchable: { type: Boolean, default: true },
+    disabled: { type: Boolean, default: false },
+    required: { type: Boolean, default: false },
+    invalid: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'change'])
 
 const showDropdown = ref(false)
 const searchQuery = ref('')
 const hoveredIndex = ref(-1)
 
-const selectedValue = computed(() => props.modelValue)
+const same = (a, b) => String(a ?? '') === String(b ?? '')
 
-const selectedOption = computed(() => {
-    return props.options.find(option => option.value === selectedValue.value)
-})
+const isSelected = (value) => same(value, props.modelValue)
+
+const selectedOption = computed(() => props.options.find((option) => isSelected(option.value)))
 
 const displayText = computed(() => {
     if (showDropdown.value) {
         return searchQuery.value
     }
-    if (selectedOption.value) {
-        return selectedOption.value.label
-    }
-    return props.placeholder
+    return selectedOption.value?.label || ''
 })
 
 const filteredOptions = computed(() => {
-    if (!props.searchable || !searchQuery.value) {
+    if (!props.searchable || !searchQuery.value.trim()) {
         return props.options
     }
-
-    return props.options.filter(option =>
-        option.label.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
+    const q = searchQuery.value.trim().toLowerCase()
+    return props.options.filter((option) => String(option.label).toLowerCase().includes(q))
 })
+
+const open = () => {
+    if (props.disabled) return
+    showDropdown.value = true
+    searchQuery.value = ''
+    hoveredIndex.value = Math.max(0, filteredOptions.value.findIndex((option) => isSelected(option.value)))
+}
 
 const selectOption = (option) => {
     emit('update:modelValue', option.value)
+    emit('change', option)
     searchQuery.value = ''
     showDropdown.value = false
     hoveredIndex.value = -1
@@ -91,27 +96,31 @@ const selectOption = (option) => {
 const handleInput = (event) => {
     searchQuery.value = event.target.value
     showDropdown.value = true
-    hoveredIndex.value = -1
+    hoveredIndex.value = filteredOptions.value.length ? 0 : -1
 }
 
 const handleBlur = () => {
-    // Delay hiding to allow click events to fire
-    setTimeout(() => {
+    window.setTimeout(() => {
         showDropdown.value = false
         searchQuery.value = ''
         hoveredIndex.value = -1
-    }, 150)
+    }, 120)
 }
 
-const handleKeydown = (event) => {
-    if (!showDropdown.value) {
-        showDropdown.value = true
+const handleKeydown = async (event) => {
+    if (props.disabled) return
+
+    if (!showDropdown.value && ['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) {
+        event.preventDefault()
+        open()
+        await nextTick()
         return
     }
 
     switch (event.key) {
         case 'ArrowDown':
             event.preventDefault()
+            if (!filteredOptions.value.length) return
             hoveredIndex.value = Math.min(hoveredIndex.value + 1, filteredOptions.value.length - 1)
             break
         case 'ArrowUp':
@@ -130,17 +139,131 @@ const handleKeydown = (event) => {
             hoveredIndex.value = -1
             break
         default:
-            if (props.searchable) {
-                showDropdown.value = true
-                hoveredIndex.value = -1
-            }
+            break
     }
 }
 
-// Watch for external changes to modelValue
-watch(() => props.modelValue, (newValue) => {
-    if (newValue && selectedOption.value) {
-        searchQuery.value = selectedOption.value.label
+watch(() => props.modelValue, () => {
+    if (!showDropdown.value) {
+        searchQuery.value = ''
     }
-}, { immediate: true })
+})
 </script>
+
+<style scoped>
+.ss {
+    position: relative;
+    width: 100%;
+}
+
+/* Match Medicine form `.field` exactly */
+.ss-input {
+    width: 100%;
+    box-sizing: border-box;
+    height: 2rem;
+    min-height: 2rem;
+    border-radius: var(--pf-radius, 0.35rem);
+    border: 1px solid var(--shell-panel-border, #ced4da);
+    background: var(--shell-panel-surface, #fff);
+    padding: 0 1.8rem 0 0.55rem;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 400;
+    line-height: calc(2rem - 2px);
+    color: var(--shell-panel-text, #343747);
+    box-shadow: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.ss-input::placeholder {
+    color: var(--shell-panel-muted, #adb5bd);
+    font-size: 0.82rem;
+    font-weight: 400;
+    opacity: 1;
+}
+
+.ss-input:focus {
+    outline: none;
+    border-color: var(--pf-accent, #5156be);
+    box-shadow: 0 0 0 0.12rem rgba(var(--pf-accent-rgb, 81, 86, 190), 0.18);
+}
+
+.ss-input:disabled {
+    background: color-mix(in srgb, var(--shell-panel-bg, #eef0f5) 85%, #fff);
+    color: var(--shell-panel-muted, #74788d);
+    cursor: not-allowed;
+}
+
+.ss-caret {
+    position: absolute;
+    top: 0;
+    right: 0.55rem;
+    bottom: 0;
+    display: inline-flex;
+    align-items: center;
+    pointer-events: none;
+    color: var(--shell-panel-muted, #74788d);
+    font-size: 0.7rem;
+    transition: transform 0.15s ease;
+}
+
+.ss.is-open .ss-caret {
+    transform: rotate(180deg);
+}
+
+.ss.is-open .ss-input {
+    border-color: var(--pf-accent, #5156be);
+    box-shadow: 0 0 0 0.12rem rgba(var(--pf-accent-rgb, 81, 86, 190), 0.18);
+}
+
+.ss-menu {
+    position: absolute;
+    z-index: 40;
+    top: calc(100% + 0.2rem);
+    left: 0;
+    right: 0;
+    max-height: 14rem;
+    overflow: auto;
+    border: 1px solid var(--shell-panel-border, #ced4da);
+    border-radius: var(--pf-radius, 0.35rem);
+    background: var(--shell-panel-surface, #fff);
+    box-shadow: 0 0.45rem 1rem rgba(16, 24, 40, 0.1);
+    padding: 0.2rem;
+}
+
+.ss-empty {
+    margin: 0;
+    padding: 0.35rem 0.55rem;
+    font-size: 0.82rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.ss-option {
+    display: block;
+    width: 100%;
+    border: 0;
+    border-radius: var(--pf-radius, 0.35rem);
+    background: transparent;
+    text-align: left;
+    padding: 0.32rem 0.55rem;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 400;
+    line-height: 1.3;
+    color: var(--shell-panel-text, #343747);
+    cursor: pointer;
+}
+
+.ss-option:hover,
+.ss-option.is-on {
+    background: rgba(var(--pf-accent-rgb, 81, 86, 190), 0.1);
+    color: var(--pf-accent, #5156be);
+}
+
+.ss.is-invalid .ss-input,
+.ss.is-invalid .ss-input:focus {
+    border-color: #f46a6a;
+    box-shadow: 0 0 0 0.12rem rgba(244, 106, 106, 0.18);
+}
+</style>

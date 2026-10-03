@@ -35,6 +35,22 @@ class PermissionCatalog
             'view-audit',
             'view-all-branches',
             'manage-controlled',
+            'manage-hrm',
+            'manage-hrm-employees',
+            'manage-hrm-payroll',
+        ];
+    }
+
+    public static function groups(): array
+    {
+        return [
+            'Operations' => ['view-dashboard', 'pos-access', 'manage-invoices', 'print-invoices', 'manage-customers'],
+            'Products' => ['manage-medicines', 'manage-categories', 'manage-manufacturers'],
+            'Inventory' => ['manage-inventory', 'manage-purchases', 'manage-suppliers'],
+            'Finance' => ['manage-accounts', 'manage-finance', 'view-reports'],
+            'Compliance' => ['dispense', 'manage-controlled', 'view-audit'],
+            'HRM' => ['manage-hrm', 'manage-hrm-employees', 'manage-hrm-payroll'],
+            'Admin' => ['manage-users', 'manage-settings', 'manage-system', 'manage-data', 'manage-branches', 'view-all-branches', 'import-data', 'export-data'],
         ];
     }
 
@@ -51,6 +67,7 @@ class PermissionCatalog
                 'manage-purchases', 'manage-accounts', 'manage-categories', 'manage-manufacturers',
                 'view-reports', 'pos-access', 'print-invoices', 'import-data', 'export-data',
                 'manage-suppliers', 'manage-inventory', 'view-all-branches',
+                'manage-hrm', 'manage-hrm-employees', 'manage-hrm-payroll',
             ],
             'cashier'    => ['view-dashboard', 'manage-customers', 'manage-invoices', 'pos-access', 'print-invoices'],
             'pharmacist' => [

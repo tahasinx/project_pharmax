@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Compliance\ControlledDispenseRecorder;
 use App\Domain\Finance\JournalPoster;
 use App\Domain\Inventory\FefoAllocator;
 use App\Domain\Organization\BranchContext;
@@ -31,9 +32,9 @@ class InvoiceController extends Controller
     public function index()
     {
         $itemsPerPage = $this->getItemsPerPage();
-        $invoices     = Invoice::with(['customer', 'user'])
-            ->orderBy('created_at', 'desc')
-            ->paginate($itemsPerPage)->withQueryString();
+        $invoices     = BranchContext::constrain(
+            Invoice::with(['customer', 'user'])->orderBy('created_at', 'desc')
+        )->paginate($itemsPerPage)->withQueryString();
 
         return Inertia::render('Invoice/Index', [
             'invoices' => $invoices,
@@ -60,7 +61,7 @@ class InvoiceController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'customer_id'         => 'required|exists:customers,customer_id',
+            'customer_id'         => 'nullable|exists:customers,customer_id',
             'date'                => 'required|date',
             'payment_type'        => 'required|in:cash,bank,credit,card,bkash,nagad,rocket,mixed',
             'paid_amount'         => 'nullable|numeric|min:0',
@@ -74,6 +75,7 @@ class InvoiceController extends Controller
             'items.*.rate'        => 'required|numeric|min:0',
             'send_sms'            => 'nullable|boolean',
             'send_email'          => 'nullable|boolean',
+            'prescription'        => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:8192',
         ]);
 
         // Recalculate due on server for accuracy and safety
@@ -81,25 +83,36 @@ class InvoiceController extends Controller
         $paidAmount  = (float) ($request->paid_amount ?? 0);
         $dueAmount   = max(round($totalAmount - $paidAmount, 2), 0);
 
-        $customerId = Customer::localIdOrFail($request->customer_id);
+        $customerId = $request->filled('customer_id')
+            ? Customer::localIdOrFail($request->customer_id)
+            : Customer::walkIn()->id;
+
+        $prescriptionPath = null;
+        $prescriptionName = null;
+        if ($request->hasFile('prescription')) {
+            $prescriptionPath = $request->file('prescription')->store('prescriptions', 'public');
+            $prescriptionName = $request->file('prescription')->getClientOriginalName();
+        }
 
         $invoice = Invoice::create([
-            'invoice_id'       => $this->generateInvoiceId(),
-            'branch_id'        => BranchContext::id(),
-            'counter_id'       => $request->user()?->counter_id,
-            'customer_id'      => $customerId,
-            'date'             => $request->date,
-            'invoice_no'       => $request->invoice_no ?: $this->generateInvoiceNumber(),
-            'total_amount'     => $totalAmount,
-            'total_tax'        => $request->total_tax ?? 0,
-            'previous_due'     => $request->previous_due ?? 0,
-            'paid_amount'      => $paidAmount,
-            'due_amount'       => $dueAmount,
-            'total_discount'   => $request->total_discount ?? 0,
-            'invoice_discount' => $request->invoice_discount ?? 0,
-            'user_id'          => auth()->id(),
-            'details'          => $request->details,
-            'payment_type'     => $request->payment_type,
+            'invoice_id'                  => $this->generateInvoiceId(),
+            'branch_id'                   => BranchContext::id(),
+            'counter_id'                  => $request->user()?->counter_id,
+            'customer_id'                 => $customerId,
+            'date'                        => $request->date,
+            'invoice_no'                  => $request->invoice_no ?: $this->generateInvoiceNumber(),
+            'total_amount'                => $totalAmount,
+            'total_tax'                   => $request->total_tax ?? 0,
+            'previous_due'                => $request->previous_due ?? 0,
+            'paid_amount'                 => $paidAmount,
+            'due_amount'                  => $dueAmount,
+            'total_discount'              => $request->total_discount ?? 0,
+            'invoice_discount'            => $request->invoice_discount ?? 0,
+            'user_id'                     => auth()->id(),
+            'details'                     => $request->details,
+            'payment_type'                => $request->payment_type,
+            'prescription_path'           => $prescriptionPath,
+            'prescription_original_name'  => $prescriptionName,
         ]);
 
         $saleCost = 0;
@@ -148,6 +161,20 @@ class InvoiceController extends Controller
                         'user_id'      => auth()->id(),
                     ]);
                 }
+
+                $medicine = Medicine::find($medicineLocalId);
+                if ($medicine) {
+                    app(ControlledDispenseRecorder::class)->record(
+                        $medicine,
+                        $result['lines'],
+                        $invoice->customer_id,
+                        $invoice->branch_id,
+                        auth()->id(),
+                        'pos',
+                        null,
+                        $invoice,
+                    );
+                }
             }
 
             $payments = $request->input('payments', []);
@@ -184,8 +211,8 @@ class InvoiceController extends Controller
 
         // Conditional notifications
         try {
-            $customer = Customer::findByPublicId($request->customer_id);
-            if ($customer) {
+            $customer = Customer::find($customerId);
+            if ($customer && $customer->mobile !== 'WALK-IN') {
                 // Load invoice relations for messaging
                 $invoice->load(['items.medicine', 'customer']);
 
@@ -319,28 +346,12 @@ class InvoiceController extends Controller
 
     public function pos()
     {
-        $customers = Customer::where('status', true)->get();
-        $today     = now()->toDateString();
-        $medicines = Medicine::with(['category', 'manufacturer', 'units'])
-            ->withSum(['stocks as stock_qty' => function ($query) {
-                $query->where('quantity', '>', 0)
-                    ->where(function ($inner) {
-                        $inner->whereNull('status')->orWhere('status', 'available');
-                    })
-                    ->where(function ($inner) {
-                        $inner->where('recalled', false)->orWhereNull('recalled');
-                    });
-            }], 'quantity')
-            ->where('status', true)
-            ->orderBy('name')
-            ->get();
-        $invoiceNo = $this->generateInvoiceNumber();
+        $today = now()->toDateString();
 
         return Inertia::render('Invoice/POS', [
-            'customers'  => $customers,
-            'medicines'  => $medicines,
-            'invoiceNo'  => $invoiceNo,
-            'heldBills'  => HeldBill::where('user_id', auth()->id())->where('status', 'held')->latest()->get(),
+            'medicines'  => $this->posMedicineCatalog('', 'all', 36),
+            'invoiceNo'  => $this->generateInvoiceNumber(),
+            'heldBills'  => HeldBill::where('user_id', auth()->id())->where('status', 'held')->latest()->limit(8)->get(),
             'resume'     => session('held_payload'),
             'todaySales' => (float) Invoice::whereDate('date', $today)->sum('total_amount'),
             'todayCount' => Invoice::whereDate('date', $today)->count(),
@@ -384,34 +395,183 @@ class InvoiceController extends Controller
 
     public function searchMedicines(Request $request)
     {
-        $query = $request->get('q');
+        $q = trim((string) $request->get('q', ''));
+        $kind = (string) $request->get('kind', 'all');
+        $limit = min(max((int) $request->get('limit', 36), 1), 60);
 
-        $medicines = Medicine::with(['category', 'manufacturer', 'generic', 'brand', 'units'])
-            ->where('status', true)
-            ->where(function ($q) use ($query) {
-                $q->where('name', 'like', "%{$query}%")
-                    ->orWhere('generic_name', 'like', "%{$query}%")
-                    ->orWhere('barcode_data', $query)
-                    ->orWhere('product_id', $query)
-                    ->orWhere('sku', $query);
-            })
-            ->limit(10)
-            ->get();
+        return response()->json($this->posMedicineCatalog($q, $kind, $limit));
+    }
 
-        return response()->json($medicines);
+    /**
+     * POS catalog: lean columns, stock sum, name + generic search.
+     *
+     * @return \Illuminate\Support\Collection<int, Medicine>
+     */
+    private function posMedicineCatalog(string $q, string $kind = 'all', int $limit = 36)
+    {
+        $stockScope = function ($query) {
+            $query->where('quantity', '>', 0)
+                ->where(function ($inner) {
+                    $inner->whereNull('status')->orWhere('status', 'available');
+                })
+                ->where(function ($inner) {
+                    $inner->where('recalled', false)->orWhereNull('recalled');
+                });
+            BranchContext::constrainStock($query);
+        };
+
+        $builder = Medicine::query()
+            ->select([
+                'medicines.id',
+                'medicines.medicine_id',
+                'medicines.name',
+                'medicines.generic_name',
+                'medicines.generic_id',
+                'medicines.category_id',
+                'medicines.manufacturer_id',
+                'medicines.strength',
+                'medicines.dosage_form',
+                'medicines.dosage_form_id',
+                'medicines.medicine_type_id',
+                'medicines.sku',
+                'medicines.product_id',
+                'medicines.barcode_data',
+                'medicines.price',
+                'medicines.image',
+                'medicines.requires_prescription',
+                'medicines.is_controlled',
+                'medicines.is_narcotic',
+                'medicines.status',
+            ])
+            ->with([
+                'category:id,category_id,name',
+                'manufacturer:id,manufacturer_id,name',
+                'generic:id,generic_id,name,segment',
+                'medicineType:id,medicine_type_id,name',
+                'dosageForm:id,dosage_form_id,name',
+                'units:id,medicine_id,name,factor_to_base',
+            ])
+            ->withSum(['stocks as stock_qty' => $stockScope], 'quantity')
+            ->where('medicines.status', true);
+
+        if ($q !== '') {
+            $escaped = addcslashes($q, '%_\\');
+            $like = '%'.$escaped.'%';
+            $prefix = $escaped.'%';
+
+            $builder->where(function ($w) use ($q, $like) {
+                $w->where('medicines.name', 'like', $like)
+                    ->orWhere('medicines.generic_name', 'like', $like)
+                    ->orWhere('medicines.dosage_form', 'like', $like)
+                    ->orWhere('medicines.sku', $q)
+                    ->orWhere('medicines.product_id', $q)
+                    ->orWhere('medicines.barcode_data', $q)
+                    ->orWhereHas('generic', function ($g) use ($like) {
+                        $g->where('name', 'like', $like);
+                    })
+                    ->orWhereHas('dosageForm', function ($f) use ($like) {
+                        $f->where('name', 'like', $like);
+                    })
+                    ->orWhereHas('brand', function ($b) use ($like) {
+                        $b->where('name', 'like', $like);
+                    })
+                    ->orWhereIn('medicines.medex_id', function ($sub) use ($like) {
+                        $sub->select('medex_id')
+                            ->from('medex_brand_indexes')
+                            ->whereNotNull('medex_id')
+                            ->where(function ($i) use ($like) {
+                                $i->where('name', 'like', $like)
+                                    ->orWhere('generic_name', 'like', $like)
+                                    ->orWhere('form', 'like', $like);
+                            });
+                    });
+            });
+
+            $builder->orderByRaw(
+                'CASE
+                    WHEN medicines.barcode_data = ? OR medicines.sku = ? OR medicines.product_id = ? THEN 0
+                    WHEN medicines.name LIKE ? THEN 1
+                    WHEN medicines.generic_name LIKE ? THEN 2
+                    ELSE 3
+                END',
+                [$q, $q, $q, $prefix, $prefix]
+            );
+        }
+
+        if ($kind === 'Rx') {
+            $builder->where('medicines.requires_prescription', true);
+        } elseif ($kind === 'OTC') {
+            $builder->where(function ($w) {
+                $w->where('medicines.requires_prescription', false)
+                    ->orWhereNull('medicines.requires_prescription');
+            })->whereDoesntHave('category', function ($c) {
+                $c->where(function ($n) {
+                    $n->where('name', 'like', '%device%')
+                        ->orWhere('name', 'like', '%supplement%');
+                });
+            });
+        } elseif ($kind === 'Supplement') {
+            $builder->whereHas('category', fn ($c) => $c->where('name', 'like', '%supplement%'));
+        } elseif ($kind === 'Device') {
+            $builder->where(function ($w) {
+                $w->whereHas('category', fn ($c) => $c->where('name', 'like', '%device%'))
+                    ->orWhereHas('medicineType', fn ($t) => $t->where('name', 'Device'));
+            });
+        } elseif ($kind === 'Herbal') {
+            $builder->whereHas('medicineType', fn ($t) => $t->where('name', 'Herbal'));
+        }
+
+        if ($q === '') {
+            $builder->orderByRaw('COALESCE(stock_qty, 0) DESC')->orderBy('medicines.name');
+        } else {
+            $builder->orderBy('medicines.name');
+        }
+
+        return $builder->limit($limit)->get()->map(function (Medicine $medicine) {
+            if ($medicine->image && ! str_starts_with((string) $medicine->image, 'http') && ! str_starts_with((string) $medicine->image, '/')) {
+                $medicine->setAttribute('image', Storage::disk('public')->url($medicine->image));
+            }
+
+            return $medicine;
+        });
     }
 
     public function searchCustomers(Request $request)
     {
-        $query = $request->get('q');
+        $query = trim((string) $request->get('q', ''));
+        if ($query === '') {
+            return response()->json([]);
+        }
 
-        $customers = Customer::where('name', 'like', "%{$query}%")
-            ->orWhere('mobile', 'like', "%{$query}%")
+        $customers = Customer::query()
             ->where('status', true)
+            ->where('mobile', '!=', 'WALK-IN')
+            ->where(function ($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%")
+                    ->orWhere('mobile', 'like', "%{$query}%")
+                    ->orWhere('phone', 'like', "%{$query}%");
+            })
+            ->orderBy('name')
             ->limit(10)
-            ->get();
+            ->get(['id', 'customer_id', 'name', 'mobile', 'phone', 'email']);
 
         return response()->json($customers);
+    }
+
+    public function quickStoreCustomer(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'mobile' => 'required|string|max:30|unique:customers,mobile',
+        ]);
+
+        $customer = Customer::create([
+            'name' => $data['name'],
+            'mobile' => $data['mobile'],
+            'status' => true,
+        ]);
+
+        return response()->json($customer);
     }
 
     public function availableStocks(Medicine $medicine)

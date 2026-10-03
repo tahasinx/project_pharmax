@@ -31,6 +31,8 @@ class Invoice extends Model
         'details',
         'payment_type',
         'status',
+        'prescription_path',
+        'prescription_original_name',
     ];
 
     protected $casts = [
@@ -44,6 +46,15 @@ class Invoice extends Model
         'invoice_discount' => 'decimal:2',
         'status'           => 'boolean',
     ];
+
+    public function prescriptionUrl(): ?string
+    {
+        if (! $this->prescription_path) {
+            return null;
+        }
+
+        return asset('storage/'.$this->prescription_path);
+    }
 
     public function customer(): BelongsTo
     {

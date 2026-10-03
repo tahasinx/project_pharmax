@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Services\Tenant\TenantThemeStore;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -23,6 +24,45 @@ class SettingController extends Controller
             'settings'  => $settings,
             'timezones' => \DateTimeZone::listIdentifiers(),
         ]);
+    }
+
+    /**
+     * Tenant application theme settings.
+     */
+    public function theme(TenantThemeStore $themes)
+    {
+        return Inertia::render('Settings/Theme', [
+            'theme'                => $themes->theme(),
+            'canManageTypography'  => false,
+        ]);
+    }
+
+    /**
+     * Persist tenant application theme.
+     */
+    public function updateTheme(Request $request, TenantThemeStore $themes)
+    {
+        $rules = [
+            'primary' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'shape'   => ['required', 'in:default,rounded,flat'],
+        ];
+
+        // Typography is owned by platform/app admin only.
+        $allowTypography = false;
+        if ($allowTypography) {
+            $rules = array_merge($rules, [
+                'font_family' => ['required', 'string', 'max:60'],
+                'font_href'   => ['nullable', 'string', 'max:500'],
+                'font_size'   => ['required', 'integer', 'min:12', 'max:22'],
+                'font_weight' => ['required', 'integer', 'in:300,400,500,600,700,800,900'],
+            ]);
+        }
+
+        $validated = $request->validate($rules);
+        $themes->save($validated, $allowTypography);
+
+        return redirect()->route('settings.theme')
+            ->with('success', 'Theme settings updated.');
     }
 
     /**
@@ -99,6 +139,10 @@ class SettingController extends Controller
             'date_format'          => 'Y-m-d',
             'items_per_page'       => 15,
             'enable_notifications' => true,
+
+            // MedEx reference catalog
+            'medex_enabled'   => (bool) config('medex.enabled', true),
+            'medex_cache_ttl' => (int) config('medex.cache_ttl', 43200),
 
             // Email Configuration
             'email_provider'    => 'smtp',
@@ -181,6 +225,8 @@ class SettingController extends Controller
                 'date_format'          => $json['date_format'] ?? $settings['date_format'],
                 'items_per_page'       => $json['items_per_page'] ?? $settings['items_per_page'],
                 'enable_notifications' => $json['enable_notifications'] ?? $settings['enable_notifications'],
+                'medex_enabled'        => $json['medex_enabled'] ?? $settings['medex_enabled'],
+                'medex_cache_ttl'      => $json['medex_cache_ttl'] ?? $settings['medex_cache_ttl'],
 
                 // Email Configuration
                 'email_provider'    => $json['email_provider'] ?? $settings['email_provider'],
@@ -346,6 +392,24 @@ class SettingController extends Controller
             'nexmo_secret'          => $request->input('nexmo_secret'),
             'nexmo_from'            => $request->input('nexmo_from'),
         ];
+
+        $existing = [];
+        try {
+            if (Storage::exists('settings.json')) {
+                $decoded = json_decode(Storage::get('settings.json'), true);
+                if (is_array($decoded)) {
+                    $existing = $decoded;
+                }
+            }
+        } catch (\Throwable) {
+            $existing = [];
+        }
+
+        foreach (['theme_primary', 'theme_shape', 'theme_font_family', 'theme_font_href', 'theme_font_size', 'theme_font_weight'] as $themeKey) {
+            if (array_key_exists($themeKey, $existing)) {
+                $uiOnly[$themeKey] = $existing[$themeKey];
+            }
+        }
 
         Storage::put('settings.json', json_encode($uiOnly, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     }

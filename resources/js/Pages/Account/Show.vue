@@ -1,194 +1,149 @@
 <template>
     <Head title="Account Details" />
     <AuthenticatedLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Account Details: {{ account.name }}
-                </h2>
-                <div class="flex space-x-2">
-                    <Link :href="route('accounts.edit', account.id)"
-                          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        Edit Account
-                    </Link>
-                    <Link :href="route('accounts.index')"
-                          class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                        Back to Accounts
-                    </Link>
+        <FormScreen :title="account.name" :close-href="route('accounts.index')">
+            <template #header-actions>
+                <span class="status-chip" :class="{ 'is-on': account.status }">
+                    <span class="status-dot" />
+                    {{ account.status ? 'Active' : 'Inactive' }}
+                </span>
+                <Link :href="route('accounts.edit', account.id)" class="btn btn-primary btn-sm">Edit</Link>
+            </template>
+
+            <div class="med-view">
+                <div class="med-view-grid">
+                    <section class="med-panel">
+                        <header class="med-panel-head">
+                            <h6>Account information</h6>
+                            <p>Identity and classification</p>
+                        </header>
+                        <dl class="med-facts">
+                            <div class="med-fact">
+                                <dt>Account name</dt>
+                                <dd>{{ account.name }}</dd>
+                            </div>
+                            <div class="med-fact">
+                                <dt>Account code</dt>
+                                <dd>{{ account.code || 'Not provided' }}</dd>
+                            </div>
+                            <div class="med-fact">
+                                <dt>Account type</dt>
+                                <dd>
+                                    <span class="type-badge" :class="`type-${account.type}`">
+                                        {{ account.type?.toUpperCase() || 'N/A' }}
+                                    </span>
+                                </dd>
+                            </div>
+                            <div class="med-fact">
+                                <dt>Current balance</dt>
+                                <dd>{{ money(account.balance) }}</dd>
+                            </div>
+                            <div class="med-fact">
+                                <dt>Created by</dt>
+                                <dd>{{ account.created_by || 'System' }}</dd>
+                            </div>
+                            <div class="med-fact">
+                                <dt>Transactions</dt>
+                                <dd>{{ account.transactions?.length || 0 }}</dd>
+                            </div>
+                        </dl>
+                    </section>
+
+                    <section class="med-panel">
+                        <header class="med-panel-head">
+                            <h6>Description & timeline</h6>
+                            <p>Notes and record dates</p>
+                        </header>
+                        <dl class="med-facts med-facts-1">
+                            <div class="med-fact">
+                                <dt>Description</dt>
+                                <dd>{{ account.description || 'No description provided' }}</dd>
+                            </div>
+                            <div class="med-fact">
+                                <dt>Created</dt>
+                                <dd>{{ formatDate(account.created_at) }}</dd>
+                            </div>
+                            <div class="med-fact">
+                                <dt>Last updated</dt>
+                                <dd>{{ formatDate(account.updated_at) }}</dd>
+                            </div>
+                        </dl>
+                    </section>
                 </div>
+
+                <section v-if="account.transactions && account.transactions.length > 0" class="med-panel">
+                    <header class="med-panel-head">
+                        <div>
+                            <h6>Recent transactions</h6>
+                            <p>Latest activity on this account</p>
+                        </div>
+                    </header>
+
+                    <table class="table table-sm table-striped table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                                <th>Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="transaction in account.transactions.slice(0, 10)" :key="transaction.id">
+                                <td>{{ formatDate(transaction.created_at) }}</td>
+                                <td>{{ transaction.description || 'N/A' }}</td>
+                                <td>{{ money(transaction.amount) }}</td>
+                                <td>
+                                    <span
+                                        class="type-badge"
+                                        :class="transaction.type === 'debit' ? 'type-debit' : 'type-credit'"
+                                    >
+                                        {{ transaction.type?.toUpperCase() || 'N/A' }}
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
             </div>
-        </template>
 
-        <div class="py-12">
-            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Main Information -->
-                    <div class="lg:col-span-2">
-                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                            <div class="p-6">
-                                <h3 class="text-lg font-medium text-gray-900 mb-4">Account Information</h3>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Account Name</label>
-                                        <p class="text-sm text-gray-900">{{ account.name }}</p>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Account Code</label>
-                                        <p class="text-sm text-gray-900">{{ account.code || 'Not provided' }}</p>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Account Type</label>
-                                        <span :class="getTypeColor(account.type)"
-                                              class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                                            {{ account.type?.toUpperCase() || 'N/A' }}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Current Balance</label>
-                                        <p class="text-sm text-gray-900 font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(account.balance || 0).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</p>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                                        <span :class="account.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                                              class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                                            {{ account.status ? 'Active' : 'Inactive' }}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Created By</label>
-                                        <p class="text-sm text-gray-900">{{ account.created_by || 'System' }}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                            <div class="p-6">
-                                <h3 class="text-lg font-medium text-gray-900 mb-4">Description</h3>
-                                <p class="text-sm text-gray-900">{{ account.description || 'No description provided' }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Transactions -->
-                        <div v-if="account.transactions && account.transactions.length > 0" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                            <div class="p-6">
-                                <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Transactions</h3>
-                                <div class="overflow-x-auto">
-                                    <LunaTable title="Show">
-<table class="table table-striped table-hover min-w-full divide-y divide-gray-200">
-                                        <thead class="bg-gray-50">
-                                            <tr>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Date
-                                                </th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Description
-                                                </th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Amount
-                                                </th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Type
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="bg-white divide-y divide-gray-200">
-                                            <tr v-for="transaction in account.transactions.slice(0, 10)" :key="transaction.id">
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {{ formatDate(transaction.created_at) }}
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {{ transaction.description || 'N/A' }}
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(transaction.amount || 0).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <span :class="transaction.type === 'debit' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
-                                                          class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                                                        {{ transaction.type?.toUpperCase() || 'N/A' }}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-</LunaTable>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sidebar -->
-                    <div class="lg:col-span-1">
-                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                            <div class="p-6">
-                                <h3 class="text-lg font-medium text-gray-900 mb-4">Account Statistics</h3>
-                                <div class="space-y-4">
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Total Transactions:</span>
-                                        <span class="font-medium">{{ account.transactions?.length || 0 }}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Created:</span>
-                                        <span class="font-medium">{{ formatDate(account.created_at) }}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Last Updated:</span>
-                                        <span class="font-medium">{{ formatDate(account.updated_at) }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                            <div class="p-6">
-                                <h3 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
-                                <div class="space-y-2">
-                                    <Link :href="route('accounts.edit', account.id)"
-                                          class="block w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-center">
-                                        Edit Account
-                                    </Link>
-                                    <button @click="deleteAccount(account.id)"
-                                            class="block w-full bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-center">
-                                        Delete Account
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+            <template #footer="{ close }">
+                <button type="button" class="btn btn-outline-danger" @click="close">Close</button>
+                <button type="button" class="btn btn-outline-danger" @click="deleteAccount(account.id)">
+                    Delete account
+                </button>
+                <Link :href="route('accounts.edit', account.id)" class="btn btn-primary">Edit</Link>
+            </template>
+        </FormScreen>
     </AuthenticatedLayout>
 </template>
 
 <script setup>
-import LunaTable from '@/Components/LunaTable.vue'
-
-import { Link, router, Head } from '@inertiajs/vue3'
+import { Head, Link, usePage } from '@inertiajs/vue3'
 import { destroyRecord } from '@/Composables/confirmDelete'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import FormScreen from '@/Components/FormScreen.vue'
 
-const props = defineProps({
-    account: Object
+defineProps({
+    account: Object,
 })
 
-const getTypeColor = (type) => {
-    const colors = {
-        asset: 'bg-blue-100 text-blue-800',
-        liability: 'bg-red-100 text-red-800',
-        equity: 'bg-green-100 text-green-800',
-        revenue: 'bg-yellow-100 text-yellow-800',
-        expense: 'bg-purple-100 text-purple-800'
-    }
-    return colors[type] || 'bg-gray-100 text-gray-800'
+const page = usePage()
+
+const money = (value) => {
+    const ui = page.props.ui || {}
+    const amount = Number(value || 0).toFixed(2)
+    return ui.currency_position === 'after'
+        ? `${amount}${ui.currency_symbol || ''}`
+        : `${ui.currency_symbol || ''}${amount}`
 }
 
 const formatDate = (date) => {
+    if (!date) return '—'
     return new Date(date).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
-        day: 'numeric'
+        day: 'numeric',
     })
 }
 
@@ -196,3 +151,151 @@ const deleteAccount = (id) => {
     destroyRecord('accounts.destroy', id, 'Delete this account?', 'The account has been deleted.')
 }
 </script>
+
+<style scoped>
+.med-view {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.med-view-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.med-panel {
+    background: var(--shell-panel-bg, #f8f9fc);
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    border-radius: var(--pf-radius, 0.65rem);
+    padding: 1rem 1.1rem 1.15rem;
+}
+
+.med-panel-head {
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--shell-panel-border, #e6e8ee);
+}
+
+.med-panel-head h6 {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--shell-panel-text, #343747);
+}
+
+.med-panel-head p {
+    margin: 0.2rem 0 0;
+    font-size: 0.78rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.med-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem 1rem;
+    margin: 0;
+}
+
+.med-facts-1 {
+    grid-template-columns: 1fr;
+}
+
+.med-fact {
+    min-width: 0;
+}
+
+.med-fact dt {
+    margin: 0 0 0.2rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.med-fact dd {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--shell-panel-text, #343747);
+    word-break: break-word;
+}
+
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    background: var(--shell-panel-bg, #f8f9fc);
+    border-radius: var(--pf-radius, 999px);
+    padding: 0.22rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.status-chip.is-on {
+    border-color: var(--shell-panel-accent-border, #b7ebd6);
+    background: var(--shell-panel-accent-bg, #e8f8f1);
+    color: var(--shell-panel-accent-text, #1e8f68);
+}
+
+.status-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--shell-panel-muted, #adb5bd);
+}
+
+.status-chip.is-on .status-dot {
+    background: #34c38f;
+}
+
+.type-badge {
+    display: inline-flex;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.type-asset,
+.type-credit {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.type-liability,
+.type-debit {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.type-equity {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.type-revenue {
+    background: #fef9c3;
+    color: #854d0e;
+}
+
+.type-expense {
+    background: #f3e8ff;
+    color: #6b21a8;
+}
+
+@media (max-width: 991.98px) {
+    .med-view-grid,
+    .med-facts {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+

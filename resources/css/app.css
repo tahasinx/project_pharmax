@@ -22,7 +22,7 @@ body:not(.minia-app) *:not(svg):not(.bi):not([class^="bi-"]):not([class*=" bi-"]
 
 body.minia-app,
 body.minia-app *:not(.bi):not([class^="bi-"]):not([class*=" bi-"]):not(.fa):not(.fas):not(.far):not(.fab):not([class^="fa-"]):not([class*=" fa-"]):not(.mdi):not([class^="mdi-"]):not([class*=" mdi-"]):not(.bx):not([class^="bx-"]):not([class*=" bx-"]):not([class*="dripicons"]) {
-    font-family: "IBM Plex Sans", sans-serif !important;
+    font-family: var(--pf-font, "IBM Plex Sans", sans-serif) !important;
 }
 
 body {

@@ -56,9 +56,9 @@ class PlatformSettingsStore
         if (! in_array($shape, ['default', 'rounded', 'flat'], true)) {
             $shape = 'rounded';
         }
-        $family = trim((string) ($stored['theme_font_family'] ?? 'Inter'));
+        $family = trim((string) ($stored['theme_font_family'] ?? 'IBM Plex Sans'));
         if ($family === '' || ! preg_match('/^[A-Za-z0-9][A-Za-z0-9 \-]{0,60}$/', $family)) {
-            $family = 'Inter';
+            $family = 'IBM Plex Sans';
         }
         $size = (int) ($stored['theme_font_size'] ?? 16);
         if ($size < 12 || $size > 22) {
@@ -81,6 +81,11 @@ class PlatformSettingsStore
                 'default' => '4px',
                 default   => '10px',
             },
+            'primary_rgb' => implode(', ', [
+                hexdec(substr(ltrim($primary, '#'), 0, 2)),
+                hexdec(substr(ltrim($primary, '#'), 2, 2)),
+                hexdec(substr(ltrim($primary, '#'), 4, 2)),
+            ]),
         ];
     }
 

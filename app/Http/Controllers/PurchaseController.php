@@ -23,9 +23,9 @@ class PurchaseController extends Controller
     public function index()
     {
         $itemsPerPage = $this->getItemsPerPage();
-        $purchases    = Purchase::with(['manufacturer', 'items.medicine'])
-            ->orderBy('created_at', 'desc')
-            ->paginate($itemsPerPage)->withQueryString();
+        $purchases    = BranchContext::constrain(
+            Purchase::with(['manufacturer', 'items.medicine'])->orderBy('created_at', 'desc')
+        )->paginate($itemsPerPage)->withQueryString();
 
         return Inertia::render('Purchase/Index', [
             'purchases' => $purchases,

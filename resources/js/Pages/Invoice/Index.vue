@@ -1,4 +1,5 @@
 <template>
+    <Head title="Invoices" />
     <AuthenticatedLayout>
         <template #header>
             <h4 class="mb-sm-0 font-size-18">Invoices</h4>
@@ -8,199 +9,103 @@
             </div>
         </template>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <!-- Search and Filter -->
-                <div class="listing-filters bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                    <div class="p-6">
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                                <input v-model="search"
-                                       type="text"
-                                       placeholder="Search by invoice number, customer..."
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <LunaTable title="Invoices" :pagination="invoices" empty-text="No invoices found">
+            <table class="table table-striped table-hover mb-0 w-100">
+                <thead>
+                    <tr>
+                        <th>Invoice #</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Total</th>
+                        <th>Paid</th>
+                        <th>Due</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="invoice in invoices.data" :key="invoice.id">
+                        <td>
+                            <div class="fw-semibold">{{ invoice.invoice_no }}</div>
+                        </td>
+                        <td>{{ invoice.customer?.name || '—' }}</td>
+                        <td>{{ formatDate(invoice.date) }}</td>
+                        <td>{{ money(invoice.total_amount) }}</td>
+                        <td>{{ money(invoice.paid_amount) }}</td>
+                        <td :class="{ 'text-danger': Number(invoice.due_amount) > 0 }">{{ money(invoice.due_amount) }}</td>
+                        <td>
+                            <span class="status-chip" :class="{ 'is-on': Number(invoice.due_amount) <= 0 }">
+                                <span class="status-dot" />
+                                {{ Number(invoice.due_amount) > 0 ? 'Pending' : 'Paid' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="dt-actions">
+                                <Link :href="route('invoices.show', invoice.id)" class="btn btn-sm btn-icon btn-soft-primary" title="View"><i class="bi bi-eye"></i></Link>
+                                <Link :href="route('invoices.edit', invoice.id)" class="btn btn-sm btn-icon btn-soft-secondary" title="Edit"><i class="bi bi-pencil"></i></Link>
+                                <Link :href="route('invoices.print', invoice.id)" class="btn btn-sm btn-icon btn-soft-success" title="Print"><i class="bi bi-printer"></i></Link>
+                                <button type="button" class="btn btn-sm btn-icon btn-soft-danger" title="Delete" @click="deleteInvoice(invoice.id)"><i class="bi bi-trash"></i></button>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Date From</label>
-                                <input v-model="dateFrom"
-                                       type="date"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Date To</label>
-                                <input v-model="dateTo"
-                                       type="date"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div class="flex items-end">
-                                <button @click="clearFilters"
-                                        class="w-full bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                                    Clear Filters
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Invoice List -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div v-if="invoices.data.length === 0" class="text-center py-8 text-gray-500">
-                            No invoices found
-                        </div>
-                        <div v-else class="overflow-x-auto">
-                            <LunaTable title="Invoices" :pagination="invoices">
-<table class="table table-striped table-hover min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Invoice #
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Customer
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Date
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Total Amount
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Discount
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Paid Amount
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Due Amount
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Status
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr v-for="invoice in filteredInvoices" :key="invoice.id">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            {{ invoice.invoice_no }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ invoice.customer?.name || 'N/A' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ formatDate(invoice.date) }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ props.ui.currency_position === 'before' ? props.ui.currency_symbol : '' }}{{ parseFloat(invoice.total_amount).toFixed(2) }}{{ props.ui.currency_position === 'after' ? props.ui.currency_symbol : '' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ props.ui.currency_position === 'before' ? props.ui.currency_symbol : '' }}{{ parseFloat(invoice.invoice_discount || 0).toFixed(2) }}{{ props.ui.currency_position === 'after' ? props.ui.currency_symbol : '' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ props.ui.currency_position === 'before' ? props.ui.currency_symbol : '' }}{{ parseFloat(invoice.paid_amount).toFixed(2) }}{{ props.ui.currency_position === 'after' ? props.ui.currency_symbol : '' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            <span :class="invoice.due_amount > 0 ? 'text-red-600' : 'text-green-600'">
-                                                {{ props.ui.currency_position === 'before' ? props.ui.currency_symbol : '' }}{{ parseFloat(invoice.due_amount).toFixed(2) }}{{ props.ui.currency_position === 'after' ? props.ui.currency_symbol : '' }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span :class="invoice.due_amount > 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
-                                                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                                                {{ invoice.due_amount > 0 ? 'Pending' : 'Paid' }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <div class="flex space-x-2">
-                                                <Link :href="route('invoices.show', invoice.id)"
-                                                      class="text-blue-600 hover:text-blue-900">
-                                                    View
-                                                </Link>
-                                                <Link :href="route('invoices.edit', invoice.id)"
-                                                      class="text-indigo-600 hover:text-indigo-900">
-                                                    Edit
-                                                </Link>
-                                                <Link :href="route('invoices.print', invoice.id)"
-                                                      class="text-green-600 hover:text-green-900">
-                                                    Print
-                                                </Link>
-                                                <button @click="deleteInvoice(invoice.id)"
-                                                        class="text-red-600 hover:text-red-900">
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-</LunaTable>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </LunaTable>
     </AuthenticatedLayout>
 </template>
 
 <script setup>
-import LunaTable from '@/Components/LunaTable.vue'
-
-import { ref, computed } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
+import { Head, Link } from '@inertiajs/vue3'
 import { destroyRecord } from '@/Composables/confirmDelete'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import Pagination from '@/Components/Pagination.vue'
-
-defineOptions({
-    title: 'Invoices'
-})
+import LunaTable from '@/Components/LunaTable.vue'
 
 const props = defineProps({
     invoices: Object,
-    ui: Object
+    ui: Object,
 })
 
-const search = ref('')
-const dateFrom = ref('')
-const dateTo = ref('')
-
-const filteredInvoices = computed(() => {
-    let filtered = props.invoices.data
-
-    if (search.value) {
-        const searchLower = search.value.toLowerCase()
-        filtered = filtered.filter(invoice =>
-            invoice.invoice_no.toLowerCase().includes(searchLower) ||
-            invoice.customer?.name.toLowerCase().includes(searchLower)
-        )
-    }
-
-    if (dateFrom.value) {
-        filtered = filtered.filter(invoice => invoice.date >= dateFrom.value)
-    }
-
-    if (dateTo.value) {
-        filtered = filtered.filter(invoice => invoice.date <= dateTo.value)
-    }
-
-    return filtered
-})
-
-const clearFilters = () => {
-    search.value = ''
-    dateFrom.value = ''
-    dateTo.value = ''
+const money = (value) => {
+    const amount = Number(value || 0).toFixed(2)
+    const symbol = props.ui?.currency_symbol || ''
+    return props.ui?.currency_position === 'after' ? `${amount}${symbol}` : `${symbol}${amount}`
 }
 
-const formatDate = (date) => {
-    return new Date(date).toLocaleDateString()
-}
+const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : '—')
 
 const deleteInvoice = (id) => {
     destroyRecord('invoices.destroy', id, 'Delete this invoice?', 'The invoice has been deleted.')
 }
 </script>
+
+<style scoped>
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    background: var(--shell-panel-bg, #f8f9fc);
+    border-radius: var(--pf-radius, 999px);
+    padding: 0.22rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.status-chip.is-on {
+    border-color: var(--shell-panel-accent-border, #b7ebd6);
+    background: var(--shell-panel-accent-bg, #e8f8f1);
+    color: var(--shell-panel-accent-text, #1e8f68);
+}
+
+.status-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--shell-panel-muted, #adb5bd);
+}
+
+.status-chip.is-on .status-dot {
+    background: #34c38f;
+}
+</style>

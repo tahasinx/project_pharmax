@@ -6,15 +6,33 @@ import LunaShell from '@/Layouts/LunaShell.vue';
 const page = usePage();
 
 const sections = [
-    { label: 'Counter', names: ['Dashboard', 'POS'] },
-    { label: 'Catalog', names: ['Medicine List', 'Category', 'Manufacturer', 'Generic Name', 'Medicine Type', 'Units'] },
+    { label: 'Counter', names: ['Dashboard', 'POS', 'Customers'] },
+    {
+        label: 'Products',
+        names: [
+            'Medicine List',
+            'Medicines',
+            'Category',
+            'Categories',
+            'Manufacturer',
+            'Manufacturers',
+            'Generic Name',
+            'Generics',
+            'Brands',
+            'Medicine Type',
+            'Units',
+        ],
+    },
     { label: 'Inventory', names: ['Stock', 'Expiry', 'Transfers'] },
-    { label: 'Sales', names: ['Invoices', 'Sales Returns', 'Customers', 'Prescriptions'] },
+    { label: 'Sales', names: ['Invoices', 'Sales Returns', 'Prescriptions'] },
     { label: 'Buying', names: ['Purchases', 'Purchase Orders', 'Suppliers'] },
     { label: 'Money', names: ['Accounts', 'Finance', 'Reports'] },
-    { label: 'Compliance', names: ['Controlled Register', 'Audit Log'] },
-    { label: 'Admin', names: ['Users', 'Menus', 'Settings', 'Branches'] },
+    { label: 'Compliance', names: ['Controlled Register', 'Audit Log', 'Clinical Rules'] },
+    { label: 'HRM', names: ['Employees', 'Departments', 'Payroll'] },
+    { label: 'Admin', names: ['Users', 'Menus', 'Settings', 'Theme', 'Branches'] },
 ];
+
+const normalizeMenuName = (name) => String(name || '').trim().toLowerCase();
 
 const menus = computed(() => {
     const raw = page.props.menus || [];
@@ -29,16 +47,25 @@ const isActive = (name) => {
     }
 };
 
+const menuHref = (routeName) => {
+    try {
+        return route(routeName);
+    } catch (e) {
+        return '#';
+    }
+};
+
 const groups = computed(() => {
     const used = new Set();
     const grouped = sections.map((section) => {
+        const wanted = section.names.map(normalizeMenuName);
         const items = menus.value
-            .filter((menu) => section.names.includes(menu.name))
-            .sort((a, b) => section.names.indexOf(a.name) - section.names.indexOf(b.name))
+            .filter((menu) => wanted.includes(normalizeMenuName(menu.name)))
+            .sort((a, b) => wanted.indexOf(normalizeMenuName(a.name)) - wanted.indexOf(normalizeMenuName(b.name)))
             .map((menu) => ({
                 key: menu.id,
                 name: menu.name,
-                href: route(menu.route),
+                href: menuHref(menu.route),
                 active: isActive(menu.route),
             }));
         items.forEach((item) => used.add(item.key));
@@ -50,7 +77,7 @@ const groups = computed(() => {
         .map((menu) => ({
             key: menu.id,
             name: menu.name,
-            href: route(menu.route),
+            href: menuHref(menu.route),
             active: isActive(menu.route),
         }));
 
@@ -62,13 +89,7 @@ const groups = computed(() => {
 });
 
 const branchOpen = ref(false);
-const currentBranchLabel = computed(() => {
-    const branch = page.props.branch;
-    if (!branch?.current) {
-        return 'All branches';
-    }
-    return branch.options?.find((item) => String(item.id) === String(branch.current))?.name || 'Branch';
-});
+const currentBranchLabel = computed(() => page.props.branch?.label || 'Branch');
 const closeBranch = (event) => {
     if (!event.target.closest('.branch-menu')) {
         branchOpen.value = false;
@@ -76,7 +97,10 @@ const closeBranch = (event) => {
 };
 const chooseBranch = (id) => {
     branchOpen.value = false;
-    router.post(route('branch.switch'), { branch_id: id || null });
+    router.post(route('branch.switch'), { branch_id: id || null }, {
+        preserveScroll: false,
+        preserveState: false,
+    });
 };
 onMounted(() => document.addEventListener('click', closeBranch));
 onUnmounted(() => document.removeEventListener('click', closeBranch));
@@ -91,8 +115,21 @@ onUnmounted(() => document.removeEventListener('click', closeBranch));
                     <i class="mdi mdi-chevron-down"></i>
                 </button>
                 <div class="dropdown-menu" :class="{ show: branchOpen }">
-                    <button v-if="$page.props.branch.canSwitch" type="button" class="dropdown-item" :class="{ active: !$page.props.branch.current }" @click="chooseBranch('')">All branches</button>
-                    <button v-for="branch in $page.props.branch.options" :key="branch.id" type="button" class="dropdown-item" :class="{ active: String($page.props.branch.current) === String(branch.id) }" @click="chooseBranch(branch.id)">{{ branch.name }}</button>
+                    <button
+                        v-if="$page.props.branch.canSwitch"
+                        type="button"
+                        class="dropdown-item"
+                        :class="{ active: $page.props.branch.sees_all || !$page.props.branch.current }"
+                        @click="chooseBranch('')"
+                    >All branches</button>
+                    <button
+                        v-for="branch in $page.props.branch.options"
+                        :key="branch.id"
+                        type="button"
+                        class="dropdown-item"
+                        :class="{ active: !$page.props.branch.sees_all && String($page.props.branch.current) === String(branch.id) }"
+                        @click="chooseBranch(branch.id)"
+                    >{{ branch.name }}</button>
                 </div>
             </div>
         </template>

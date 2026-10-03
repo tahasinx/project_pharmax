@@ -23,6 +23,7 @@ class Medicine extends Model
         'brand_id',
         'strength',
         'dosage_form',
+        'dosage_form_id',
         'atc_code',
         'sku',
         'requires_prescription',
@@ -45,9 +46,11 @@ class Medicine extends Model
         'qr_code_data',
         'qr_code_type',
         'qr_code_image_path',
+        'qr_code_size',
         'barcode_data',
         'barcode_type',
         'barcode_image_path',
+        'barcode_size',
         'status',
     ];
 
@@ -57,6 +60,8 @@ class Medicine extends Model
         'manufacturer_price'    => 'decimal:2',
         'alert_qty'             => 'integer',
         'box_size'              => 'integer',
+        'qr_code_size'          => 'integer',
+        'barcode_size'          => 'integer',
         'status'                => 'boolean',
         'requires_prescription' => 'boolean',
         'is_controlled'         => 'boolean',
@@ -89,6 +94,11 @@ class Medicine extends Model
     public function brand(): BelongsTo
     {
         return $this->belongsTo(Brand::class);
+    }
+
+    public function dosageForm(): BelongsTo
+    {
+        return $this->belongsTo(DosageForm::class);
     }
 
     public function units(): HasMany

@@ -1,264 +1,924 @@
 <template>
-    <Head title="Generate Codes" />
     <AuthenticatedLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Generate Codes - {{ medicine.name }}
-                </h2>
-                <div class="flex space-x-2">
-                    <Link :href="route('medicines.index')"
-                          class="bg-green-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                        All Medicines
-                    </Link>
-                    <Link :href="route('medicines.show', medicine.id)"
-                          class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                        Back to Medicine
-                    </Link>
-                    <button @click="generateAllCodes"
-                            :disabled="isLoading"
-                            class="bg-blue-500 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded">
-                        {{ isLoading ? 'Generating...' : 'Generate All Codes' }}
-                    </button>
-                </div>
-            </div>
-        </template>
+        <FormScreen :title="`Codes — ${medicine.name}`" :close-href="route('medicines.index')">
+            <template #header-actions>
+                <Link :href="route('medicines.show', medicine.id)" class="btn btn-outline-secondary btn-sm">Details</Link>
+                <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    :disabled="isLoading"
+                    @click="generateAllCodes"
+                >
+                    {{ isLoading ? 'Generating…' : 'Generate all' }}
+                </button>
+            </template>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <!-- Medicine Information -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                    <div class="p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Medicine Information</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Medicine Name</label>
-                                <p class="mt-1 text-sm text-gray-900">{{ medicine.name }}</p>
+            <div class="med-view">
+                <div class="med-view-grid">
+                    <section class="med-panel">
+                        <header class="med-panel-head">
+                            <h6>Product identity</h6>
+                            <p>What these codes will encode</p>
+                        </header>
+                        <dl class="med-facts">
+                            <div class="med-fact">
+                                <dt>Brand name</dt>
+                                <dd>{{ medicine.name }}</dd>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Product ID</label>
-                                <p class="mt-1 text-sm text-gray-900 font-mono">{{ medicine.product_id }}</p>
+                            <div class="med-fact">
+                                <dt>Generic name</dt>
+                                <dd>{{ medicine.generic_name || '—' }}</dd>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Generic Name</label>
-                                <p class="mt-1 text-sm text-gray-900">{{ medicine.generic_name || 'N/A' }}</p>
+                            <div class="med-fact">
+                                <dt>Strength</dt>
+                                <dd>{{ medicine.strength || '—' }}</dd>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Strength</label>
-                                <p class="mt-1 text-sm text-gray-900">{{ medicine.strength || 'N/A' }}</p>
+                            <div class="med-fact">
+                                <dt>Product ID</dt>
+                                <dd class="mono">{{ medicine.product_id || '—' }}</dd>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Category</label>
-                                <p class="mt-1 text-sm text-gray-900">{{ medicine.category?.name || 'N/A' }}</p>
+                            <div class="med-fact">
+                                <dt>Category</dt>
+                                <dd>{{ medicine.category?.name || '—' }}</dd>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Manufacturer</label>
-                                <p class="mt-1 text-sm text-gray-900">{{ medicine.manufacturer?.name || 'N/A' }}</p>
+                            <div class="med-fact">
+                                <dt>Manufacturer</dt>
+                                <dd>{{ medicine.manufacturer?.name || '—' }}</dd>
+                            </div>
+                        </dl>
+                    </section>
+
+                    <section class="med-panel">
+                        <header class="med-panel-head">
+                            <h6>Code status</h6>
+                            <p>Saved on this medicine record</p>
+                        </header>
+                        <div class="med-metrics">
+                            <div class="med-metric" :class="{ accent: !!medicine.qr_code_data }">
+                                <span class="med-metric-label">QR code</span>
+                                <span class="med-metric-value status-line">
+                                    <i class="bi" :class="medicine.qr_code_data ? 'bi-check-circle-fill' : 'bi-dash-circle'" />
+                                    {{ medicine.qr_code_data ? 'Saved' : 'Not saved' }}
+                                </span>
+                            </div>
+                            <div class="med-metric" :class="{ accent: !!medicine.barcode_data }">
+                                <span class="med-metric-label">Barcode</span>
+                                <span class="med-metric-value status-line">
+                                    <i class="bi" :class="medicine.barcode_data ? 'bi-check-circle-fill' : 'bi-dash-circle'" />
+                                    {{ medicine.barcode_data ? 'Saved' : 'Not saved' }}
+                                </span>
+                            </div>
+                        </div>
+                        <dl v-if="medicine.barcode_data" class="med-facts med-facts-tight">
+                            <div class="med-fact">
+                                <dt>Barcode value</dt>
+                                <dd class="mono">{{ medicine.barcode_data }}</dd>
+                            </div>
+                        </dl>
+                    </section>
+                </div>
+
+                <section class="med-panel code-section">
+                    <header class="med-panel-head code-head">
+                        <div>
+                            <h6>Codes</h6>
+                            <p>Generate, size, download, then save to this medicine</p>
+                        </div>
+                        <div class="code-actions">
+                            <button
+                                type="button"
+                                class="btn btn-outline-primary btn-sm"
+                                :disabled="isLoading"
+                                @click="generateQrCode"
+                            >
+                                <i class="bi bi-qr-code me-1" />
+                                QR
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-outline-primary btn-sm"
+                                :disabled="isLoading"
+                                @click="generateBarcode"
+                            >
+                                <i class="bi bi-upc me-1" />
+                                Barcode
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-sm"
+                                :disabled="isLoading"
+                                @click="generateAllCodes"
+                            >
+                                {{ isLoading ? 'Generating…' : 'Generate both' }}
+                            </button>
+                            <button
+                                v-if="canDownloadBoth"
+                                type="button"
+                                class="btn btn-outline-secondary btn-sm"
+                                @click="downloadBothCodes"
+                            >
+                                <i class="bi bi-download me-1" />
+                                Download both
+                            </button>
+                            <button
+                                v-if="canDownloadBoth"
+                                type="button"
+                                class="btn btn-outline-secondary btn-sm"
+                                @click="printBothCodes"
+                            >
+                                <i class="bi bi-printer me-1" />
+                                Print both
+                            </button>
+                        </div>
+                    </header>
+
+                    <div v-if="showPreview" class="code-size-row">
+                        <div v-if="modalType === 'qr' || modalType === 'both'" class="code-size-field">
+                            <span>QR size (px)</span>
+                            <div class="code-size-controls">
+                                <button
+                                    v-for="size in qrSizePresets"
+                                    :key="`qr-${size}`"
+                                    type="button"
+                                    class="btn btn-sm"
+                                    :class="Number(qrSize) === size ? 'btn-primary' : 'btn-outline-secondary'"
+                                    @click="setQrSize(size)"
+                                >
+                                    {{ size }}
+                                </button>
+                                <input
+                                    v-model="qrSizeDraft"
+                                    type="number"
+                                    min="96"
+                                    max="360"
+                                    step="1"
+                                    @keydown.enter.prevent="commitQrSize"
+                                    @blur="commitQrSize"
+                                >
+                            </div>
+                        </div>
+                        <div v-if="modalType === 'barcode' || modalType === 'both'" class="code-size-field">
+                            <span>Barcode height (px)</span>
+                            <div class="code-size-controls">
+                                <button
+                                    v-for="size in barcodeSizePresets"
+                                    :key="`bc-${size}`"
+                                    type="button"
+                                    class="btn btn-sm"
+                                    :class="Number(barcodeSize) === size ? 'btn-primary' : 'btn-outline-secondary'"
+                                    @click="setBarcodeSize(size)"
+                                >
+                                    {{ size }}
+                                </button>
+                                <input
+                                    v-model="barcodeSizeDraft"
+                                    type="number"
+                                    min="48"
+                                    max="200"
+                                    step="1"
+                                    @keydown.enter.prevent="commitBarcodeSize"
+                                    @blur="commitBarcodeSize"
+                                >
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Code Generation Interface -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="text-center">
-                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
-                                <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                </svg>
-                            </div>
-                            <h3 class="text-lg font-medium text-gray-900 mb-2">Generate QR Code & Barcode</h3>
-                            <p class="text-sm text-gray-500 mb-6">
-                                Click the buttons below to generate QR codes and barcodes for this medicine.
-                                The generated codes will be displayed in a modal where you can download or print them.
-                            </p>
-
-                            <!-- Generation Buttons -->
-                            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                                <button @click="generateQrCode"
-                                        :disabled="isLoading"
-                                        class="bg-blue-500 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center">
-                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                    </svg>
-                                    {{ isLoading ? 'Generating...' : 'Generate QR Code' }}
-                                </button>
-
-                                <button @click="generateBarcode"
-                                        :disabled="isLoading"
-                                        class="bg-green-500 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center">
-                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    {{ isLoading ? 'Generating...' : 'Generate Barcode' }}
-                                </button>
-                            </div>
-
-                            <!-- Current Codes Status -->
-                            <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0">
-                                            <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                            </svg>
-                                        </div>
-                                        <div class="ml-3">
-                                            <h4 class="text-sm font-medium text-blue-800">QR Code Status</h4>
-                                            <p class="text-sm text-blue-700">
-                                                {{ medicine.qr_code_data ? 'Generated' : 'Not Generated' }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0">
-                                            <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                            </svg>
-                                        </div>
-                                        <div class="ml-3">
-                                            <h4 class="text-sm font-medium text-green-800">Barcode Status</h4>
-                                            <p class="text-sm text-green-700">
-                                                {{ medicine.barcode_data ? 'Generated' : 'Not Generated' }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div v-if="!showPreview" class="code-empty">
+                        <i class="bi bi-upc-scan" />
+                        <p>No preview yet. Generate a QR code, barcode, or both.</p>
                     </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Code Modal -->
-        <CodeModal
-            :is-open="showModal"
-            :medicine-name="medicine.name"
-            :qr-code-data="generatedQrCodeData"
-            :qr-code-type="generatedQrCodeType"
-            :barcode-data="generatedBarcodeData"
-            :barcode-type="generatedBarcodeType"
-            :modal-type="modalType"
-            @close="closeModal"
-            @save="saveCodes"
-        />
+                    <div v-else class="code-preview-grid" :class="{ 'is-single': modalType !== 'both' }">
+                        <article v-if="modalType === 'qr' || modalType === 'both'" class="code-card">
+                            <header class="code-card-head">
+                                <span class="code-card-title">QR code</span>
+                                <span class="code-chip">{{ qrSize }}px</span>
+                            </header>
+                            <div class="code-card-canvas">
+                                <canvas ref="qrCodeCanvas" />
+                            </div>
+                            <dl class="code-card-meta">
+                                <div>
+                                    <dt>Encodes</dt>
+                                    <dd>Name, product ID, strength, maker</dd>
+                                </div>
+                                <div>
+                                    <dt>Product ID</dt>
+                                    <dd class="mono">{{ medicine.product_id || '—' }}</dd>
+                                </div>
+                            </dl>
+                            <footer class="code-card-foot">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" @click="downloadQrCode">
+                                    <i class="bi bi-download me-1" />
+                                    Download
+                                </button>
+                            </footer>
+                        </article>
+
+                        <article v-if="modalType === 'barcode' || modalType === 'both'" class="code-card">
+                            <header class="code-card-head">
+                                <span class="code-card-title">Barcode</span>
+                                <span class="code-chip">{{ barcodeSize }}px · Code 128</span>
+                            </header>
+                            <div class="code-card-canvas is-barcode">
+                                <canvas ref="barcodeCanvas" />
+                            </div>
+                            <dl class="code-card-meta">
+                                <div>
+                                    <dt>Format</dt>
+                                    <dd>Code 128</dd>
+                                </div>
+                                <div>
+                                    <dt>Value</dt>
+                                    <dd class="mono">{{ generatedBarcodeData || medicine.product_id || '—' }}</dd>
+                                </div>
+                            </dl>
+                            <footer class="code-card-foot">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" @click="downloadBarcode">
+                                    <i class="bi bi-download me-1" />
+                                    Download
+                                </button>
+                            </footer>
+                        </article>
+                    </div>
+                </section>
+            </div>
+
+            <template #footer="{ close }">
+                <button type="button" class="btn btn-outline-danger" @click="close">Cancel</button>
+                <button
+                    v-if="showPreview"
+                    type="button"
+                    class="btn btn-primary"
+                    :disabled="isSaving"
+                    @click="saveCodes"
+                >
+                    {{ isSaving ? 'Saving…' : 'Save codes' }}
+                </button>
+            </template>
+        </FormScreen>
     </AuthenticatedLayout>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { Link, Head, router } from '@inertiajs/vue3'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { Link, router } from '@inertiajs/vue3'
+import QRCode from 'qrcode'
+import JsBarcode from 'jsbarcode'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import CodeModal from '@/Components/CodeModal.vue'
+import FormScreen from '@/Components/FormScreen.vue'
 
 const props = defineProps({
-    medicine: Object
+    medicine: Object,
 })
 
 const isLoading = ref(false)
-const showModal = ref(false)
-const modalType = ref('both') // 'qr', 'barcode', or 'both'
+const isSaving = ref(false)
+const showPreview = ref(false)
+const modalType = ref('both')
 const generatedQrCodeData = ref('')
 const generatedQrCodeType = ref('product_id')
 const generatedBarcodeData = ref('')
 const generatedBarcodeType = ref('code128')
+const qrCodeCanvas = ref(null)
+const barcodeCanvas = ref(null)
+const qrSizePresets = [120, 160, 200, 240]
+const barcodeSizePresets = [60, 88, 120, 160]
+const qrSize = ref(Number(props.medicine.qr_code_size) || 180)
+const barcodeSize = ref(Number(props.medicine.barcode_size) || 88)
+const qrSizeDraft = ref(String(qrSize.value))
+const barcodeSizeDraft = ref(String(barcodeSize.value))
+
+const canDownloadBoth = computed(() => (
+    showPreview.value
+    && modalType.value === 'both'
+    && !!generatedQrCodeData.value
+    && !!generatedBarcodeData.value
+))
+
+const clamp = (value, min, max, fallback) => {
+    const n = Number(value)
+    if (! Number.isFinite(n)) return fallback
+    return Math.min(max, Math.max(min, Math.round(n)))
+}
+
+const setQrSize = (size) => {
+    const next = clamp(size, 96, 360, qrSize.value || 180)
+    qrSize.value = next
+    qrSizeDraft.value = String(next)
+}
+
+const setBarcodeSize = (size) => {
+    const next = clamp(size, 48, 200, barcodeSize.value || 88)
+    barcodeSize.value = next
+    barcodeSizeDraft.value = String(next)
+}
+
+const commitQrSize = () => {
+    setQrSize(qrSizeDraft.value === '' ? qrSize.value : qrSizeDraft.value)
+}
+
+const commitBarcodeSize = () => {
+    setBarcodeSize(barcodeSizeDraft.value === '' ? barcodeSize.value : barcodeSizeDraft.value)
+}
+
+const barcodeFormat = (type) => {
+    const key = String(type || 'code128').toLowerCase()
+    return {
+        code128: 'CODE128',
+        code39: 'CODE39',
+        ean13: 'EAN13',
+        upc: 'UPC',
+    }[key] || 'CODE128'
+}
+
+const barcodeTypeForSave = (type) => {
+    const raw = String(type || 'code128')
+    const map = {
+        CODE128: 'code128',
+        CODE39: 'code39',
+        EAN13: 'ean13',
+        UPC: 'upc',
+    }
+    return map[raw] || raw.toLowerCase()
+}
+
+const medicinePayload = () => JSON.stringify({
+    name: props.medicine.name,
+    product_id: props.medicine.product_id,
+    generic_name: props.medicine.generic_name,
+    strength: props.medicine.strength,
+    category: props.medicine.category?.name,
+    manufacturer: props.medicine.manufacturer?.name,
+})
+
+const renderCodes = async () => {
+    await nextTick()
+
+    // Use committed sizes for canvas only — never write back while typing.
+    const nextQrSize = clamp(qrSize.value, 96, 360, 180)
+    const nextBarcodeSize = clamp(barcodeSize.value, 48, 200, 88)
+
+    if ((modalType.value === 'qr' || modalType.value === 'both') && generatedQrCodeData.value && qrCodeCanvas.value) {
+        await QRCode.toCanvas(qrCodeCanvas.value, generatedQrCodeData.value, {
+            width: nextQrSize,
+            margin: 2,
+            color: { dark: '#000000', light: '#FFFFFF' },
+        })
+    }
+
+    if ((modalType.value === 'barcode' || modalType.value === 'both') && generatedBarcodeData.value && barcodeCanvas.value) {
+        const barWidth = nextBarcodeSize >= 120 ? 2.4 : 2
+        JsBarcode(barcodeCanvas.value, generatedBarcodeData.value, {
+            format: barcodeFormat(generatedBarcodeType.value),
+            width: barWidth,
+            height: nextBarcodeSize,
+            displayValue: true,
+            fontSize: Math.max(10, Math.round(nextBarcodeSize / 8)),
+            margin: 10,
+        })
+    }
+}
+
+const loadSavedCodes = async () => {
+    const hasQr = !!props.medicine.qr_code_data
+    const hasBarcode = !!props.medicine.barcode_data
+
+    setQrSize(props.medicine.qr_code_size || 180)
+    setBarcodeSize(props.medicine.barcode_size || 88)
+
+    if (!hasQr && !hasBarcode) {
+        showPreview.value = false
+        return
+    }
+
+    if (hasQr && hasBarcode) {
+        modalType.value = 'both'
+    } else if (hasQr) {
+        modalType.value = 'qr'
+    } else {
+        modalType.value = 'barcode'
+    }
+
+    generatedQrCodeData.value = props.medicine.qr_code_data || ''
+    generatedQrCodeType.value = props.medicine.qr_code_type || 'medicine_info'
+    generatedBarcodeData.value = props.medicine.barcode_data || ''
+    generatedBarcodeType.value = props.medicine.barcode_type || 'code128'
+    showPreview.value = true
+    await renderCodes()
+}
+
+onMounted(() => {
+    loadSavedCodes()
+})
+
+watch(
+    () => [props.medicine.qr_code_data, props.medicine.barcode_data, props.medicine.qr_code_size, props.medicine.barcode_size],
+    () => {
+        loadSavedCodes()
+    },
+)
+
+watch([qrSize, barcodeSize], async () => {
+    if (showPreview.value) {
+        await renderCodes()
+    }
+})
 
 const generateQrCode = async () => {
     isLoading.value = true
-
-    // Generate QR code data based on medicine info
-    const qrData = {
-        name: props.medicine.name,
-        product_id: props.medicine.product_id,
-        generic_name: props.medicine.generic_name,
-        strength: props.medicine.strength,
-        category: props.medicine.category?.name,
-        manufacturer: props.medicine.manufacturer?.name
-    }
-
-    generatedQrCodeData.value = JSON.stringify(qrData)
+    generatedQrCodeData.value = medicinePayload()
     generatedQrCodeType.value = 'medicine_info'
-    generatedBarcodeData.value = '' // Clear barcode data
-    modalType.value = 'qr' // Set modal type to QR only
-
-    // Show modal
-    showModal.value = true
+    generatedBarcodeData.value = ''
+    modalType.value = 'qr'
+    showPreview.value = true
+    await renderCodes()
     isLoading.value = false
 }
 
 const generateBarcode = async () => {
     isLoading.value = true
-
-    // Generate barcode data using product ID
     generatedBarcodeData.value = props.medicine.product_id
     generatedBarcodeType.value = 'code128'
-    generatedQrCodeData.value = '' // Clear QR code data
-    modalType.value = 'barcode' // Set modal type to barcode only
-
-    // Show modal
-    showModal.value = true
+    generatedQrCodeData.value = ''
+    modalType.value = 'barcode'
+    showPreview.value = true
+    await renderCodes()
     isLoading.value = false
 }
 
 const generateAllCodes = async () => {
     isLoading.value = true
-
-    // Generate both codes
-    const qrData = {
-        name: props.medicine.name,
-        product_id: props.medicine.product_id,
-        generic_name: props.medicine.generic_name,
-        strength: props.medicine.strength,
-        category: props.medicine.category?.name,
-        manufacturer: props.medicine.manufacturer?.name
-    }
-
-    generatedQrCodeData.value = JSON.stringify(qrData)
+    generatedQrCodeData.value = medicinePayload()
     generatedQrCodeType.value = 'medicine_info'
     generatedBarcodeData.value = props.medicine.product_id
     generatedBarcodeType.value = 'code128'
-    modalType.value = 'both' // Set modal type to both
-
-    // Show modal
-    showModal.value = true
+    modalType.value = 'both'
+    showPreview.value = true
+    await renderCodes()
     isLoading.value = false
 }
 
-const closeModal = () => {
-    showModal.value = false
+const downloadQrCode = () => {
+    if (!qrCodeCanvas.value) return
+    const link = document.createElement('a')
+    link.download = `qr-code-${props.medicine.name.replace(/\s+/g, '-').toLowerCase()}.png`
+    link.href = qrCodeCanvas.value.toDataURL()
+    link.click()
 }
 
-const saveCodes = async (codesData) => {
-    try {
-        const saveData = {}
+const downloadBarcode = () => {
+    if (!barcodeCanvas.value) return
+    const link = document.createElement('a')
+    link.download = `barcode-${props.medicine.name.replace(/\s+/g, '-').toLowerCase()}.png`
+    link.href = barcodeCanvas.value.toDataURL()
+    link.click()
+}
 
-        // Only save the codes that were generated based on modal type
-        if (modalType.value === 'qr' || modalType.value === 'both') {
-            saveData.qr_code_data = codesData.qrCodeData
-            saveData.qr_code_type = codesData.qrCodeType
-            saveData.qr_code_image_path = null
-        }
+const buildCombinedCanvas = () => {
+    if (!qrCodeCanvas.value || !barcodeCanvas.value) return null
+    const qr = qrCodeCanvas.value
+    const barcode = barcodeCanvas.value
+    const gap = 24
+    const pad = 24
+    const labelH = 24
+    const combinedCanvas = document.createElement('canvas')
+    const ctx = combinedCanvas.getContext('2d')
+    const width = Math.max(qr.width, barcode.width) + pad * 2
+    const height = labelH + qr.height + gap + labelH + barcode.height + pad
+    combinedCanvas.width = width
+    combinedCanvas.height = height
+    ctx.fillStyle = 'white'
+    ctx.fillRect(0, 0, width, height)
+    ctx.fillStyle = 'black'
+    ctx.font = '14px sans-serif'
+    ctx.fillText('QR Code', pad, 18)
+    ctx.drawImage(qr, Math.round((width - qr.width) / 2), labelH)
+    const barcodeTop = labelH + qr.height + gap
+    ctx.fillText('Barcode', pad, barcodeTop + 14)
+    ctx.drawImage(barcode, Math.round((width - barcode.width) / 2), barcodeTop + labelH)
+    return combinedCanvas
+}
 
-        if (modalType.value === 'barcode' || modalType.value === 'both') {
-            saveData.barcode_data = codesData.barcodeData
-            saveData.barcode_type = codesData.barcodeType
-            saveData.barcode_image_path = null
-        }
+const downloadBothCodes = () => {
+    const combinedCanvas = buildCombinedCanvas()
+    if (!combinedCanvas) return
+    const link = document.createElement('a')
+    link.download = `codes-${props.medicine.name.replace(/\s+/g, '-').toLowerCase()}.png`
+    link.href = combinedCanvas.toDataURL()
+    link.click()
+}
 
-        await router.post(route('medicines.codes.save', props.medicine.id), saveData, {
-            onSuccess: () => {
-                showModal.value = false
-                // Refresh the page to show updated status
-                router.reload()
-            }
-        })
-    } catch (error) {
-        console.error('Error saving codes:', error)
+const printBothCodes = () => {
+    const combinedCanvas = buildCombinedCanvas()
+    if (!combinedCanvas) return
+    const printWindow = window.open('', '_blank')
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Print Codes - ${props.medicine.name}</title>
+                <style>
+                    body { margin: 0; padding: 20px; text-align: center; font-family: sans-serif; }
+                    img { max-width: 100%; height: auto; }
+                </style>
+            </head>
+            <body>
+                <h2>${props.medicine.name} — QR Code &amp; Barcode</h2>
+                <img src="${combinedCanvas.toDataURL()}" alt="Codes">
+            </body>
+        </html>
+    `)
+    printWindow.document.close()
+    printWindow.print()
+}
+
+const saveCodes = () => {
+    const saveData = {
+        qr_code_size: clamp(qrSize.value, 96, 360, 180),
+        barcode_size: clamp(barcodeSize.value, 48, 200, 88),
     }
+
+    if (modalType.value === 'qr' || modalType.value === 'both') {
+        saveData.qr_code_data = generatedQrCodeData.value
+        saveData.qr_code_type = generatedQrCodeType.value
+        saveData.qr_code_image_path = null
+    }
+
+    if (modalType.value === 'barcode' || modalType.value === 'both') {
+        saveData.barcode_data = generatedBarcodeData.value
+        saveData.barcode_type = barcodeTypeForSave(generatedBarcodeType.value)
+        saveData.barcode_image_path = null
+    }
+
+    isSaving.value = true
+    router.post(route('medicines.codes.save', props.medicine.id), saveData, {
+        preserveScroll: true,
+        onFinish: () => {
+            isSaving.value = false
+        },
+        onSuccess: () => {
+            showPreview.value = true
+            router.reload({
+                only: ['medicine'],
+                onSuccess: () => {
+                    loadSavedCodes()
+                },
+            })
+        },
+    })
 }
 </script>
+
+<style scoped>
+.med-view {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.med-view-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.med-panel {
+    background: var(--shell-panel-bg, #f8f9fc);
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    border-radius: var(--pf-radius, 10px);
+    padding: 1rem 1.1rem 1.15rem;
+}
+
+.med-metric {
+    background: var(--shell-panel-surface, #fff);
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    border-radius: var(--pf-radius, 10px);
+    padding: 0.75rem 0.85rem;
+}
+
+.med-panel-preview {
+    background: var(--shell-panel-surface, #fff);
+}
+
+.med-panel-head {
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--shell-panel-border, #e6e8ee);
+}
+
+.med-panel-head h6 {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--shell-panel-text, #343747);
+}
+
+.med-panel-head p {
+    margin: 0.2rem 0 0;
+    font-size: 0.78rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.med-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem 1rem;
+    margin: 0;
+}
+
+.med-facts-tight {
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    border-top: 1px dashed var(--shell-panel-border, #e6e8ee);
+}
+
+.med-fact {
+    min-width: 0;
+}
+
+.med-fact dt {
+    margin: 0 0 0.2rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.med-fact dd {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--shell-panel-text, #343747);
+    word-break: break-word;
+}
+
+.med-fact dd.mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.84rem;
+    font-weight: 500;
+}
+
+.med-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.med-metric {
+    background: var(--shell-panel-surface, #fff);
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    border-radius: 0.5rem;
+    padding: 0.75rem 0.85rem;
+}
+
+.med-metric.accent {
+    border-color: var(--shell-panel-accent-border, #b7ebd6);
+    background: var(--shell-panel-accent-bg, #e8f8f1);
+}
+
+.med-metric-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.med-metric-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--shell-panel-text, #343747);
+}
+
+.med-metric.accent .med-metric-value {
+    color: var(--shell-panel-accent-text, #1e8f68);
+}
+
+.status-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.code-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.code-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.45rem;
+    flex-shrink: 0;
+}
+
+.code-section .btn,
+.code-section input {
+    border-radius: var(--pf-radius, 10px) !important;
+}
+
+.code-size-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 0.85rem;
+}
+
+.code-size-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0.7rem 0.8rem;
+    background: var(--shell-panel-surface, #fff);
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    border-radius: var(--pf-radius, 10px);
+}
+
+.code-size-field > span {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.code-size-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.code-size-controls input {
+    width: 4.5rem;
+    height: 1.9rem;
+    border: 1px solid var(--shell-panel-border, #dfe3ea);
+    padding: 0 0.45rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--shell-panel-text, #343747);
+}
+
+.code-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    min-height: 9rem;
+    border: 1px dashed var(--shell-panel-border, #dfe3ea);
+    border-radius: var(--pf-radius, 10px);
+    background: var(--shell-panel-surface, #fff);
+    color: var(--shell-panel-muted, #74788d);
+    text-align: center;
+    padding: 1.25rem;
+}
+
+.code-empty i {
+    font-size: 1.55rem;
+    color: var(--shell-panel-muted, #adb5bd);
+}
+
+.code-empty p {
+    margin: 0;
+    font-size: 0.84rem;
+}
+
+.code-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.code-preview-grid.is-single {
+    grid-template-columns: minmax(0, 22rem);
+}
+
+.code-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--shell-panel-surface, #fff);
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    border-radius: var(--pf-radius, 10px);
+    overflow: hidden;
+    min-height: 100%;
+}
+
+.code-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.7rem 0.85rem;
+    border-bottom: 1px solid var(--shell-panel-border, #eef0f4);
+}
+
+.code-card-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--shell-panel-text, #343747);
+}
+
+.code-chip {
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    background: var(--shell-panel-bg, #f8f9fc);
+    border-radius: var(--pf-radius, 10px);
+    padding: 0.15rem 0.55rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--shell-panel-muted, #74788d);
+    white-space: nowrap;
+}
+
+.code-card-canvas {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 11rem;
+    padding: 1rem;
+    background: var(--shell-panel-canvas, #fafbfc);
+}
+
+.code-card-canvas.is-barcode {
+    min-height: 11rem;
+    padding: 1.25rem 0.75rem;
+}
+
+.code-card-canvas canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+.code-card-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem 0.85rem;
+    margin: 0;
+    padding: 0.75rem 0.85rem;
+    border-top: 1px solid var(--shell-panel-border, #eef0f4);
+}
+
+.code-card-meta dt {
+    margin: 0 0 0.15rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.code-card-meta dd {
+    margin: 0;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--shell-panel-text, #343747);
+    word-break: break-word;
+}
+
+.code-card-meta dd.mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+.code-card-foot {
+    margin-top: auto;
+    padding: 0.65rem 0.85rem 0.8rem;
+    border-top: 1px solid var(--shell-panel-border, #eef0f4);
+    background: var(--shell-panel-surface, #fff);
+}
+
+@media (max-width: 991.98px) {
+    .med-view-grid,
+    .med-facts,
+    .med-metrics,
+    .code-preview-grid,
+    .code-card-meta,
+    .code-size-row {
+        grid-template-columns: 1fr;
+    }
+
+    .code-preview-grid.is-single {
+        grid-template-columns: 1fr;
+    }
+
+    .code-head {
+        flex-direction: column;
+    }
+
+    .code-actions {
+        justify-content: flex-start;
+    }
+}
+</style>

@@ -24,7 +24,7 @@ class MenuSeeder extends Seeder
             [
                 'name'       => 'Dashboard',
                 'route'      => 'dashboard',
-                'icon'       => '🏠',
+                'icon'       => 'bi-speedometer2',
                 'order'      => 1,
                 'is_active'  => true,
                 'permission' => 'view-dashboard',
@@ -33,7 +33,7 @@ class MenuSeeder extends Seeder
             [
                 'name'       => 'POS',
                 'route'      => 'pos',
-                'icon'       => '🛒',
+                'icon'       => 'bi-bag-check',
                 'order'      => 2,
                 'is_active'  => true,
                 'permission' => 'pos-access',
@@ -42,7 +42,7 @@ class MenuSeeder extends Seeder
             [
                 'name'       => 'Medicine List',
                 'route'      => 'medicines.index',
-                'icon'       => '💊',
+                'icon'       => 'bi-capsule',
                 'order'      => 3,
                 'is_active'  => true,
                 'permission' => 'manage-medicines',
@@ -51,7 +51,7 @@ class MenuSeeder extends Seeder
             [
                 'name'       => 'Manufacturer',
                 'route'      => 'manufacturers.index',
-                'icon'       => '🏭',
+                'icon'       => 'bi-buildings',
                 'order'      => 4,
                 'is_active'  => true,
                 'permission' => 'manage-manufacturers',
@@ -60,7 +60,7 @@ class MenuSeeder extends Seeder
             [
                 'name'       => 'Customers',
                 'route'      => 'customers.index',
-                'icon'       => '👥',
+                'icon'       => 'bi-people',
                 'order'      => 5,
                 'is_active'  => true,
                 'permission' => 'manage-customers',
@@ -69,7 +69,7 @@ class MenuSeeder extends Seeder
             [
                 'name'       => 'Invoices',
                 'route'      => 'invoices.index',
-                'icon'       => '📄',
+                'icon'       => 'bi-receipt',
                 'order'      => 6,
                 'is_active'  => true,
                 'permission' => 'manage-invoices',
@@ -78,7 +78,7 @@ class MenuSeeder extends Seeder
             [
                 'name'       => 'Purchases',
                 'route'      => 'purchases.index',
-                'icon'       => '🧾',
+                'icon'       => 'bi-bag',
                 'order'      => 7,
                 'is_active'  => true,
                 'permission' => 'manage-purchases',
@@ -87,7 +87,7 @@ class MenuSeeder extends Seeder
             [
                 'name'       => 'Reports',
                 'route'      => 'reports.index',
-                'icon'       => '📊',
+                'icon'       => 'bi-bar-chart',
                 'order'      => 8,
                 'is_active'  => true,
                 'permission' => 'view-reports',
@@ -96,7 +96,7 @@ class MenuSeeder extends Seeder
             [
                 'name'       => 'Accounts',
                 'route'      => 'accounts.index',
-                'icon'       => '💰',
+                'icon'       => 'bi-wallet2',
                 'order'      => 9,
                 'is_active'  => true,
                 'permission' => 'manage-accounts',
@@ -105,7 +105,7 @@ class MenuSeeder extends Seeder
             [
                 'name'       => 'Users',
                 'route'      => 'users.index',
-                'icon'       => '👤',
+                'icon'       => 'bi-person',
                 'order'      => 10,
                 'is_active'  => true,
                 'permission' => 'manage-users',
@@ -114,7 +114,7 @@ class MenuSeeder extends Seeder
             [
                 'name'       => 'Menus',
                 'route'      => 'menus.index',
-                'icon'       => '📋',
+                'icon'       => 'bi-list-ul',
                 'order'      => 11,
                 'is_active'  => true,
                 'permission' => 'manage-users',
@@ -123,7 +123,7 @@ class MenuSeeder extends Seeder
             [
                 'name'       => 'Stock',
                 'route'      => 'stocks.index',
-                'icon'       => '📦',
+                'icon'       => 'bi-box-seam',
                 'order'      => 13,
                 'is_active'  => true,
                 'permission' => 'manage-medicines',
@@ -132,11 +132,47 @@ class MenuSeeder extends Seeder
             [
                 'name'       => 'Settings',
                 'route'      => 'settings.index',
-                'icon'       => '⚙️',
+                'icon'       => 'bi-gear',
                 'order'      => 14,
                 'is_active'  => true,
                 'permission' => 'manage-settings',
                 'roles'      => ['admin'],
+            ],
+            [
+                'name'       => 'Theme',
+                'route'      => 'settings.theme',
+                'icon'       => 'bi-palette',
+                'order'      => 15,
+                'is_active'  => true,
+                'permission' => 'manage-settings',
+                'roles'      => ['admin'],
+            ],
+            [
+                'name'       => 'Employees',
+                'route'      => 'hrm.employees.index',
+                'icon'       => 'bi-person-badge',
+                'order'      => 16,
+                'is_active'  => true,
+                'permission' => 'manage-hrm-employees',
+                'roles'      => ['admin', 'manager'],
+            ],
+            [
+                'name'       => 'Departments',
+                'route'      => 'hrm.departments.index',
+                'icon'       => 'bi-building',
+                'order'      => 17,
+                'is_active'  => true,
+                'permission' => 'manage-hrm',
+                'roles'      => ['admin', 'manager'],
+            ],
+            [
+                'name'       => 'Payroll',
+                'route'      => 'hrm.payroll.index',
+                'icon'       => 'bi-cash-stack',
+                'order'      => 18,
+                'is_active'  => true,
+                'permission' => 'manage-hrm-payroll',
+                'roles'      => ['admin', 'manager'],
             ],
         ];
 

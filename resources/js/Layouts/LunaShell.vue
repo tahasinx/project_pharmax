@@ -149,14 +149,19 @@ const toggleSection = (label) => {
 const sectionIsOpen = (group) => openSections.value[group.label] === true;
 const sectionHasActive = (group) => group.items.some((item) => item.active);
 
-const singleNames = ['Dashboard', 'POS'];
+const singleNames = ['Dashboard', 'POS', 'Customers'];
+const singleIcon = (name) => ({
+    Dashboard: 'bi-speedometer2',
+    POS: 'bi-bag-check',
+    Customers: 'bi-people',
+}[name] || 'bi-dot');
 const flatItems = computed(() => props.groups.flatMap((group) => group.items));
 const singleItems = computed(() => singleNames
     .map((name) => flatItems.value.find((item) => item.name === name))
     .filter(Boolean)
     .map((item) => ({
         ...item,
-        icon: item.name === 'POS' ? 'shopping-bag' : 'home',
+        icon: singleIcon(item.name),
     })));
 const groupedMenus = computed(() => props.groups
     .map((group) => ({
@@ -166,25 +171,32 @@ const groupedMenus = computed(() => props.groups
     .filter((group) => group.items.length));
 
 const sectionIcon = (label) => ({
-    Catalog: 'package',
-    Inventory: 'archive',
-    Sales: 'shopping-cart',
-    Buying: 'truck',
-    Money: 'dollar-sign',
-    Compliance: 'shield',
-    Admin: 'settings',
-    Other: 'more-horizontal',
-    Operate: 'grid',
-    Billing: 'credit-card',
-    System: 'database',
-}[label] || 'circle');
+    Products: 'bi-grid-3x3-gap',
+    Catalog: 'bi-grid-3x3-gap',
+    Inventory: 'bi-box-seam',
+    Sales: 'bi-cart3',
+    Buying: 'bi-basket',
+    Money: 'bi-cash-coin',
+    Compliance: 'bi-shield-check',
+    HRM: 'bi-people',
+    Admin: 'bi-gear',
+    Other: 'bi-three-dots',
+    Operate: 'bi-grid',
+    Billing: 'bi-credit-card',
+    System: 'bi-database',
+}[label] || 'bi-circle');
 
 const itemIcon = (name) => ({
     'Medicine List': 'bi-capsule',
+    Medicines: 'bi-capsule',
     'Generic Name': 'bi-prescription2',
+    Generics: 'bi-prescription2',
+    Brands: 'bi-badge-tm',
     'Medicine Type': 'bi-bookmark',
     Category: 'bi-tags',
+    Categories: 'bi-tags',
     Manufacturer: 'bi-buildings',
+    Manufacturers: 'bi-buildings',
     Units: 'bi-rulers',
     Stock: 'bi-box-seam',
     Expiry: 'bi-calendar-x',
@@ -201,9 +213,14 @@ const itemIcon = (name) => ({
     Reports: 'bi-bar-chart',
     'Controlled Register': 'bi-shield-lock',
     'Audit Log': 'bi-journal-text',
+    'Clinical Rules': 'bi-clipboard2-pulse',
+    Employees: 'bi-person-badge',
+    Departments: 'bi-building',
+    Payroll: 'bi-cash-stack',
     Users: 'bi-person',
     Menus: 'bi-list-ul',
     Settings: 'bi-gear',
+    Theme: 'bi-palette',
     Branches: 'bi-diagram-3',
     Overview: 'bi-speedometer2',
     Pharmacies: 'bi-shop',
@@ -476,13 +493,13 @@ watch(() => page.url, () => {
                     <ul class="metismenu list-unstyled" id="side-menu">
                         <li v-for="item in singleItems" :key="item.key || item.name" :class="{ 'mm-active': item.active }">
                             <Link :href="item.href" :class="{ active: item.active }" @click="closeMobileNav">
-                                <i :data-feather="item.icon"></i>
+                                <i class="bi" :class="item.icon"></i>
                                 <span>{{ item.name }}</span>
                             </Link>
                         </li>
                         <li v-for="group in groupedMenus" :key="group.label" :class="{ 'mm-active': sectionHasActive(group) }">
                             <a href="javascript:void(0);" class="has-arrow" :aria-expanded="sectionIsOpen(group) ? 'true' : 'false'" @click.prevent="toggleSection(group.label)">
-                                <i :data-feather="sectionIcon(group.label)"></i>
+                                <i class="bi" :class="sectionIcon(group.label)"></i>
                                 <span>{{ group.label }}</span>
                             </a>
                             <ul class="sub-menu mm-collapse sub-section" :class="{ 'mm-show': sectionIsOpen(group) }" :aria-expanded="sectionIsOpen(group) ? 'true' : 'false'">

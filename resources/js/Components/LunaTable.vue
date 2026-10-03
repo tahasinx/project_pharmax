@@ -1,9 +1,10 @@
 <script setup>
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 
-defineProps({
+const props = defineProps({
     title: { type: String, default: 'Records' },
     pagination: { type: Object, default: null },
+    emptyText: { type: String, default: 'No records found' },
 });
 
 const root = ref(null);
@@ -60,6 +61,15 @@ const init = async () => {
     if ($.fn.DataTable.isDataTable(node)) {
         $(node).DataTable().destroy();
     }
+
+    // Remove placeholder colspan rows — they break DataTables column counts.
+    node.querySelectorAll('tbody tr').forEach((row) => {
+        const cells = [...row.children];
+        if (cells.some((cell) => cell.hasAttribute('colspan')) || cells.length === 0) {
+            row.remove();
+        }
+    });
+
     node.classList.add('table', 'table-bordered', 'w-100');
     const headRow = node.querySelector('thead tr');
     if (headRow && !headRow.querySelector('.dt-index')) {
@@ -77,18 +87,34 @@ const init = async () => {
         className: 'btn btn-sm btn-light',
         exportOptions: { columns: exportColumns },
     });
+    const emptyHtml = `
+        <div class="dt-empty">
+            <i class="bi bi-inbox" aria-hidden="true"></i>
+            <strong class="text-danger">${props.emptyText}</strong>
+            <span>Nothing to show here yet</span>
+        </div>
+    `;
     tableApi = $(node).DataTable({
         autoWidth: false,
         responsive: false,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'All']],
         dom: "<'dt-toolbar'<'dt-length'l><'dt-tools'<'dt-buttons'B>><'dt-filter'f>>rt<'dt-foot'<'dt-info'i><'dt-pages'p>>",
+        language: {
+            emptyTable: emptyHtml,
+            zeroRecords: emptyHtml,
+        },
         buttons: [
             button('copy', 'bi-clipboard', 'Copy'),
             button('csv', 'bi-filetype-csv', 'CSV'),
             button('excel', 'bi-file-earmark-excel', 'Excel'),
             button('pdf', 'bi-file-earmark-pdf', 'PDF'),
             button('print', 'bi-printer', 'Print'),
-            { extend: 'colvis', text: '<i class="bi bi-layout-three-columns"></i><span>Columns</span>', className: 'btn btn-sm btn-light', exportOptions: { columns: exportColumns } },
+            {
+                extend: 'colvis',
+                text: '<i class="bi bi-layout-three-columns"></i><span>Columns</span>',
+                className: 'btn btn-sm btn-light',
+                columns: ':not(.dt-fit):not(.dt-index)',
+            },
         ],
         columnDefs: [
             { targets: 0, orderable: false, searchable: false, width: '36px', className: 'dt-index' },
@@ -98,9 +124,28 @@ const init = async () => {
     const syncRows = () => {
         const info = tableApi.page.info();
         const headers = [...node.querySelectorAll('thead th')].map((cell) => cell.textContent.replace(/[↑↓↕]/g, '').trim());
+        const colCount = headers.length || node.querySelectorAll('thead th').length || 1;
+
+        // Keep empty-state cell centered across the full table width.
+        node.querySelectorAll('td.dataTables_empty').forEach((cell) => {
+            cell.colSpan = colCount;
+            cell.classList.add('dt-empty-cell');
+            cell.classList.remove('dt-fit', 'dt-index');
+            cell.style.textAlign = 'center';
+            const row = cell.closest('tr');
+            if (row) {
+                row.querySelectorAll('td').forEach((sibling) => {
+                    if (sibling !== cell) sibling.remove();
+                });
+            }
+        });
+
         let number = info.start + 1;
         tableApi.rows({ page: 'current' }).every(function () {
             const row = this.node();
+            if (row.querySelector('td.dataTables_empty')) {
+                return;
+            }
             row.querySelectorAll(':scope > td').forEach((cell, index) => {
                 if (cell.classList.contains('dt-index')) {
                     cell.textContent = number;

@@ -2,9 +2,10 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Branch;
+use App\Domain\Organization\BranchContext;
 use App\Models\Menu;
 use App\Services\Platform\PlatformSettingsStore;
+use App\Services\Tenant\TenantThemeStore;
 use App\Support\StagingDeployHost;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -49,11 +50,9 @@ class HandleInertiaRequests extends Middleware
                     'deploy'  => StagingDeployHost::matches(),
                     'theme'   => $isInstallRoute ? null : $this->appTheme(),
                 ],
-                'branch' => fn () => $request->user() && ! $isCentral && ! $isInstallRoute ? [
-                    'current'   => session('branch_id') ?: $request->user()->branch_id,
-                    'options'   => Branch::orderBy('name')->get(),
-                    'canSwitch' => $request->user()->hasRole('admin') || $request->user()->can('view-all-branches') || $request->user()->can('manage-branches'),
-                ] : null,
+                'branch' => fn () => $request->user() && ! $isCentral && ! $isInstallRoute
+                    ? BranchContext::shared($request->user())
+                    : null,
                 'app' => [
                     'name'    => $isInstallRoute ? config('app.name', 'Epharma') : $this->platformName(),
                     'logo'    => $isInstallRoute ? '' : $this->brandMedia()['logo'],
@@ -102,7 +101,12 @@ class HandleInertiaRequests extends Middleware
     private function appTheme(): ?array
     {
         try {
-            return app(PlatformSettingsStore::class)->theme();
+            $isCentral = request()->attributes->get('tenant.mode') === 'central';
+            if ($isCentral) {
+                return app(PlatformSettingsStore::class)->theme();
+            }
+
+            return app(TenantThemeStore::class)->theme();
         } catch (\Throwable) {
             return null;
         }
@@ -128,6 +132,12 @@ class HandleInertiaRequests extends Middleware
 
     private function getUserMenus($user)
     {
-        return Menu::active()->ordered()->get();
+        return Menu::active()->ordered()->get()->filter(function ($menu) use ($user) {
+            if (! $menu->permission) {
+                return true;
+            }
+
+            return $user->can($menu->permission);
+        })->values();
     }
 }

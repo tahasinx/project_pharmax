@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Organization\BranchContext;
 use App\Models\Medicine;
 use App\Models\Stock;
 use App\Traits\HasSettingsPagination;
@@ -21,15 +22,17 @@ class StockController extends Controller
     public function index()
     {
         $itemsPerPage = $this->getItemsPerPage();
-        $stocks       = Stock::with('medicine.category', 'medicine.manufacturer', 'warehouse')
-            ->orderBy('created_at', 'desc')
-            ->paginate($itemsPerPage)->withQueryString();
+        $stocks       = BranchContext::constrainStock(
+            Stock::with('medicine.category', 'medicine.manufacturer', 'warehouse')->orderBy('created_at', 'desc')
+        )->paginate($itemsPerPage)->withQueryString();
 
-        $weightedCosts = Stock::query()
-            ->where('quantity', '>', 0)
-            ->where(function ($q) {
-                $q->whereNull('status')->orWhere('status', 'available');
-            })
+        $weightedCosts = BranchContext::constrainStock(
+            Stock::query()
+                ->where('quantity', '>', 0)
+                ->where(function ($q) {
+                    $q->whereNull('status')->orWhere('status', 'available');
+                })
+        )
             ->selectRaw('medicine_id, SUM(quantity * purchase_price) / NULLIF(SUM(quantity), 0) as wac')
             ->groupBy('medicine_id')
             ->pluck('wac', 'medicine_id');
@@ -199,18 +202,17 @@ class StockController extends Controller
 
     public function alerts()
     {
-        $lowStock = Stock::with('medicine.category', 'medicine.manufacturer')
-            ->lowStock()
-            ->get();
+        $lowStock = BranchContext::constrainStock(
+            Stock::with('medicine.category', 'medicine.manufacturer')->lowStock()
+        )->get();
 
-        $expired = Stock::with('medicine.category', 'medicine.manufacturer')
-            ->expired()
-            ->get();
+        $expired = BranchContext::constrainStock(
+            Stock::with('medicine.category', 'medicine.manufacturer')->expired()
+        )->get();
 
-        $expiringSoon = Stock::with('medicine.category', 'medicine.manufacturer')
-            ->expiringSoon(30)
-            ->orderBy('expiry_date')
-            ->get();
+        $expiringSoon = BranchContext::constrainStock(
+            Stock::with('medicine.category', 'medicine.manufacturer')->expiringSoon(30)->orderBy('expiry_date')
+        )->get();
 
         return Inertia::render('Stock/Alerts', [
             'lowStock'     => $lowStock,
@@ -222,9 +224,9 @@ class StockController extends Controller
     private function getStockAlerts()
     {
         return [
-            'low_stock'     => Stock::with('medicine')->lowStock()->count(),
-            'expired'       => Stock::with('medicine')->expired()->count(),
-            'expiring_soon' => Stock::with('medicine')->expiringSoon(30)->count(),
+            'low_stock'     => BranchContext::constrainStock(Stock::query()->lowStock())->count(),
+            'expired'       => BranchContext::constrainStock(Stock::query()->expired())->count(),
+            'expiring_soon' => BranchContext::constrainStock(Stock::query()->expiringSoon(30))->count(),
         ];
     }
 }

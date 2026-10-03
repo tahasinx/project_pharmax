@@ -24,13 +24,17 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
-        // Content Security Policy
+        // Content Security Policy (Vite HMR allowed only in local/debug)
+        $allowVite = app()->environment('local') || (bool) config('app.debug');
+        $viteHttp  = $allowVite ? ' http://127.0.0.1:5173 http://localhost:5173' : '';
+        $viteWs    = $allowVite ? ' ws://127.0.0.1:5173 ws://localhost:5173' : '';
+
         $csp = "default-src 'self'; ".
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdn.skypack.dev; ".
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net; ".
-            "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net; ".
-            "img-src 'self' data: https:; ".
-            "connect-src 'self' https://medex.com.bd; ".
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdn.skypack.dev{$viteHttp}; ".
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net{$viteHttp}; ".
+            "font-src 'self' data: https://fonts.gstatic.com https://fonts.bunny.net{$viteHttp}; ".
+            "img-src 'self' data: blob: https:{$viteHttp}; ".
+            "connect-src 'self' https://medex.com.bd{$viteHttp}{$viteWs}; ".
             "frame-ancestors 'none';";
 
         $response->headers->set('Content-Security-Policy', $csp);

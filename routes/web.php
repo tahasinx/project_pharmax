@@ -3,12 +3,14 @@
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ComplianceController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataExportController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ManufacturerController;
 use App\Http\Controllers\MedicineController;
+use App\Http\Controllers\MedexController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\PharmacyController;
 use App\Http\Controllers\Platform\BillingController as PlatformBillingController;
@@ -23,6 +25,9 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\TerminalController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\Hrm\DepartmentController as HrmDepartmentController;
+use App\Http\Controllers\Hrm\EmployeeController as HrmEmployeeController;
+use App\Http\Controllers\Hrm\PayrollController as HrmPayrollController;
 use App\Models\Setting;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
@@ -139,6 +144,7 @@ Route::middleware('auth')->group(function () {
     Route::get('invoices/{invoice}/print', [InvoiceController::class, 'print'])->name('invoices.print');
     Route::get('api/medicines/search', [InvoiceController::class, 'searchMedicines'])->name('api.medicines.search');
     Route::get('api/customers/search', [InvoiceController::class, 'searchCustomers'])->name('api.customers.search');
+    Route::post('api/customers/quick', [InvoiceController::class, 'quickStoreCustomer'])->name('api.customers.quick');
     Route::get('api/medicines/{medicine}/stocks', [InvoiceController::class, 'availableStocks'])->name('api.medicines.stocks');
 
     // Purchase Routes
@@ -157,18 +163,27 @@ Route::middleware('auth')->group(function () {
     // Settings Routes
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
     Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+    Route::get('settings/theme', [SettingController::class, 'theme'])->name('settings.theme');
+    Route::put('settings/theme', [SettingController::class, 'updateTheme'])->name('settings.theme.update');
 
     // User Management Routes
     Route::resource('users', UserController::class);
 
     // External medicine save API and MedEx proxies
     Route::post('api/medicines/store-external', [MedicineController::class, 'storeExternal'])->name('api.medicines.storeExternal');
-    Route::get('api/medex/search', [MedicineController::class, 'medexSearch'])->name('api.medex.search');
-    Route::get('api/medex/product', [MedicineController::class, 'medexProduct'])->name('api.medex.product');
-    Route::get('api/medex/brands', [MedicineController::class, 'medexBrands'])->name('api.medex.brands');
-    Route::post('api/medex/brands/import', [MedicineController::class, 'importMedexBrands'])->name('api.medex.brands.import');
-    Route::get('api/medex/companies', [MedicineController::class, 'medexCompanies'])->name('api.medex.companies');
-    Route::post('api/medex/companies/import', [MedicineController::class, 'importMedexCompanies'])->name('api.medex.companies.import');
+    Route::get('api/medex/search', [MedexController::class, 'search'])->name('api.medex.search');
+    Route::get('api/medex/product', [MedexController::class, 'product'])->name('api.medex.product');
+    Route::get('api/medex/brands', [MedexController::class, 'brands'])->name('api.medex.brands');
+    Route::post('api/medex/brands/import', [MedexController::class, 'importBrands'])->name('api.medex.brands.import');
+    Route::get('api/medex/companies', [MedexController::class, 'companies'])->name('api.medex.companies');
+    Route::post('api/medex/companies/import', [MedexController::class, 'importCompanies'])->name('api.medex.companies.import');
+    Route::get('api/medex/generics', [MedexController::class, 'generics'])->name('api.medex.generics');
+    Route::post('api/medex/generics/import', [MedexController::class, 'importGenerics'])->name('api.medex.generics.import');
+    Route::get('api/medex/dosage-forms', [MedexController::class, 'dosageForms'])->name('api.medex.dosage-forms');
+    Route::post('api/medex/dosage-forms/import', [MedexController::class, 'importDosageForms'])->name('api.medex.dosage-forms.import');
+    Route::get('api/medex/local', [MedexController::class, 'localIndex'])->name('api.medex.local');
+    Route::get('api/medex/status', [MedexController::class, 'status'])->name('api.medex.status');
+    Route::post('api/medex/sync/{directory}', [MedexController::class, 'sync'])->name('api.medex.sync');
 
     // Menu Management Routes
     Route::resource('menus', MenuController::class);
@@ -220,8 +235,11 @@ Route::middleware('auth')->group(function () {
     Route::post('purchase-invoices', [PharmacyController::class, 'storePurchaseInvoice'])->name('purchase-invoices.store');
     Route::post('finance/customer-receipt', [PharmacyController::class, 'customerReceipt'])->name('finance.customer-receipt');
     Route::post('finance/supplier-payment', [PharmacyController::class, 'supplierPayment'])->name('finance.supplier-payment');
-    Route::get('clinical-rules', [PharmacyController::class, 'clinicalRules'])->name('clinical-rules.index');
-    Route::post('clinical-rules', [PharmacyController::class, 'storeClinicalRule'])->name('clinical-rules.store');
+    Route::get('clinical-rules', [ComplianceController::class, 'clinicalRules'])->name('clinical-rules.index');
+    Route::post('clinical-rules', [ComplianceController::class, 'storeClinicalRule'])->name('clinical-rules.store');
+    Route::put('clinical-rules/{clinicalRule}', [ComplianceController::class, 'updateClinicalRule'])->name('clinical-rules.update');
+    Route::post('clinical-rules/{clinicalRule}/toggle', [ComplianceController::class, 'toggleClinicalRule'])->name('clinical-rules.toggle');
+    Route::delete('clinical-rules/{clinicalRule}', [ComplianceController::class, 'destroyClinicalRule'])->name('clinical-rules.destroy');
     Route::post('prescriptions/{prescription}/status', [PharmacyController::class, 'setPrescriptionStatus'])->name('prescriptions.status');
 
     Route::get('sales-returns/create', [PharmacyController::class, 'salesReturnForm'])->name('sales-returns.create');
@@ -231,10 +249,10 @@ Route::middleware('auth')->group(function () {
     Route::post('prescriptions', [PharmacyController::class, 'storePrescription'])->name('prescriptions.store');
     Route::get('prescriptions/{prescription}', [PharmacyController::class, 'showPrescription'])->name('prescriptions.show');
     Route::post('prescriptions/{prescription}/dispense', [PharmacyController::class, 'dispense'])->name('prescriptions.dispense');
-    Route::get('controlled-register', [PharmacyController::class, 'controlledRegister'])->name('controlled.index');
+    Route::get('controlled-register', [ComplianceController::class, 'controlledRegister'])->name('controlled.index');
 
     Route::get('finance', [PharmacyController::class, 'finance'])->name('finance.index');
-    Route::get('audit', [PharmacyController::class, 'audit'])->name('audit.index');
+    Route::get('audit', [ComplianceController::class, 'audit'])->name('audit.index');
 
     // Reports Routes
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
@@ -242,6 +260,31 @@ Route::middleware('auth')->group(function () {
     Route::get('reports/purchases', [ReportController::class, 'purchases'])->name('reports.purchases');
     Route::get('reports/profit-loss', [ReportController::class, 'profitLoss'])->name('reports.profit-loss');
     Route::get('reports/customer-dues', [ReportController::class, 'customerDues'])->name('reports.customer-dues');
+    Route::get('reports/stock-valuation', [ReportController::class, 'stockValuation'])->name('reports.stock-valuation');
+    Route::get('reports/expiry-aging', [ReportController::class, 'expiryAging'])->name('reports.expiry-aging');
+    Route::get('reports/movers', [ReportController::class, 'movers'])->name('reports.movers');
+    Route::get('reports/payment-mix', [ReportController::class, 'paymentMix'])->name('reports.payment-mix');
+    Route::get('reports/tax-summary', [ReportController::class, 'taxSummary'])->name('reports.tax-summary');
+    Route::get('reports/cashier-sales', [ReportController::class, 'cashierSales'])->name('reports.cashier-sales');
+
+    // HRM
+    Route::prefix('hrm')->name('hrm.')->group(function () {
+        Route::get('departments', [HrmDepartmentController::class, 'index'])->name('departments.index');
+        Route::post('departments', [HrmDepartmentController::class, 'store'])->name('departments.store');
+        Route::put('departments/{department}', [HrmDepartmentController::class, 'update'])->name('departments.update');
+        Route::delete('departments/{department}', [HrmDepartmentController::class, 'destroy'])->name('departments.destroy');
+
+        Route::resource('employees', HrmEmployeeController::class);
+        Route::post('employees/{employee}/documents', [HrmEmployeeController::class, 'storeDocument'])->name('employees.documents.store');
+        Route::delete('employees/{employee}/documents/{document}', [HrmEmployeeController::class, 'destroyDocument'])->name('employees.documents.destroy');
+
+        Route::get('payroll', [HrmPayrollController::class, 'index'])->name('payroll.index');
+        Route::post('payroll/generate', [HrmPayrollController::class, 'generate'])->name('payroll.generate');
+        Route::get('payroll/{payroll}', [HrmPayrollController::class, 'show'])->name('payroll.show');
+        Route::post('payroll/{payroll}/approve', [HrmPayrollController::class, 'approve'])->name('payroll.approve');
+        Route::post('payroll/{payroll}/mark-paid', [HrmPayrollController::class, 'markPaid'])->name('payroll.mark-paid');
+        Route::put('payslips/{payslip}', [HrmPayrollController::class, 'updatePayslip'])->name('payslips.update');
+    });
 
     // Terminal Routes
     Route::get('/terminal', [TerminalController::class, 'index'])->name('terminal');

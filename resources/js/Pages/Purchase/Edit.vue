@@ -1,287 +1,257 @@
 <template>
     <AuthenticatedLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Edit Purchase #{{ purchase.purchase_no }}
-                </h2>
-                <div class="flex space-x-2">
-                    <Link :href="route('purchases.show', purchase.id)"
-                          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        View Purchase
-                    </Link>
-                    <Link :href="route('purchases.index')"
-                          class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                        Back to Purchases
-                    </Link>
-                </div>
-            </div>
-        </template>
+        <FormScreen :title="`Edit purchase #${purchase.purchase_no}`" :close-href="route('purchases.index')">
+            <template #header-actions>
+                <Link :href="route('purchases.show', purchase.id)" class="btn btn-soft-primary btn-sm">View</Link>
+            </template>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <form @submit.prevent="submitForm">
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                <!-- Left Side - Purchase Information -->
-                                <div class="lg:col-span-2 space-y-6">
-                                    <!-- Basic Information -->
-                                    <div class="space-y-4">
-                                        <h3 class="text-lg font-medium text-gray-900">Purchase Information</h3>
+            <form id="purchase-edit-form" class="med-form" @submit.prevent="submitForm">
+                <div class="med-doc-layout">
+                    <div class="med-doc-main">
+                        <section class="med-panel">
+                            <header class="med-panel-head">
+                                <h6>Purchase information</h6>
+                                <p>Supplier, date, and payment</p>
+                            </header>
 
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">Manufacturer *</label>
-                                                <div class="relative">
-                                                    <input :value="selectedManufacturer ? selectedManufacturer.name : manufacturerSearch"
-                                                           @input="handleManufacturerInput"
-                                                           @focus="showManufacturerResults = true"
-                                                           type="text"
-                                                           :placeholder="selectedManufacturer ? selectedManufacturer.name : 'Search manufacturers...'"
-                                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                           :class="{ 'border-red-500': !selectedManufacturer && manufacturerSearch.length > 0 }">
-
-                                                    <!-- Manufacturer Search Results -->
-                                                    <div v-if="showManufacturerResults && manufacturerSearchResults.length > 0"
-                                                         class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                                                        <div v-for="manufacturer in manufacturerSearchResults" :key="manufacturer.id"
-                                                             class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-200 last:border-b-0"
-                                                             @click="selectManufacturer(manufacturer)">
-                                                            <div class="font-medium">{{ manufacturer.name }}</div>
-                                                            <div v-if="manufacturer.email" class="text-sm text-gray-500">{{ manufacturer.email }}</div>
-                                                            <div v-if="manufacturer.mobile" class="text-sm text-gray-500">{{ manufacturer.mobile }}</div>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Selected Manufacturer Display -->
-                                                    <div v-if="selectedManufacturer" class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
-                                                        <div class="flex justify-between items-center">
-                                                            <div>
-                                                                <div class="font-medium text-blue-900">{{ selectedManufacturer.name }}</div>
-                                                                <div v-if="selectedManufacturer.email" class="text-sm text-blue-700">{{ selectedManufacturer.email }}</div>
-                                                            </div>
-                                                            <button type="button" @click="clearManufacturer" class="text-blue-600 hover:text-blue-800">
-                                                                ✕
-                                                            </button>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Validation Message -->
-                                                    <div v-if="errors.manufacturer || (!selectedManufacturer && manufacturerSearch.length > 0)" class="mt-1 text-sm text-red-600">
-                                                        {{ errors.manufacturer || 'Please select a manufacturer from the dropdown' }}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">Purchase Date *</label>
-                                                <input v-model="form.purchase_date"
-                                                       type="date"
-                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                       required>
-                                            </div>
-                                        </div>
-
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">Chalan No</label>
-                                                <input v-model="form.chalan_no"
-                                                       type="text"
-                                                       placeholder="Auto-generated if empty"
-                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                            </div>
-
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">Payment Type *</label>
-                                                <select v-model="form.payment_type"
-                                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                        required>
-                                                    <option value="cash">Cash</option>
-                                                    <option value="bank">Bank Transfer</option>
-                                                    <option value="credit">Credit</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">Paid Amount</label>
-                                                <input v-model="form.paid_amount"
-                                                       type="number"
-                                                       step="0.01"
-                                                       min="0"
-                                                       placeholder="0.00"
-                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                            </div>
-
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">Due Amount</label>
-                                                <input :value="dueAmount.toFixed(2)"
-                                                       type="number"
-                                                       step="0.01"
-                                                       readonly
-                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600">
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Details</label>
-                                            <textarea v-model="form.details"
-                                                      rows="3"
-                                                      placeholder="Enter purchase details..."
-                                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                                        </div>
-                                    </div>
-
-                                    <!-- Product Selection -->
-                                    <div class="space-y-4">
-                                        <h3 class="text-lg font-medium text-gray-900">Add Products</h3>
-
-                                        <div class="relative">
-                                            <input v-model="productSearch"
-                                                   @input="searchProducts"
-                                                   type="text"
-                                                   placeholder="Search medicines..."
-                                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        </div>
-
-                                        <!-- Search Results -->
-                                        <div v-if="productSearchResults.length > 0" class="border border-gray-300 rounded-md max-h-48 overflow-y-auto">
-                                            <div v-for="product in productSearchResults" :key="product.id"
-                                                 class="p-3 border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
-                                                 @click="addProduct(product)">
-                                                <div class="flex justify-between items-center">
-                                                    <div>
-                                                        <div class="font-medium">{{ product.name }}</div>
-                                                        <div class="text-sm text-gray-500">{{ product.generic_name }}</div>
-                                                    </div>
-                                                    <div class="text-right">
-                                                        <div class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ parseFloat(product.price).toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</div>
-                                                        <div class="text-sm text-gray-500">{{ product.category?.name }}</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Cart Items -->
-                                    <div class="space-y-4">
-                                        <h3 class="text-lg font-medium text-gray-900">Purchase Items</h3>
-
-                                        <!-- Items Validation Message -->
-                                        <div v-if="errors.items" class="text-sm text-red-600">
-                                            {{ errors.items }}
-                                        </div>
-
-                                        <div v-if="cartItems.length > 0" class="overflow-x-auto">
-                                            <table class="min-w-full divide-y divide-gray-200">
-                                                <thead class="bg-gray-50">
-                                                    <tr>
-                                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
-                                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody class="bg-white divide-y divide-gray-200">
-                                                    <tr v-for="(item, index) in cartItems" :key="index">
-                                                        <td class="px-6 py-4 whitespace-nowrap">
-                                                            <div class="text-sm font-medium text-gray-900">{{ item.name }}</div>
-                                                            <div class="text-sm text-gray-500">{{ item.generic_name }}</div>
-                                                        </td>
-                                                        <td class="px-6 py-4 whitespace-nowrap">
-                                                            <input v-model.number="item.quantity"
-                                                                   type="number"
-                                                                   min="1"
-                                                                   class="w-20 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                                   @input="updateItemTotal(index)">
-                                                        </td>
-                                                        <td class="px-6 py-4 whitespace-nowrap">
-                                                            <input v-model.number="item.rate"
-                                                                   type="number"
-                                                                   step="0.01"
-                                                                   min="0"
-                                                                   class="w-24 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                                   @input="updateItemTotal(index)">
-                                                        </td>
-                                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                            {{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ item.total.toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}
-                                                        </td>
-                                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                            <button type="button"
-                                                                    @click="removeItem(index)"
-                                                                    class="text-red-600 hover:text-red-900">
-                                                                Remove
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Right Side - Summary -->
-                                <div class="lg:col-span-1">
-                                    <div class="bg-gray-50 p-6 rounded-lg sticky top-6">
-                                        <h3 class="text-lg font-medium text-gray-900 mb-4">Purchase Summary</h3>
-
-                                        <div class="space-y-2">
-                                            <div class="flex justify-between">
-                                                <span class="text-gray-600">Subtotal:</span>
-                                                <span class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ subtotal.toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
-                                            </div>
-                                            <div class="flex justify-between">
-                                                <span class="text-gray-600">Tax (10%):</span>
-                                                <span class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ tax.toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
-                                            </div>
-                                            <div class="flex justify-between">
-                                                <span class="text-gray-600">Discount:</span>
-                                                <span class="font-medium">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ discount.toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
-                                            </div>
-                                            <hr class="my-2">
-                                            <div class="flex justify-between text-lg font-semibold">
-                                                <span>Total:</span>
-                                                <span>{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ total.toFixed(2) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</span>
-                                            </div>
-                                        </div>
-
-                                        <div class="mt-6">
-                                            <button type="submit"
-                                                    :disabled="cartItems.length === 0"
-                                                    class="w-full bg-blue-500 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded">
-                                                Update Purchase
+                            <div class="med-row med-row-2">
+                                <div class="med-field">
+                                    <label class="field-label">Manufacturer <span class="req">*</span></label>
+                                    <div class="entity-search">
+                                        <input
+                                            :value="selectedManufacturer ? selectedManufacturer.name : manufacturerSearch"
+                                            type="text"
+                                            class="field"
+                                            :placeholder="selectedManufacturer ? selectedManufacturer.name : 'Search manufacturers…'"
+                                            autocomplete="off"
+                                            @input="handleManufacturerInput"
+                                            @focus="showManufacturerResults = true"
+                                        >
+                                        <div
+                                            v-if="showManufacturerResults && manufacturerSearchResults.length > 0"
+                                            class="entity-search-dropdown"
+                                        >
+                                            <button
+                                                v-for="manufacturer in manufacturerSearchResults"
+                                                :key="manufacturer.id"
+                                                type="button"
+                                                class="entity-search-item"
+                                                @mousedown.prevent="selectManufacturer(manufacturer)"
+                                            >
+                                                <div class="entity-search-name">{{ manufacturer.name }}</div>
+                                                <div v-if="manufacturer.email" class="entity-search-meta">{{ manufacturer.email }}</div>
+                                                <div v-if="manufacturer.mobile" class="entity-search-meta">{{ manufacturer.mobile }}</div>
                                             </button>
                                         </div>
                                     </div>
+                                    <div v-if="selectedManufacturer" class="selected-chip">
+                                        <div>
+                                            <div class="selected-chip-name">{{ selectedManufacturer.name }}</div>
+                                            <div v-if="selectedManufacturer.email" class="entity-search-meta">{{ selectedManufacturer.email }}</div>
+                                        </div>
+                                        <button type="button" class="selected-chip-clear" @click="clearManufacturer">×</button>
+                                    </div>
+                                    <p v-if="errors.manufacturer || (!selectedManufacturer && manufacturerSearch.length > 0)" class="field-error">
+                                        {{ errors.manufacturer || 'Please select a manufacturer from the dropdown' }}
+                                    </p>
+                                </div>
+                                <div class="med-field">
+                                    <label class="field-label" for="purchase-date">Purchase date <span class="req">*</span></label>
+                                    <input id="purchase-date" v-model="form.purchase_date" type="date" class="field" required>
                                 </div>
                             </div>
-                        </div>
+
+                            <div class="med-row med-row-2">
+                                <div class="med-field">
+                                    <label class="field-label" for="purchase-chalan">Chalan no</label>
+                                    <input id="purchase-chalan" v-model="form.chalan_no" type="text" class="field" placeholder="Auto-generated if empty">
+                                </div>
+                                <div class="med-field">
+                                    <label class="field-label" for="purchase-payment">Payment type <span class="req">*</span></label>
+                                    <select id="purchase-payment" v-model="form.payment_type" class="field" required>
+                                        <option value="cash">Cash</option>
+                                        <option value="bank">Bank Transfer</option>
+                                        <option value="credit">Credit</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="med-row med-row-2">
+                                <div class="med-field">
+                                    <label class="field-label" for="purchase-paid">Paid amount</label>
+                                    <input id="purchase-paid" v-model="form.paid_amount" type="number" step="0.01" min="0" class="field" placeholder="0.00">
+                                </div>
+                                <div class="med-field">
+                                    <label class="field-label" for="purchase-due">Due amount</label>
+                                    <input id="purchase-due" :value="dueAmount.toFixed(2)" type="number" step="0.01" readonly class="field field-readonly">
+                                </div>
+                            </div>
+
+                            <div class="med-field">
+                                <label class="field-label" for="purchase-details">Details</label>
+                                <textarea id="purchase-details" v-model="form.details" rows="3" class="field" placeholder="Enter purchase details…"></textarea>
+                            </div>
+                        </section>
+
+                        <section class="med-panel">
+                            <header class="med-panel-head">
+                                <h6>Add products</h6>
+                                <p>Search medicines to add line items</p>
+                            </header>
+                            <div class="med-field">
+                                <label class="field-label" for="purchase-product-search">Search medicines</label>
+                                <div class="entity-search">
+                                    <input
+                                        id="purchase-product-search"
+                                        v-model="productSearch"
+                                        type="text"
+                                        class="field"
+                                        placeholder="Search medicines…"
+                                        autocomplete="off"
+                                        @input="searchProducts"
+                                    >
+                                    <div v-if="productSearchResults.length > 0" class="entity-search-dropdown">
+                                        <button
+                                            v-for="product in productSearchResults"
+                                            :key="product.id"
+                                            type="button"
+                                            class="entity-search-item"
+                                            @mousedown.prevent="addProduct(product)"
+                                        >
+                                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                                <div>
+                                                    <div class="entity-search-name">{{ product.name }}</div>
+                                                    <div class="entity-search-meta">{{ product.generic_name }}</div>
+                                                </div>
+                                                <div class="text-end">
+                                                    <div class="entity-search-name">{{ money(product.price) }}</div>
+                                                    <div class="entity-search-meta">{{ product.category?.name }}</div>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="med-panel">
+                            <header class="med-panel-head">
+                                <h6>Purchase items</h6>
+                                <p>Quantities and rates</p>
+                            </header>
+                            <p v-if="errors.items" class="field-error">{{ errors.items }}</p>
+                            <div v-if="cartItems.length > 0" class="table-responsive">
+                                <table class="table table-sm table-striped table-hover mb-0 line-items-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Quantity</th>
+                                            <th>Rate</th>
+                                            <th>Total</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="(item, index) in cartItems" :key="index">
+                                            <td>
+                                                <div class="fw-semibold">{{ item.name }}</div>
+                                                <div class="text-muted font-size-12">{{ item.generic_name }}</div>
+                                            </td>
+                                            <td>
+                                                <input
+                                                    v-model.number="item.quantity"
+                                                    type="number"
+                                                    min="1"
+                                                    class="field field-inline"
+                                                    @input="updateItemTotal(index)"
+                                                >
+                                            </td>
+                                            <td>
+                                                <input
+                                                    v-model.number="item.rate"
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    class="field field-inline field-inline-wide"
+                                                    @input="updateItemTotal(index)"
+                                                >
+                                            </td>
+                                            <td class="fw-semibold">{{ money(item.total) }}</td>
+                                            <td>
+                                                <button type="button" class="btn btn-sm btn-link text-danger p-0" @click="removeItem(index)">Remove</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
                     </div>
-                </form>
-            </div>
-        </div>
+
+                    <aside class="med-doc-aside">
+                        <section class="med-panel med-panel-sticky">
+                            <header class="med-panel-head">
+                                <h6>Purchase summary</h6>
+                                <p>Totals before saving</p>
+                            </header>
+                            <dl class="summary-lines">
+                                <div class="summary-line">
+                                    <dt>Subtotal</dt>
+                                    <dd>{{ money(subtotal) }}</dd>
+                                </div>
+                                <div class="summary-line">
+                                    <dt>Tax (10%)</dt>
+                                    <dd>{{ money(tax) }}</dd>
+                                </div>
+                                <div class="summary-line">
+                                    <dt>Discount</dt>
+                                    <dd>{{ money(discount) }}</dd>
+                                </div>
+                                <div class="summary-line summary-line-total">
+                                    <dt>Total</dt>
+                                    <dd>{{ money(total) }}</dd>
+                                </div>
+                            </dl>
+                        </section>
+                    </aside>
+                </div>
+            </form>
+
+            <template #footer="{ close }">
+                <button type="button" class="btn btn-outline-danger" @click="close">Cancel</button>
+                <button type="submit" form="purchase-edit-form" class="btn btn-primary" :disabled="cartItems.length === 0">
+                    Update purchase
+                </button>
+            </template>
+        </FormScreen>
     </AuthenticatedLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
+import { Link, router, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import FormScreen from '@/Components/FormScreen.vue'
 
 const props = defineProps({
     purchase: Object,
     manufacturers: Array,
-    medicines: Array
+    medicines: Array,
 })
+
+const page = usePage()
+
+const money = (value) => {
+    const ui = page.props.ui || {}
+    const amount = Number(value || 0).toFixed(2)
+    return ui.currency_position === 'after'
+        ? `${amount}${ui.currency_symbol || ''}`
+        : `${ui.currency_symbol || ''}${amount}`
+}
 
 const productSearch = ref('')
 const productSearchResults = ref([])
 const cartItems = ref([])
 
-// Manufacturer search
 const manufacturerSearch = ref('')
 const manufacturerSearchResults = ref([])
 const selectedManufacturer = ref(null)
@@ -300,34 +270,22 @@ const form = ref({
     due_amount: 0,
     total_vat: 0,
     bank_id: null,
-    items: []
+    items: [],
 })
 
-// Inline validation errors (to mirror Create page UX)
 const errors = ref({ manufacturer: '', items: '' })
 
-const subtotal = computed(() => {
-    return cartItems.value.reduce((sum, item) => sum + item.total, 0)
-})
+const subtotal = computed(() => cartItems.value.reduce((sum, item) => sum + item.total, 0))
 
-const tax = computed(() => {
-    return subtotal.value * 0.1 // 10% tax
-})
+const tax = computed(() => subtotal.value * 0.1)
 
-const discount = computed(() => {
-    return 0 // Can be implemented later
-})
+const discount = computed(() => 0)
 
-const total = computed(() => {
-    return subtotal.value + tax.value - discount.value
-})
+const total = computed(() => subtotal.value + tax.value - discount.value)
 
-const dueAmount = computed(() => {
-    return total.value - form.value.paid_amount
-})
+const dueAmount = computed(() => total.value - form.value.paid_amount)
 
 onMounted(() => {
-    // Populate form with existing purchase data
     form.value = {
         manufacturer_id: props.purchase.manufacturer_id,
         purchase_date: props.purchase.purchase_date ? new Date(props.purchase.purchase_date).toISOString().split('T')[0] : '',
@@ -341,25 +299,20 @@ onMounted(() => {
         due_amount: props.purchase.due_amount || 0,
         total_vat: props.purchase.total_vat || 0,
         bank_id: props.purchase.bank_id || null,
-        items: []
+        items: [],
     }
 
-    // Set selected manufacturer for display
     if (props.purchase.manufacturer) {
         selectedManufacturer.value = props.purchase.manufacturer
-        console.log('Manufacturer loaded:', props.purchase.manufacturer)
-    } else {
-        console.log('No manufacturer found in purchase:', props.purchase)
     }
 
-    // Load existing purchase items into cart
     cartItems.value = props.purchase.items.map(item => ({
         medicine_id: item.medicine_id,
         name: item.medicine?.name || 'Unknown',
         generic_name: item.medicine?.generic_name || '',
         quantity: Number(item.quantity),
         rate: Number(item.rate),
-        total: Number(item.total_amount)
+        total: Number(item.total_amount),
     }))
 })
 
@@ -432,7 +385,7 @@ const addProduct = (product) => {
             generic_name: product.generic_name,
             quantity: 1,
             rate: rate,
-            total: rate
+            total: rate,
         })
     }
 
@@ -450,7 +403,6 @@ const removeItem = (index) => {
 }
 
 const submitForm = () => {
-    // reset errors
     errors.value.manufacturer = ''
     errors.value.items = ''
 
@@ -470,10 +422,260 @@ const submitForm = () => {
     form.value.due_amount = dueAmount.value
     form.value.items = cartItems.value
 
-    router.put(route('purchases.update', props.purchase.id), form.value, {
-        onSuccess: () => {
-            // Redirect to purchase show page
-        }
-    })
+    router.put(route('purchases.update', props.purchase.id), form.value)
 }
 </script>
+
+<style scoped>
+.med-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.med-doc-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+    gap: 0.85rem;
+    align-items: start;
+}
+
+.med-doc-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+.med-doc-aside {
+    min-width: 0;
+}
+
+.med-panel {
+    background: var(--shell-panel-bg, #f8f9fc);
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    border-radius: var(--pf-radius, 0.65rem);
+    padding: 1rem 1.1rem 1.15rem;
+}
+
+.med-panel-sticky {
+    position: sticky;
+    top: 0.5rem;
+}
+
+.med-panel-head {
+    margin-bottom: 0.65rem;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid var(--shell-panel-border, #e6e8ee);
+}
+
+.med-panel-head h6 {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--shell-panel-text, #343747);
+}
+
+.med-panel-head p {
+    margin: 0.15rem 0 0;
+    font-size: 0.72rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.med-field {
+    margin-bottom: 0.55rem;
+}
+
+.med-field:last-child {
+    margin-bottom: 0;
+}
+
+.med-row {
+    display: grid;
+    gap: 0.55rem;
+    margin-bottom: 0.55rem;
+}
+
+.med-row:last-child {
+    margin-bottom: 0;
+}
+
+.med-row-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field-label {
+    display: block;
+    margin-bottom: 0.2rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--shell-panel-muted, #495057);
+}
+
+.req {
+    color: #f46a6a;
+}
+
+.field {
+    width: 100%;
+    border-radius: var(--pf-radius, 0.35rem);
+    border: 1px solid var(--shell-panel-border, #ced4da);
+    background: var(--shell-panel-surface, #fff);
+    padding: 0.32rem 0.55rem;
+    font-size: 0.82rem;
+    line-height: 1.3;
+    color: var(--shell-panel-text, #343747);
+}
+
+.field:focus {
+    outline: none;
+    border-color: var(--pf-accent, #5156be);
+    box-shadow: 0 0 0 0.12rem rgba(var(--pf-accent-rgb, 81, 86, 190), 0.18);
+}
+
+.field-readonly {
+    background: var(--shell-panel-bg, #f8f9fc);
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.field-inline {
+    width: 4.5rem;
+    min-width: 4.5rem;
+}
+
+.field-inline-wide {
+    width: 6rem;
+    min-width: 6rem;
+}
+
+.field-error {
+    margin: 0.2rem 0 0;
+    font-size: 0.7rem;
+    color: #f46a6a;
+}
+
+.entity-search {
+    position: relative;
+}
+
+.entity-search-dropdown {
+    position: absolute;
+    z-index: 50;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.25rem;
+    max-height: 15rem;
+    overflow-y: auto;
+    background: var(--shell-panel-surface, #fff);
+    border: 1px solid var(--shell-panel-border, #ced4da);
+    border-radius: var(--pf-radius, 0.35rem);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.entity-search-item {
+    display: block;
+    width: 100%;
+    padding: 0.45rem 0.55rem;
+    border: none;
+    border-bottom: 1px solid var(--shell-panel-border, #e6e8ee);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+}
+
+.entity-search-item:last-child {
+    border-bottom: none;
+}
+
+.entity-search-item:hover {
+    background: var(--shell-panel-bg, #f8f9fc);
+}
+
+.entity-search-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--shell-panel-text, #343747);
+}
+
+.entity-search-meta {
+    font-size: 0.72rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.selected-chip {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.45rem;
+    padding: 0.45rem 0.55rem;
+    border-radius: var(--pf-radius, 0.35rem);
+    border: 1px solid var(--shell-panel-accent-border, #b7ebd6);
+    background: var(--shell-panel-accent-bg, #e8f8f1);
+}
+
+.selected-chip-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--shell-panel-accent-text, #1e8f68);
+}
+
+.selected-chip-clear {
+    border: none;
+    background: transparent;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--shell-panel-muted, #74788d);
+    cursor: pointer;
+}
+
+.summary-lines {
+    margin: 0;
+}
+
+.summary-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.45rem;
+}
+
+.summary-line dt {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.summary-line dd {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--shell-panel-text, #343747);
+}
+
+.summary-line-total {
+    margin-top: 0.35rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid var(--shell-panel-border, #e6e8ee);
+}
+
+.summary-line-total dt,
+.summary-line-total dd {
+    font-size: 0.92rem;
+    font-weight: 700;
+}
+
+@media (max-width: 991.98px) {
+    .med-doc-layout,
+    .med-row-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .med-panel-sticky {
+        position: static;
+    }
+}
+</style>

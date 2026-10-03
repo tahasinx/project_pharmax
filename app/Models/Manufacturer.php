@@ -18,10 +18,15 @@ class Manufacturer extends Model
         'email',
         'details',
         'status',
+        'segment',
+        'medex_path',
+        'medex_id',
+        'meta',
     ];
 
     protected $casts = [
         'status' => 'boolean',
+        'meta'   => 'array',
     ];
 
     public function medicines(): HasMany

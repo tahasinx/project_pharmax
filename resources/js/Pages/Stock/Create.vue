@@ -1,168 +1,134 @@
 <template>
     <Head title="Add Stock" />
     <AuthenticatedLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Add Stock
-                </h2>
-                <Link :href="route('stocks.index')"
-                      class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                    Back to Stock
-                </Link>
-            </div>
-        </template>
+        <FormScreen title="Add stock" :close-href="route('stocks.index')">
+            <template #header-actions>
+                <button
+                    type="button"
+                    class="status-chip"
+                    :class="{ 'is-on': form.is_active }"
+                    role="switch"
+                    :aria-checked="form.is_active"
+                    @click="form.is_active = !form.is_active"
+                >
+                    <span class="status-dot" />
+                    {{ form.is_active ? 'Active' : 'Inactive' }}
+                </button>
+            </template>
 
-        <div class="py-12">
-            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-                <form @submit.prevent="submitForm">
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- Basic Information -->
-                                <div class="space-y-4">
-                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Stock Information</h3>
+            <form id="stock-create-form" class="med-form" @submit.prevent="submitForm">
+                <div class="med-form-grid">
+                    <section class="med-panel">
+                        <header class="med-panel-head">
+                            <h6>Stock information</h6>
+                            <p>Batch, quantity, and levels</p>
+                        </header>
 
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Medicine *</label>
-                                        <div class="relative">
-                                            <input v-model="medicineSearch"
-                                                   @input="searchMedicines"
-                                                   @focus="medicineSearchFocused = true"
-                                                   @blur="handleBlur"
-                                                   type="text"
-                                                   placeholder="Search medicine..."
-                                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                   required>
-
-                                            <!-- Search Results Dropdown -->
-                                            <div v-if="medicineSearchFocused && medicineSearchResults.length > 0"
-                                                 class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                                <div v-for="medicine in medicineSearchResults"
-                                                     :key="medicine.id"
-                                                     @mousedown="selectMedicine(medicine)"
-                                                     class="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0">
-                                                    <div class="font-medium text-gray-900">{{ medicine.name }}</div>
-                                                    <div class="text-sm text-gray-500">{{ medicine.generic_name }}</div>
-                                                    <div class="text-xs text-gray-400">{{ medicine.category?.name || 'No Category' }}</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Batch Number</label>
-                                        <input v-model="form.batch_number"
-                                               type="text"
-                                               placeholder="e.g., BATCH001"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Expiry Date *</label>
-                                        <input v-model="form.expiry_date"
-                                               type="date"
-                                               required
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Quantity *</label>
-                                        <input v-model.number="form.quantity"
-                                               type="number"
-                                               min="0"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                               required>
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Minimum Stock Level *</label>
-                                        <input v-model.number="form.min_stock_level"
-                                               type="number"
-                                               min="0"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                               required>
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Maximum Stock Level</label>
-                                        <input v-model.number="form.max_stock_level"
-                                               type="number"
-                                               min="0"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
+                        <div class="med-field">
+                            <label class="field-label" for="stock-medicine">Medicine <span class="req">*</span></label>
+                            <div class="medicine-search">
+                                <input
+                                    id="stock-medicine"
+                                    v-model="medicineSearch"
+                                    type="text"
+                                    class="field"
+                                    placeholder="Search medicine…"
+                                    autocomplete="off"
+                                    required
+                                    @input="searchMedicines"
+                                    @focus="medicineSearchFocused = true"
+                                    @blur="handleBlur"
+                                >
+                                <div
+                                    v-if="medicineSearchFocused && medicineSearchResults.length > 0"
+                                    class="medicine-search-dropdown"
+                                >
+                                    <button
+                                        v-for="medicine in medicineSearchResults"
+                                        :key="medicine.id"
+                                        type="button"
+                                        class="medicine-search-item"
+                                        @mousedown.prevent="selectMedicine(medicine)"
+                                    >
+                                        <div class="medicine-search-name">{{ medicine.name }}</div>
+                                        <div class="medicine-search-meta">{{ medicine.generic_name }}</div>
+                                        <div class="medicine-search-meta muted">{{ medicine.category?.name || 'No category' }}</div>
+                                    </button>
                                 </div>
-
-                                <!-- Pricing & Supplier Information -->
-                                <div class="space-y-4">
-                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Pricing & Supplier</h3>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Purchase Price (per unit)</label>
-                                        <input v-model.number="form.purchase_price"
-                                               type="number"
-                                               step="0.01"
-                                               min="0"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Selling Price (per unit)</label>
-                                        <input v-model.number="form.selling_price"
-                                               type="number"
-                                               step="0.01"
-                                               min="0"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
-                                        <input v-model="form.supplier"
-                                               type="text"
-                                               placeholder="Supplier name"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                                        <textarea v-model="form.notes"
-                                                  rows="3"
-                                                  placeholder="Additional notes..."
-                                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                                    </div>
-
-                                    <div class="flex items-center">
-                                        <input v-model="form.is_active"
-                                               type="checkbox"
-                                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                                        <label class="ml-2 text-sm text-gray-900">Active</label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Form Actions -->
-                            <div class="mt-8 flex justify-end space-x-4">
-                                <Link :href="route('stocks.index')"
-                                      class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                                    Cancel
-                                </Link>
-                                <button type="submit"
-                                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                    Add Stock
-                                </button>
                             </div>
                         </div>
-                    </div>
-                </form>
-            </div>
-        </div>
+
+                        <div class="med-field">
+                            <label class="field-label" for="stock-batch">Batch number</label>
+                            <input id="stock-batch" v-model="form.batch_number" type="text" class="field" placeholder="e.g. BATCH001">
+                        </div>
+
+                        <div class="med-row med-row-2">
+                            <div class="med-field">
+                                <label class="field-label" for="stock-expiry">Expiry date <span class="req">*</span></label>
+                                <input id="stock-expiry" v-model="form.expiry_date" type="date" class="field" required>
+                            </div>
+                            <div class="med-field">
+                                <label class="field-label" for="stock-qty">Quantity <span class="req">*</span></label>
+                                <input id="stock-qty" v-model.number="form.quantity" type="number" min="0" class="field" required>
+                            </div>
+                        </div>
+
+                        <div class="med-row med-row-2">
+                            <div class="med-field">
+                                <label class="field-label" for="stock-min">Minimum stock level <span class="req">*</span></label>
+                                <input id="stock-min" v-model.number="form.min_stock_level" type="number" min="0" class="field" required>
+                            </div>
+                            <div class="med-field">
+                                <label class="field-label" for="stock-max">Maximum stock level</label>
+                                <input id="stock-max" v-model.number="form.max_stock_level" type="number" min="0" class="field">
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="med-panel">
+                        <header class="med-panel-head">
+                            <h6>Pricing & supplier</h6>
+                            <p>Costs and sourcing notes</p>
+                        </header>
+
+                        <div class="med-row med-row-2">
+                            <div class="med-field">
+                                <label class="field-label" for="stock-purchase">Purchase price (per unit)</label>
+                                <input id="stock-purchase" v-model.number="form.purchase_price" type="number" step="0.01" min="0" class="field">
+                            </div>
+                            <div class="med-field">
+                                <label class="field-label" for="stock-selling">Selling price (per unit)</label>
+                                <input id="stock-selling" v-model.number="form.selling_price" type="number" step="0.01" min="0" class="field">
+                            </div>
+                        </div>
+
+                        <div class="med-field">
+                            <label class="field-label" for="stock-supplier">Supplier</label>
+                            <input id="stock-supplier" v-model="form.supplier" type="text" class="field" placeholder="Supplier name">
+                        </div>
+
+                        <div class="med-field">
+                            <label class="field-label" for="stock-notes">Notes</label>
+                            <textarea id="stock-notes" v-model="form.notes" rows="3" class="field" placeholder="Additional notes…"></textarea>
+                        </div>
+                    </section>
+                </div>
+            </form>
+
+            <template #footer="{ close }">
+                <button type="button" class="btn btn-outline-danger" @click="close">Cancel</button>
+                <button type="submit" form="stock-create-form" class="btn btn-primary">Add stock</button>
+            </template>
+        </FormScreen>
     </AuthenticatedLayout>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import { Link, router, Head } from '@inertiajs/vue3'
+import { router, Head } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import FormScreen from '@/Components/FormScreen.vue'
 
 const props = defineProps({
     medicines: Array,
@@ -172,7 +138,7 @@ const props = defineProps({
 const form = ref({
     medicine_id: '',
     batch_number: '',
-    expiry_date: '', // Required field - no default value
+    expiry_date: '',
     quantity: 0,
     min_stock_level: 10,
     max_stock_level: '',
@@ -180,10 +146,9 @@ const form = ref({
     selling_price: '',
     supplier: '',
     notes: '',
-    is_active: true
+    is_active: true,
 })
 
-// Medicine search functionality
 const medicineSearch = ref('')
 const medicineSearchFocused = ref(false)
 const medicineSearchResults = ref([])
@@ -209,7 +174,6 @@ const selectMedicine = (medicine) => {
 }
 
 const handleBlur = () => {
-    // Delay hiding the dropdown to allow click events to fire
     setTimeout(() => {
         medicineSearchFocused.value = false
     }, 200)
@@ -223,10 +187,190 @@ onMounted(() => {
 })
 
 const submitForm = () => {
-    router.post(route('stocks.store'), form.value, {
-        onSuccess: () => {
-            // Redirect to stocks index
-        }
-    })
+    router.post(route('stocks.store'), form.value)
 }
 </script>
+
+<style scoped>
+.med-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.med-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.med-panel {
+    background: var(--shell-panel-bg, #f8f9fc);
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    border-radius: var(--pf-radius, 0.65rem);
+    padding: 1rem 1.1rem 1.15rem;
+}
+
+.med-panel-head {
+    margin-bottom: 0.65rem;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid var(--shell-panel-border, #e6e8ee);
+}
+
+.med-panel-head h6 {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--shell-panel-text, #343747);
+}
+
+.med-panel-head p {
+    margin: 0.15rem 0 0;
+    font-size: 0.72rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.med-field {
+    margin-bottom: 0.55rem;
+}
+
+.med-field:last-child {
+    margin-bottom: 0;
+}
+
+.med-row {
+    display: grid;
+    gap: 0.55rem;
+    margin-bottom: 0.55rem;
+}
+
+.med-row:last-child {
+    margin-bottom: 0;
+}
+
+.med-row-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field-label {
+    display: block;
+    margin-bottom: 0.2rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--shell-panel-muted, #495057);
+}
+
+.req {
+    color: #f46a6a;
+}
+
+.field {
+    width: 100%;
+    border-radius: var(--pf-radius, 0.35rem);
+    border: 1px solid var(--shell-panel-border, #ced4da);
+    background: var(--shell-panel-surface, #fff);
+    padding: 0.32rem 0.55rem;
+    font-size: 0.82rem;
+    line-height: 1.3;
+    color: var(--shell-panel-text, #343747);
+}
+
+.field:focus {
+    outline: none;
+    border-color: var(--pf-accent, #5156be);
+    box-shadow: 0 0 0 0.12rem rgba(var(--pf-accent-rgb, 81, 86, 190), 0.18);
+}
+
+.medicine-search {
+    position: relative;
+}
+
+.medicine-search-dropdown {
+    position: absolute;
+    z-index: 50;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.25rem;
+    max-height: 15rem;
+    overflow-y: auto;
+    background: var(--shell-panel-surface, #fff);
+    border: 1px solid var(--shell-panel-border, #ced4da);
+    border-radius: var(--pf-radius, 0.35rem);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.medicine-search-item {
+    display: block;
+    width: 100%;
+    padding: 0.45rem 0.55rem;
+    border: none;
+    border-bottom: 1px solid var(--shell-panel-border, #e6e8ee);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+}
+
+.medicine-search-item:last-child {
+    border-bottom: none;
+}
+
+.medicine-search-item:hover {
+    background: var(--shell-panel-bg, #f8f9fc);
+}
+
+.medicine-search-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--shell-panel-text, #343747);
+}
+
+.medicine-search-meta {
+    font-size: 0.72rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.medicine-search-meta.muted {
+    font-size: 0.68rem;
+    opacity: 0.85;
+}
+
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    background: var(--shell-panel-bg, #f8f9fc);
+    border-radius: var(--pf-radius, 999px);
+    padding: 0.22rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.status-chip.is-on {
+    border-color: var(--shell-panel-accent-border, #b7ebd6);
+    background: var(--shell-panel-accent-bg, #e8f8f1);
+    color: var(--shell-panel-accent-text, #1e8f68);
+}
+
+.status-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--shell-panel-muted, #adb5bd);
+}
+
+.status-chip.is-on .status-dot {
+    background: #34c38f;
+}
+
+@media (max-width: 991.98px) {
+    .med-form-grid,
+    .med-row-2 {
+        grid-template-columns: 1fr;
+    }
+}
+</style>

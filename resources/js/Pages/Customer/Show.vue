@@ -1,241 +1,187 @@
 <template>
     <AuthenticatedLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Customer Details - {{ customer.name }}
-                </h2>
-                <div class="flex space-x-2">
-                    <Link :href="route('customers.edit', customer.id)"
-                          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        Edit Customer
-                    </Link>
-                    <Link :href="route('customers.index')"
-                          class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                        Back to Customers
-                    </Link>
+        <FormScreen :title="customer.name" :close-href="route('customers.index')">
+            <template #header-actions>
+                <span class="status-chip" :class="{ 'is-on': customer.status }">
+                    <span class="status-dot" />
+                    {{ customer.status ? 'Active' : 'Inactive' }}
+                </span>
+                <Link :href="route('customers.edit', customer.id)" class="btn btn-primary btn-sm">Edit</Link>
+            </template>
+
+            <div class="med-view">
+                <div class="med-view-grid">
+                    <section class="med-panel">
+                        <header class="med-panel-head">
+                            <h6>Basic information</h6>
+                            <p>Name and contact details</p>
+                        </header>
+                        <dl class="med-facts">
+                            <div class="med-fact">
+                                <dt>Customer</dt>
+                                <dd>{{ customer.name }}</dd>
+                            </div>
+                            <div class="med-fact">
+                                <dt>Mobile</dt>
+                                <dd>{{ customer.mobile }}</dd>
+                            </div>
+                            <div class="med-fact">
+                                <dt>Email</dt>
+                                <dd>{{ customer.email || '—' }}</dd>
+                            </div>
+                            <div class="med-fact">
+                                <dt>Phone</dt>
+                                <dd>{{ customer.phone || '—' }}</dd>
+                            </div>
+                            <div class="med-fact">
+                                <dt>Fax</dt>
+                                <dd>{{ customer.fax || '—' }}</dd>
+                            </div>
+                            <div class="med-fact">
+                                <dt>Customer since</dt>
+                                <dd>{{ formatDate(customer.created_at) }}</dd>
+                            </div>
+                        </dl>
+                    </section>
+
+                    <section class="med-panel">
+                        <header class="med-panel-head">
+                            <h6>Address</h6>
+                            <p>Location on file</p>
+                        </header>
+                        <dl class="med-facts">
+                            <div class="med-fact med-fact-full">
+                                <dt>Address</dt>
+                                <dd>{{ customer.address || '—' }}</dd>
+                            </div>
+                            <div class="med-fact">
+                                <dt>City</dt>
+                                <dd>{{ customer.city || '—' }}</dd>
+                            </div>
+                            <div class="med-fact">
+                                <dt>State</dt>
+                                <dd>{{ customer.state || '—' }}</dd>
+                            </div>
+                            <div class="med-fact">
+                                <dt>ZIP</dt>
+                                <dd>{{ customer.zip || '—' }}</dd>
+                            </div>
+                            <div class="med-fact">
+                                <dt>Country</dt>
+                                <dd>{{ customer.country || '—' }}</dd>
+                            </div>
+                        </dl>
+                    </section>
                 </div>
-            </div>
-        </template>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Left Side - Customer Information -->
-                    <div class="lg:col-span-2 space-y-6">
-                        <!-- Basic Information -->
-                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                            <div class="p-6">
-                                <h3 class="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div class="space-y-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-500">Customer Name</label>
-                                            <p class="mt-1 text-sm text-gray-900">{{ customer.name }}</p>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-500">Mobile Number</label>
-                                            <p class="mt-1 text-sm text-gray-900">{{ customer.mobile }}</p>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-500">Email Address</label>
-                                            <p class="mt-1 text-sm text-gray-900">{{ customer.email || 'Not provided' }}</p>
-                                        </div>
-                                    </div>
-                                    <div class="space-y-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-500">Phone Number</label>
-                                            <p class="mt-1 text-sm text-gray-900">{{ customer.phone || 'Not provided' }}</p>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-500">Fax Number</label>
-                                            <p class="mt-1 text-sm text-gray-900">{{ customer.fax || 'Not provided' }}</p>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-500">Status</label>
-                                            <span :class="customer.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                                                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                                                {{ customer.status ? 'Active' : 'Inactive' }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
+                <div class="med-view-grid">
+                    <section class="med-panel">
+                        <header class="med-panel-head">
+                            <h6>Account summary</h6>
+                            <p>Invoice totals for this customer</p>
+                        </header>
+                        <dl class="med-facts">
+                            <div class="med-fact">
+                                <dt>Total invoices</dt>
+                                <dd>{{ customer.invoices?.length || 0 }}</dd>
                             </div>
-                        </div>
-
-                        <!-- Address Information -->
-                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                            <div class="p-6">
-                                <h3 class="text-lg font-medium text-gray-900 mb-4">Address Information</h3>
-                                <div class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-500">Address</label>
-                                        <p class="mt-1 text-sm text-gray-900">{{ customer.address || 'Not provided' }}</p>
-                                    </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-500">City</label>
-                                            <p class="mt-1 text-sm text-gray-900">{{ customer.city || 'Not provided' }}</p>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-500">State</label>
-                                            <p class="mt-1 text-sm text-gray-900">{{ customer.state || 'Not provided' }}</p>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-500">ZIP Code</label>
-                                            <p class="mt-1 text-sm text-gray-900">{{ customer.zip || 'Not provided' }}</p>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-500">Country</label>
-                                        <p class="mt-1 text-sm text-gray-900">{{ customer.country || 'Not provided' }}</p>
-                                    </div>
-                                </div>
+                            <div class="med-fact">
+                                <dt>Total amount</dt>
+                                <dd>{{ money(totalAmount) }}</dd>
                             </div>
-                        </div>
-
-                        <!-- Recent Invoices -->
-                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                            <div class="p-6">
-                                <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Invoices</h3>
-                                <div v-if="customer.invoices && customer.invoices.length === 0" class="text-center py-8 text-gray-500">
-                                    No invoices found for this customer
-                                </div>
-                                <div v-else class="overflow-x-auto">
-                                    <LunaTable title="Show">
-<table class="table table-striped table-hover min-w-full divide-y divide-gray-200">
-                                        <thead class="bg-gray-50">
-                                            <tr>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Invoice #
-                                                </th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Date
-                                                </th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Total Amount
-                                                </th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Paid Amount
-                                                </th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Due Amount
-                                                </th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Status
-                                                </th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Actions
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="bg-white divide-y divide-gray-200">
-                                            <tr v-for="invoice in customer.invoices?.slice(0, 10)" :key="invoice.id">
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                    {{ invoice.invoice_no }}
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {{ formatDate(invoice.date) }}
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    ${{ parseFloat(invoice.total_amount).toFixed(2) }}
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    ${{ parseFloat(invoice.paid_amount).toFixed(2) }}
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    <span :class="invoice.due_amount > 0 ? 'text-red-600' : 'text-green-600'">
-                                                        ${{ parseFloat(invoice.due_amount).toFixed(2) }}
-                                                    </span>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <span :class="invoice.due_amount > 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
-                                                          class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                                                        {{ invoice.due_amount > 0 ? 'Pending' : 'Paid' }}
-                                                    </span>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                    <Link :href="route('invoices.show', invoice.id)"
-                                                          class="text-blue-600 hover:text-blue-900">
-                                                        View
-                                                    </Link>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-</LunaTable>
-                                </div>
+                            <div class="med-fact">
+                                <dt>Paid amount</dt>
+                                <dd class="text-success">{{ money(paidAmount) }}</dd>
                             </div>
+                            <div class="med-fact">
+                                <dt>Due amount</dt>
+                                <dd :class="dueAmount > 0 ? 'text-danger' : 'text-success'">{{ money(dueAmount) }}</dd>
+                            </div>
+                        </dl>
+                        <div class="med-quick-actions">
+                            <Link :href="route('invoices.create', { customer_id: customer.id })" class="btn btn-sm btn-primary">
+                                Create invoice
+                            </Link>
+                            <Link :href="route('pos', { customer_id: customer.id })" class="btn btn-sm btn-soft-success">
+                                POS sale
+                            </Link>
                         </div>
-                    </div>
+                    </section>
+                </div>
 
-                    <!-- Right Side - Summary -->
-                    <div class="lg:col-span-1">
-                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg sticky top-6">
-                            <div class="p-6">
-                                <h3 class="text-lg font-medium text-gray-900 mb-4">Customer Summary</h3>
+                <section class="med-panel">
+                    <header class="med-panel-head d-flex align-items-center justify-content-between gap-2">
+                        <div>
+                            <h6>Recent invoices</h6>
+                            <p>Latest billing for this customer</p>
+                        </div>
+                        <Link :href="route('invoices.create', { customer_id: customer.id })" class="btn btn-sm btn-primary">
+                            Add invoice
+                        </Link>
+                    </header>
 
-                                <div class="space-y-4">
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Total Invoices:</span>
-                                        <span class="font-medium">{{ customer.invoices?.length || 0 }}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Total Amount:</span>
-                                        <span class="font-medium">${{ totalAmount.toFixed(2) }}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Paid Amount:</span>
-                                        <span class="font-medium text-green-600">${{ paidAmount.toFixed(2) }}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Due Amount:</span>
-                                        <span :class="dueAmount > 0 ? 'text-red-600' : 'text-green-600'"
-                                              class="font-medium">
-                                            ${{ dueAmount.toFixed(2) }}
+                    <div v-if="!customer.invoices?.length" class="text-muted font-size-13">No invoices found for this customer.</div>
+                    <div v-else class="table-responsive">
+                        <table class="table table-sm table-striped table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Invoice #</th>
+                                    <th>Date</th>
+                                    <th>Total</th>
+                                    <th>Paid</th>
+                                    <th>Due</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="invoice in customer.invoices.slice(0, 10)" :key="invoice.id">
+                                    <td class="fw-semibold">{{ invoice.invoice_no }}</td>
+                                    <td>{{ formatDate(invoice.date) }}</td>
+                                    <td>{{ money(invoice.total_amount) }}</td>
+                                    <td>{{ money(invoice.paid_amount) }}</td>
+                                    <td>
+                                        <span :class="invoice.due_amount > 0 ? 'text-danger' : 'text-success'">
+                                            {{ money(invoice.due_amount) }}
                                         </span>
-                                    </div>
-                                </div>
-
-                                <!-- Quick Actions -->
-                                <div class="mt-6 pt-6 border-t">
-                                    <h4 class="text-md font-medium text-gray-900 mb-3">Quick Actions</h4>
-                                    <div class="space-y-2">
-                                        <Link :href="route('invoices.create', { customer_id: customer.id })"
-                                              class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded block text-center">
-                                            Create Invoice
+                                    </td>
+                                    <td>
+                                        <span class="status-chip" :class="{ 'is-on': !(invoice.due_amount > 0) }">
+                                            <span class="status-dot" />
+                                            {{ invoice.due_amount > 0 ? 'Pending' : 'Paid' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <Link :href="route('invoices.show', invoice.id)" class="btn btn-sm btn-icon btn-soft-primary" title="View">
+                                            <i class="bi bi-eye"></i>
                                         </Link>
-                                        <Link :href="route('pos', { customer_id: customer.id })"
-                                              class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded block text-center">
-                                            POS Sale
-                                        </Link>
-                                    </div>
-                                </div>
-
-                                <!-- Customer Since -->
-                                <div class="mt-6 pt-6 border-t">
-                                    <h4 class="text-md font-medium text-gray-900 mb-2">Customer Since</h4>
-                                    <p class="text-sm text-gray-600">{{ formatDate(customer.created_at) }}</p>
-                                </div>
-                            </div>
-                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                </div>
+                </section>
             </div>
-        </div>
+
+            <template #footer="{ close }">
+                <button type="button" class="btn btn-outline-danger" @click="close">Close</button>
+                <Link :href="route('customers.edit', customer.id)" class="btn btn-primary">Edit</Link>
+            </template>
+        </FormScreen>
     </AuthenticatedLayout>
 </template>
 
 <script setup>
-import LunaTable from '@/Components/LunaTable.vue'
-
 import { computed } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { Link, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import FormScreen from '@/Components/FormScreen.vue'
 
 const props = defineProps({
-    customer: Object
+    customer: Object,
 })
+
+const page = usePage()
 
 const totalAmount = computed(() => {
     return props.customer.invoices?.reduce((sum, invoice) => sum + parseFloat(invoice.total_amount), 0) || 0
@@ -249,7 +195,141 @@ const dueAmount = computed(() => {
     return props.customer.invoices?.reduce((sum, invoice) => sum + parseFloat(invoice.due_amount), 0) || 0
 })
 
+const money = (value) => {
+    const ui = page.props.ui || {}
+    const amount = Number(value || 0).toFixed(2)
+    return ui.currency_position === 'after'
+        ? `${amount}${ui.currency_symbol || ''}`
+        : `${ui.currency_symbol || ''}${amount}`
+}
+
 const formatDate = (date) => {
-    return new Date(date).toLocaleDateString()
+    if (!date) return '—'
+    return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    })
 }
 </script>
+
+<style scoped>
+.med-view {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.med-view-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.med-panel {
+    background: var(--shell-panel-bg, #f8f9fc);
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    border-radius: var(--pf-radius, 0.65rem);
+    padding: 1rem 1.1rem 1.15rem;
+}
+
+.med-panel-head {
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--shell-panel-border, #e6e8ee);
+}
+
+.med-panel-head h6 {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--shell-panel-text, #343747);
+}
+
+.med-panel-head p {
+    margin: 0.2rem 0 0;
+    font-size: 0.78rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.med-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem 1rem;
+    margin: 0;
+}
+
+.med-fact {
+    min-width: 0;
+}
+
+.med-fact-full {
+    grid-column: 1 / -1;
+}
+
+.med-fact dt {
+    margin: 0 0 0.2rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.med-fact dd {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--shell-panel-text, #343747);
+    word-break: break-word;
+}
+
+.med-quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.85rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--shell-panel-border, #e6e8ee);
+}
+
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    background: var(--shell-panel-bg, #f8f9fc);
+    border-radius: var(--pf-radius, 999px);
+    padding: 0.22rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.status-chip.is-on {
+    border-color: var(--shell-panel-accent-border, #b7ebd6);
+    background: var(--shell-panel-accent-bg, #e8f8f1);
+    color: var(--shell-panel-accent-text, #1e8f68);
+}
+
+.status-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--shell-panel-muted, #adb5bd);
+}
+
+.status-chip.is-on .status-dot {
+    background: #34c38f;
+}
+
+@media (max-width: 991.98px) {
+    .med-view-grid,
+    .med-facts {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+

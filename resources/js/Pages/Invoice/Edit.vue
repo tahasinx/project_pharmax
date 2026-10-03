@@ -1,269 +1,251 @@
 <template>
     <AuthenticatedLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Edit Invoice #{{ invoice.invoice_no }}
-                </h2>
-                <div class="flex space-x-2">
-                    <Link :href="route('invoices.show', invoice.id)"
-                          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        View Invoice
-                    </Link>
-                    <Link :href="route('invoices.index')"
-                          class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                        Back to Invoices
-                    </Link>
-                </div>
-            </div>
-        </template>
+        <FormScreen :title="`Edit invoice #${invoice.invoice_no}`" :close-href="route('invoices.index')">
+            <template #header-actions>
+                <Link :href="route('invoices.show', invoice.id)" class="btn btn-soft-primary btn-sm">View</Link>
+            </template>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <form @submit.prevent="submitForm">
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <!-- Left Side - Customer and Invoice Details -->
-                        <div class="lg:col-span-2 space-y-6">
-                            <!-- Customer Selection -->
-                            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                                <div class="p-6">
-                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Customer Information</h3>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Customer *</label>
-                                            <div class="relative customer-search-container">
-                                                <input v-model="customerSearch"
-                                                       @input="searchCustomers"
-                                                       @focus="customerSearchFocused = true"
-                                                       type="text"
-                                                       placeholder="Search customer..."
-                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                       required>
-                                                <div v-if="customerSearchFocused && customerSearchResults.length > 0"
-                                                     class="absolute z-50 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto mt-1">
-                                                    <div v-for="customer in customerSearchResults"
-                                                         :key="customer.id"
-                                                         @click="selectCustomer(customer)"
-                                                         class="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0">
-                                                        {{ customer.name }} - {{ customer.mobile }}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Payment Type *</label>
-                                            <select v-model="form.payment_type"
-                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    required>
-                                                <option value="cash">Cash</option>
-                                                <option value="bank">Bank</option>
-                                                <option value="credit">Credit</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div v-if="selectedCustomer" class="mt-4 p-3 bg-blue-50 rounded-md">
-                                        <p class="text-sm text-blue-800">
-                                            <strong>{{ selectedCustomer.name }}</strong><br>
-                                            Mobile: {{ selectedCustomer.mobile }}<br>
-                                            Email: {{ selectedCustomer.email || 'N/A' }}<br>
-                                            Address: {{ selectedCustomer.address || 'N/A' }}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Invoice Details -->
-                            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                                <div class="p-6">
-                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Invoice Details</h3>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Invoice Number</label>
-                                            <input v-model="form.invoice_no"
-                                                   type="text"
-                                                   readonly
-                                                   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
-                                            <input v-model="form.date"
-                                                   type="date"
-                                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                   required>
+            <form id="invoice-edit-form" class="med-form" @submit.prevent="submitForm">
+                <div class="med-doc-layout">
+                    <div class="med-doc-main">
+                        <section class="med-panel">
+                            <header class="med-panel-head">
+                                <h6>Customer information</h6>
+                                <p>Bill-to customer and payment type</p>
+                            </header>
+                            <div class="med-row med-row-2">
+                                <div class="med-field">
+                                    <label class="field-label" for="invoice-customer">Customer <span class="req">*</span></label>
+                                    <div class="entity-search customer-search-container">
+                                        <input
+                                            id="invoice-customer"
+                                            v-model="customerSearch"
+                                            type="text"
+                                            class="field"
+                                            placeholder="Search customer…"
+                                            autocomplete="off"
+                                            required
+                                            @input="searchCustomers"
+                                            @focus="customerSearchFocused = true"
+                                        >
+                                        <div
+                                            v-if="customerSearchFocused && customerSearchResults.length > 0"
+                                            class="entity-search-dropdown"
+                                        >
+                                            <button
+                                                v-for="customer in customerSearchResults"
+                                                :key="customer.id"
+                                                type="button"
+                                                class="entity-search-item"
+                                                @mousedown.prevent="selectCustomer(customer)"
+                                            >
+                                                {{ customer.name }} — {{ customer.mobile }}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- Product Selection -->
-                            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                                <div class="p-6">
-                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Add Products</h3>
-                                    <div class="relative mb-4">
-                                        <input v-model="productSearch"
-                                               @input="searchProducts"
-                                               type="text"
-                                               placeholder="Search medicines..."
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        <div v-if="productSearchResults.length > 0"
-                                             class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                            <div v-for="product in productSearchResults"
-                                                 :key="product.id"
-                                                 @click="addProduct(product)"
-                                                 class="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b">
-                                                <div class="flex justify-between">
-                                                    <div>
-                                                        <p class="font-medium">{{ product.name }}</p>
-                                                        <p class="text-sm text-gray-500">{{ product.generic_name }}</p>
-                                                    </div>
-                                                    <div class="text-right">
-                                                        <p class="font-medium">{{ ui.currency_position === 'before' ? ui.currency_symbol : '' }}{{ product.price }}{{ ui.currency_position === 'after' ? ui.currency_symbol : '' }}</p>
-                                                        <p class="text-sm text-gray-500">{{ product.category?.name }}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div class="med-field">
+                                    <label class="field-label" for="invoice-payment">Payment type <span class="req">*</span></label>
+                                    <select id="invoice-payment" v-model="form.payment_type" class="field" required>
+                                        <option value="cash">Cash</option>
+                                        <option value="bank">Bank</option>
+                                        <option value="credit">Credit</option>
+                                    </select>
                                 </div>
                             </div>
-
-                            <!-- Cart Items -->
-                            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                                <div class="p-6">
-                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Invoice Items</h3>
-                                    <div v-if="cartItems.length === 0" class="text-center py-8 text-gray-500">
-                                        No items added to invoice
-                                    </div>
-                                    <div v-else class="space-y-4">
-                                        <div v-for="(item, index) in cartItems" :key="index"
-                                             class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                                            <div class="flex-1">
-                                                <h4 class="font-medium text-gray-900">{{ item.name }}</h4>
-                                                <p class="text-sm text-gray-500">{{ item.generic_name }}</p>
-                                            </div>
-                                            <div class="flex items-center space-x-4">
-                                                <div class="flex items-center space-x-2">
-                                                    <button type="button" @click="decreaseQuantity(index)"
-                                                            class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                                                        -
-                                                    </button>
-                                                    <input v-model.number="item.quantity"
-                                                           @change="updateItemTotal(index)"
-                                                           type="number"
-                                                           min="1"
-                                                           class="w-16 px-2 py-1 border border-gray-300 rounded text-center">
-                                                    <button type="button" @click="increaseQuantity(index)"
-                                                            class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                                                        +
-                                                    </button>
-                                                </div>
-                                                <div class="w-20 text-right">
-                                                    <p class="font-medium">{{ ui.currency_position === 'before' ? ui.currency_symbol : '' }}{{ formatMoney(item.total) }}{{ ui.currency_position === 'after' ? ui.currency_symbol : '' }}</p>
-                                                </div>
-                                                <button @click="removeItem(index)"
-                                                        class="text-red-600 hover:text-red-800">
-                                                    🗑️
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
+                            <div v-if="selectedCustomer" class="selected-chip">
+                                <div>
+                                    <div class="selected-chip-name">{{ selectedCustomer.name }}</div>
+                                    <div class="entity-search-meta">Mobile: {{ selectedCustomer.mobile }}</div>
+                                    <div class="entity-search-meta">Email: {{ selectedCustomer.email || 'N/A' }}</div>
+                                    <div class="entity-search-meta">Address: {{ selectedCustomer.address || 'N/A' }}</div>
                                 </div>
                             </div>
-                        </div>
+                        </section>
 
-                        <!-- Right Side - Order Summary -->
-                        <div class="lg:col-span-1">
-                            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg sticky top-6">
-                                <div class="p-6">
-                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Invoice Summary</h3>
+                        <section class="med-panel">
+                            <header class="med-panel-head">
+                                <h6>Invoice details</h6>
+                                <p>Number and date</p>
+                            </header>
+                            <div class="med-row med-row-2">
+                                <div class="med-field">
+                                    <label class="field-label" for="invoice-no">Invoice number</label>
+                                    <input id="invoice-no" v-model="form.invoice_no" type="text" readonly class="field field-readonly">
+                                </div>
+                                <div class="med-field">
+                                    <label class="field-label" for="invoice-date">Date <span class="req">*</span></label>
+                                    <input id="invoice-date" v-model="form.date" type="date" class="field" required>
+                                </div>
+                            </div>
+                        </section>
 
-                                    <div class="space-y-3 mb-6">
-                                        <div class="flex justify-between">
-                                            <span class="text-gray-600">Subtotal:</span>
-                                            <span class="font-medium">{{ props.ui.currency_position === 'before' ? props.ui.currency_symbol : '' }}{{ formatMoney(subtotal) }}{{ props.ui.currency_position === 'after' ? props.ui.currency_symbol : '' }}</span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span class="text-gray-600">Tax (10%):</span>
-                                            <span class="font-medium">{{ props.ui.currency_position === 'before' ? props.ui.currency_symbol : '' }}{{ formatMoney(tax) }}{{ props.ui.currency_position === 'after' ? props.ui.currency_symbol : '' }}</span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span class="text-gray-600">Discount:</span>
-                                            <span class="font-medium">-{{ props.ui.currency_position === 'before' ? props.ui.currency_symbol : '' }}{{ formatMoney(discount) }}{{ props.ui.currency_position === 'after' ? props.ui.currency_symbol : '' }}</span>
-                                        </div>
-                                        <hr class="my-2">
-                                        <div class="flex justify-between text-lg font-bold">
-                                            <span>Total:</span>
-                                            <span>{{ props.ui.currency_position === 'before' ? props.ui.currency_symbol : '' }}{{ formatMoney(total) }}{{ props.ui.currency_position === 'after' ? props.ui.currency_symbol : '' }}</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="space-y-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Discount Amount</label>
-                                            <input v-model.number="discountAmount"
-                                                   @input="updateDiscount"
-                                                   type="number"
-                                                   step="0.01"
-                                                   min="0"
-                                                   :max="subtotal"
-                                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        </div>
-
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Paid Amount</label>
-                                            <input v-model.number="form.paid_amount"
-                                                   type="number"
-                                                   step="0.01"
-                                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        </div>
-
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Due Amount</label>
-                                            <input v-model.number="form.due_amount"
-                                                   type="number"
-                                                   step="0.01"
-                                                   readonly
-                                                   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100">
-                                        </div>
-
-
-
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                                            <textarea v-model="form.details"
-                                                      rows="3"
-                                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                                        </div>
-
-                                        <button type="submit"
-                                                :disabled="cartItems.length === 0 || !form.customer_id"
-                                                class="w-full bg-green-500 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded">
-                                            Update Invoice
+                        <section class="med-panel">
+                            <header class="med-panel-head">
+                                <h6>Add products</h6>
+                                <p>Search medicines to add line items</p>
+                            </header>
+                            <div class="med-field">
+                                <label class="field-label" for="invoice-product-search">Search medicines</label>
+                                <div class="entity-search">
+                                    <input
+                                        id="invoice-product-search"
+                                        v-model="productSearch"
+                                        type="text"
+                                        class="field"
+                                        placeholder="Search medicines…"
+                                        autocomplete="off"
+                                        @input="searchProducts"
+                                    >
+                                    <div v-if="productSearchResults.length > 0" class="entity-search-dropdown">
+                                        <button
+                                            v-for="product in productSearchResults"
+                                            :key="product.id"
+                                            type="button"
+                                            class="entity-search-item"
+                                            @mousedown.prevent="addProduct(product)"
+                                        >
+                                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                                <div>
+                                                    <div class="entity-search-name">{{ product.name }}</div>
+                                                    <div class="entity-search-meta">{{ product.generic_name }}</div>
+                                                </div>
+                                                <div class="text-end">
+                                                    <div class="entity-search-name">{{ money(product.price) }}</div>
+                                                    <div class="entity-search-meta">{{ product.category?.name }}</div>
+                                                </div>
+                                            </div>
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </section>
+
+                        <section class="med-panel">
+                            <header class="med-panel-head">
+                                <h6>Invoice items</h6>
+                                <p>Quantities and line totals</p>
+                            </header>
+                            <div v-if="cartItems.length === 0" class="text-muted font-size-13">No items added to invoice</div>
+                            <div v-else class="invoice-items-list">
+                                <div v-for="(item, index) in cartItems" :key="index" class="invoice-item-row">
+                                    <div class="invoice-item-info">
+                                        <div class="fw-semibold">{{ item.name }}</div>
+                                        <div class="text-muted font-size-12">{{ item.generic_name }}</div>
+                                    </div>
+                                    <div class="invoice-item-controls">
+                                        <div class="qty-controls">
+                                            <button type="button" class="qty-btn" @click="decreaseQuantity(index)">−</button>
+                                            <input
+                                                v-model.number="item.quantity"
+                                                type="number"
+                                                min="1"
+                                                class="field field-inline qty-input"
+                                                @change="updateItemTotal(index)"
+                                            >
+                                            <button type="button" class="qty-btn" @click="increaseQuantity(index)">+</button>
+                                        </div>
+                                        <div class="invoice-item-total">{{ money(item.total) }}</div>
+                                        <button type="button" class="btn btn-sm btn-link text-danger p-0" @click="removeItem(index)">Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
                     </div>
-                </form>
-            </div>
-        </div>
+
+                    <aside class="med-doc-aside">
+                        <section class="med-panel med-panel-sticky">
+                            <header class="med-panel-head">
+                                <h6>Invoice summary</h6>
+                                <p>Totals and payment</p>
+                            </header>
+                            <dl class="summary-lines">
+                                <div class="summary-line">
+                                    <dt>Subtotal</dt>
+                                    <dd>{{ money(subtotal) }}</dd>
+                                </div>
+                                <div class="summary-line">
+                                    <dt>Tax (10%)</dt>
+                                    <dd>{{ money(tax) }}</dd>
+                                </div>
+                                <div class="summary-line">
+                                    <dt>Discount</dt>
+                                    <dd>−{{ money(discount) }}</dd>
+                                </div>
+                                <div class="summary-line summary-line-total">
+                                    <dt>Total</dt>
+                                    <dd>{{ money(total) }}</dd>
+                                </div>
+                            </dl>
+
+                            <div class="med-field mt-3">
+                                <label class="field-label" for="invoice-discount">Discount amount</label>
+                                <input
+                                    id="invoice-discount"
+                                    v-model.number="discountAmount"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    :max="subtotal"
+                                    class="field"
+                                    @input="updateDiscount"
+                                >
+                            </div>
+                            <div class="med-field">
+                                <label class="field-label" for="invoice-paid">Paid amount</label>
+                                <input id="invoice-paid" v-model.number="form.paid_amount" type="number" step="0.01" class="field">
+                            </div>
+                            <div class="med-field">
+                                <label class="field-label" for="invoice-due">Due amount</label>
+                                <input id="invoice-due" v-model.number="form.due_amount" type="number" step="0.01" readonly class="field field-readonly">
+                            </div>
+                            <div class="med-field">
+                                <label class="field-label" for="invoice-notes">Notes</label>
+                                <textarea id="invoice-notes" v-model="form.details" rows="3" class="field"></textarea>
+                            </div>
+                        </section>
+                    </aside>
+                </div>
+            </form>
+
+            <template #footer="{ close }">
+                <button type="button" class="btn btn-outline-danger" @click="close">Cancel</button>
+                <button
+                    type="submit"
+                    form="invoice-edit-form"
+                    class="btn btn-primary"
+                    :disabled="cartItems.length === 0 || !form.customer_id"
+                >
+                    Update invoice
+                </button>
+            </template>
+        </FormScreen>
     </AuthenticatedLayout>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
+import { Link, router, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import FormScreen from '@/Components/FormScreen.vue'
 
 const props = defineProps({
     invoice: Object,
     customers: Array,
     medicines: Array,
-    ui: Object
+    ui: Object,
 })
 
-// Ensure dates are in YYYY-MM-DD format for <input type="date">
+const page = usePage()
+
+const money = (value) => {
+    const ui = props.ui || page.props.ui || {}
+    const amount = Number(value ?? 0).toFixed(2)
+    return ui.currency_position === 'after'
+        ? `${amount}${ui.currency_symbol || ''}`
+        : `${ui.currency_symbol || ''}${amount}`
+}
+
 const formatDateForInput = (value) => {
     if (!value) return ''
     const dt = new Date(value)
@@ -289,33 +271,25 @@ const form = ref({
     invoice_no: props.invoice.invoice_no,
     date: formatDateForInput(props.invoice.date),
     details: props.invoice.details,
-    items: []
+    items: [],
 })
 
 const subtotal = computed(() => {
     const sum = cartItems.value.reduce((sum, item) => Number(sum) + Number(item.total || 0), 0)
-    return Math.round(sum * 100) / 100 // Round to 2 decimal places
+    return Math.round(sum * 100) / 100
 })
 
 const tax = computed(() => {
-    const taxAmount = subtotal.value * 0.1 // 10% tax
-    return Math.round(taxAmount * 100) / 100 // Round to 2 decimal places
+    const taxAmount = subtotal.value * 0.1
+    return Math.round(taxAmount * 100) / 100
 })
 
-const discount = computed(() => {
-    return Number(discountAmount.value) || 0
-})
+const discount = computed(() => Number(discountAmount.value) || 0)
 
 const total = computed(() => {
     const totalAmount = subtotal.value + tax.value - discount.value
-    return Math.round(totalAmount * 100) / 100 // Round to 2 decimal places
+    return Math.round(totalAmount * 100) / 100
 })
-
-// Safe money formatter for numbers or computeds
-const formatMoney = (val) => {
-    const n = typeof val === 'number' ? val : Number(val?.value ?? val)
-    return Number(n || 0).toFixed(2)
-}
 
 const recomputeDue = () => {
     const paid = Number(form.value.paid_amount) || 0
@@ -328,7 +302,6 @@ watch([() => form.value.paid_amount, () => discountAmount.value, total], () => {
 })
 
 onMounted(() => {
-    // Load existing invoice items into cart
     cartItems.value = props.invoice.items.map(item => {
         const priceNum = Number(item.rate) || 0
         const qtyNum = Number(item.quantity) || 1
@@ -340,17 +313,15 @@ onMounted(() => {
             generic_name: item.medicine?.generic_name || '',
             price: priceNum,
             quantity: qtyNum,
-            total: Number.isFinite(totalNum) ? totalNum : priceNum * qtyNum
+            total: Number.isFinite(totalNum) ? totalNum : priceNum * qtyNum,
         }
     })
 
-    // Load customer details
     selectedCustomer.value = props.customers.find(c => c.id == form.value.customer_id)
     if (selectedCustomer.value) {
         customerSearch.value = selectedCustomer.value.name
     }
 
-    // Load discount amount
     discountAmount.value = Number(props.invoice.invoice_discount) || 0
 })
 
@@ -414,7 +385,7 @@ const addProduct = (product) => {
             generic_name: product.generic_name,
             price: Number(product.price) || 0,
             quantity: 1,
-            total: Number(product.price) || 0
+            total: Number(product.price) || 0,
         })
     }
 
@@ -449,7 +420,7 @@ const submitForm = () => {
         quantity: item.quantity,
         rate: item.price,
         discount: 0,
-        batch_id: 'BATCH001' // Default batch
+        batch_id: 'BATCH001',
     }))
 
     form.value.total_amount = total.value
@@ -457,10 +428,289 @@ const submitForm = () => {
     form.value.total_discount = discount.value
     form.value.invoice_discount = discount.value
 
-    router.put(route('invoices.update', props.invoice.id), form.value, {
-        onSuccess: () => {
-            // Redirect to invoice show page
-        }
-    })
+    router.put(route('invoices.update', props.invoice.id), form.value)
 }
 </script>
+
+<style scoped>
+.med-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.med-doc-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+    gap: 0.85rem;
+    align-items: start;
+}
+
+.med-doc-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+.med-doc-aside {
+    min-width: 0;
+}
+
+.med-panel {
+    background: var(--shell-panel-bg, #f8f9fc);
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    border-radius: var(--pf-radius, 0.65rem);
+    padding: 1rem 1.1rem 1.15rem;
+}
+
+.med-panel-sticky {
+    position: sticky;
+    top: 0.5rem;
+}
+
+.med-panel-head {
+    margin-bottom: 0.65rem;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid var(--shell-panel-border, #e6e8ee);
+}
+
+.med-panel-head h6 {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--shell-panel-text, #343747);
+}
+
+.med-panel-head p {
+    margin: 0.15rem 0 0;
+    font-size: 0.72rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.med-field {
+    margin-bottom: 0.55rem;
+}
+
+.med-field:last-child {
+    margin-bottom: 0;
+}
+
+.med-row {
+    display: grid;
+    gap: 0.55rem;
+    margin-bottom: 0.55rem;
+}
+
+.med-row:last-child {
+    margin-bottom: 0;
+}
+
+.med-row-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field-label {
+    display: block;
+    margin-bottom: 0.2rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--shell-panel-muted, #495057);
+}
+
+.req {
+    color: #f46a6a;
+}
+
+.field {
+    width: 100%;
+    border-radius: var(--pf-radius, 0.35rem);
+    border: 1px solid var(--shell-panel-border, #ced4da);
+    background: var(--shell-panel-surface, #fff);
+    padding: 0.32rem 0.55rem;
+    font-size: 0.82rem;
+    line-height: 1.3;
+    color: var(--shell-panel-text, #343747);
+}
+
+.field:focus {
+    outline: none;
+    border-color: var(--pf-accent, #5156be);
+    box-shadow: 0 0 0 0.12rem rgba(var(--pf-accent-rgb, 81, 86, 190), 0.18);
+}
+
+.field-readonly {
+    background: var(--shell-panel-bg, #f8f9fc);
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.field-inline {
+    width: 4.5rem;
+    min-width: 4.5rem;
+}
+
+.entity-search {
+    position: relative;
+}
+
+.entity-search-dropdown {
+    position: absolute;
+    z-index: 50;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.25rem;
+    max-height: 15rem;
+    overflow-y: auto;
+    background: var(--shell-panel-surface, #fff);
+    border: 1px solid var(--shell-panel-border, #ced4da);
+    border-radius: var(--pf-radius, 0.35rem);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.entity-search-item {
+    display: block;
+    width: 100%;
+    padding: 0.45rem 0.55rem;
+    border: none;
+    border-bottom: 1px solid var(--shell-panel-border, #e6e8ee);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.82rem;
+}
+
+.entity-search-item:last-child {
+    border-bottom: none;
+}
+
+.entity-search-item:hover {
+    background: var(--shell-panel-bg, #f8f9fc);
+}
+
+.entity-search-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--shell-panel-text, #343747);
+}
+
+.entity-search-meta {
+    font-size: 0.72rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.selected-chip {
+    margin-top: 0.45rem;
+    padding: 0.45rem 0.55rem;
+    border-radius: var(--pf-radius, 0.35rem);
+    border: 1px solid var(--shell-panel-accent-border, #b7ebd6);
+    background: var(--shell-panel-accent-bg, #e8f8f1);
+}
+
+.selected-chip-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--shell-panel-accent-text, #1e8f68);
+}
+
+.summary-lines {
+    margin: 0;
+}
+
+.summary-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.45rem;
+}
+
+.summary-line dt {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.summary-line dd {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--shell-panel-text, #343747);
+}
+
+.summary-line-total {
+    margin-top: 0.35rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid var(--shell-panel-border, #e6e8ee);
+}
+
+.summary-line-total dt,
+.summary-line-total dd {
+    font-size: 0.92rem;
+    font-weight: 700;
+}
+
+.invoice-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.invoice-item-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    border-radius: var(--pf-radius, 0.35rem);
+    background: var(--shell-panel-surface, #fff);
+}
+
+.invoice-item-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+
+.qty-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.qty-btn {
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 1px solid var(--shell-panel-border, #ced4da);
+    border-radius: var(--pf-radius, 999px);
+    background: var(--shell-panel-bg, #f8f9fc);
+    font-size: 0.9rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.qty-input {
+    text-align: center;
+}
+
+.invoice-item-total {
+    min-width: 4.5rem;
+    font-weight: 600;
+    font-size: 0.82rem;
+}
+
+@media (max-width: 991.98px) {
+    .med-doc-layout,
+    .med-row-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .med-panel-sticky {
+        position: static;
+    }
+}
+</style>

@@ -2,227 +2,144 @@
     <Head title="Stock Reports" />
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Stock Reports & Analytics
-                </h2>
-                <Link :href="route('stocks.index')"
-                      class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                    Back to Stock
-                </Link>
+            <h4 class="mb-sm-0 font-size-18">Stock reports & analytics</h4>
+            <div class="page-title-right d-flex flex-wrap align-items-center gap-2">
+                <Link :href="route('stocks.index')" class="btn btn-outline-secondary btn-sm">Back to stock</Link>
             </div>
         </template>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <!-- Statistics Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0">
-                                    <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                                        <span class="text-red-600 text-lg">⚠️</span>
-                                    </div>
-                                </div>
-                                <div class="ml-4">
-                                    <p class="text-sm font-medium text-gray-500">Low Stock</p>
-                                    <p class="text-2xl font-semibold text-gray-900">{{ stats.low_stock_count }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0">
-                                    <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                                        <span class="text-orange-600 text-lg">⏰</span>
-                                    </div>
-                                </div>
-                                <div class="ml-4">
-                                    <p class="text-sm font-medium text-gray-500">Expiring Soon</p>
-                                    <p class="text-2xl font-semibold text-gray-900">{{ stats.expiring_soon_count }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0">
-                                    <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                                        <span class="text-gray-600 text-lg">❌</span>
-                                    </div>
-                                </div>
-                                <div class="ml-4">
-                                    <p class="text-sm font-medium text-gray-500">Expired</p>
-                                    <p class="text-2xl font-semibold text-gray-900">{{ stats.expired_count }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0">
-                                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <span class="text-blue-600 text-lg">💊</span>
-                                    </div>
-                                </div>
-                                <div class="ml-4">
-                                    <p class="text-sm font-medium text-gray-500">Total Medicines</p>
-                                    <p class="text-2xl font-semibold text-gray-900">{{ stats.total_medicines }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0">
-                                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                        <span class="text-green-600 text-lg">💰</span>
-                                    </div>
-                                </div>
-                                <div class="ml-4">
-                                    <p class="text-sm font-medium text-gray-500">Stock Value</p>
-                                    <p class="text-2xl font-semibold text-gray-900">{{ $page.props.ui.currency_position === 'before' ? $page.props.ui.currency_symbol : '' }}{{ formatCurrency(stats.total_stock_value) }}{{ $page.props.ui.currency_position === 'after' ? $page.props.ui.currency_symbol : '' }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Stock by Category Chart -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-8">
-                    <div class="p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Stock Distribution by Category</h3>
-                        <div class="space-y-4">
-                            <div v-for="(quantity, category) in stockByCategory" :key="category" class="flex items-center">
-                                <div class="w-32 text-sm font-medium text-gray-700">{{ category }}</div>
-                                <div class="flex-1 mx-4">
-                                    <div class="bg-gray-200 rounded-full h-4">
-                                        <div class="bg-blue-600 h-4 rounded-full"
-                                             :style="{ width: getPercentage(quantity) + '%' }"></div>
-                                    </div>
-                                </div>
-                                <div class="w-16 text-sm text-gray-900 text-right">{{ quantity }} units</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Expiring Medicines -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Medicines Expiring Soon (Next 30 Days)</h3>
-                        <div v-if="expiringMedicines.length === 0" class="text-center py-8 text-gray-500">
-                            No medicines expiring soon
-                        </div>
-                        <div v-else class="overflow-x-auto">
-                            <LunaTable title="Reports">
-<table class="table table-striped table-hover min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Medicine
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Batch
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Quantity
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Expiry Date
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Days Left
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr v-for="stock in expiringMedicines" :key="stock.id">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div>
-                                                <div class="text-sm font-medium text-gray-900">{{ stock.medicine.name }}</div>
-                                                <div class="text-sm text-gray-500">{{ stock.medicine.generic_name }}</div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ stock.batch_number || 'N/A' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ stock.quantity }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ formatDate(stock.expiry_date) }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span :class="getDaysLeftColor(daysUntilExpiry(stock.expiry_date))"
-                                                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                                                {{ daysUntilExpiry(stock.expiry_date) }} days
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <Link :href="route('stocks.edit', stock.id)"
-                                                  class="text-indigo-600 hover:text-indigo-900">
-                                                Update Stock
-                                            </Link>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-</LunaTable>
-                        </div>
+        <div class="row g-3 mb-4">
+            <div v-for="stat in statCards" :key="stat.label" class="col-xl col-md-4 col-sm-6">
+                <div class="card card-h-100 mb-0">
+                    <div class="card-body">
+                        <p class="text-muted mb-1 font-size-13">{{ stat.label }}</p>
+                        <h4 class="mb-0">{{ stat.value }}</h4>
                     </div>
                 </div>
             </div>
         </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-4">Stock distribution by category</h5>
+                <div v-if="categoryRows.length === 0" class="text-muted mb-0">No category data yet.</div>
+                <div v-for="row in categoryRows" :key="row.category" class="d-flex align-items-center gap-3 mb-3">
+                    <div class="text-truncate font-size-13" style="width: 8rem;">{{ row.category }}</div>
+                    <div class="flex-grow-1">
+                        <div class="progress" style="height: 0.65rem;">
+                            <div
+                                class="progress-bar"
+                                role="progressbar"
+                                :style="{ width: row.percent + '%' }"
+                                :aria-valuenow="row.percent"
+                                aria-valuemin="0"
+                                aria-valuemax="100"
+                            />
+                        </div>
+                    </div>
+                    <div class="text-end font-size-13 text-nowrap" style="width: 5rem;">{{ row.quantity }} units</div>
+                </div>
+            </div>
+        </div>
+
+        <LunaTable title="Medicines expiring soon (next 30 days)" empty-text="No medicines expiring soon">
+            <table class="table table-striped table-hover mb-0 w-100">
+                <thead>
+                    <tr>
+                        <th>Medicine</th>
+                        <th>Batch</th>
+                        <th>Quantity</th>
+                        <th>Expiry date</th>
+                        <th>Days left</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="stock in expiringMedicines" :key="stock.id">
+                        <td>
+                            <div class="fw-semibold">{{ stock.medicine.name }}</div>
+                            <div class="text-muted font-size-12">{{ stock.medicine.generic_name }}</div>
+                        </td>
+                        <td>{{ stock.batch_number || '—' }}</td>
+                        <td>{{ stock.quantity }}</td>
+                        <td>{{ formatDate(stock.expiry_date) }}</td>
+                        <td>
+                            <span class="status-chip" :class="daysChipClass(daysUntilExpiry(stock.expiry_date))">
+                                <span class="status-dot" />
+                                {{ daysUntilExpiry(stock.expiry_date) }} days
+                            </span>
+                        </td>
+                        <td>
+                            <div class="dt-actions">
+                                <Link :href="route('stocks.edit', stock.id)" class="btn btn-sm btn-icon btn-soft-secondary" title="Update stock">
+                                    <i class="bi bi-pencil"></i>
+                                </Link>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </LunaTable>
     </AuthenticatedLayout>
 </template>
 
 <script setup>
-import LunaTable from '@/Components/LunaTable.vue'
-
-import { Link, Head } from '@inertiajs/vue3'
+import { computed } from 'vue'
+import { Link, Head, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import LunaTable from '@/Components/LunaTable.vue'
 
 const props = defineProps({
     stats: Object,
     stockByCategory: Object,
-    expiringMedicines: Array
+    expiringMedicines: Array,
 })
+
+const page = usePage()
 
 const formatCurrency = (amount) => {
     return parseFloat(amount || 0).toFixed(2)
 }
 
+const stockValueDisplay = computed(() => {
+    const ui = page.props.ui
+    const amount = formatCurrency(props.stats.total_stock_value)
+    if (ui.currency_position === 'before') {
+        return `${ui.currency_symbol}${amount}`
+    }
+    return `${amount}${ui.currency_symbol}`
+})
+
+const statCards = computed(() => [
+    { label: 'Low stock', value: props.stats.low_stock_count },
+    { label: 'Expiring soon', value: props.stats.expiring_soon_count },
+    { label: 'Expired', value: props.stats.expired_count },
+    { label: 'Total medicines', value: props.stats.total_medicines },
+    { label: 'Stock value', value: stockValueDisplay.value },
+])
+
+const categoryRows = computed(() => {
+    const entries = Object.entries(props.stockByCategory || {})
+    const max = Math.max(...entries.map(([, quantity]) => quantity), 0)
+    return entries.map(([category, quantity]) => ({
+        category,
+        quantity,
+        percent: max > 0 ? (quantity / max) * 100 : 0,
+    }))
+})
+
 const formatDate = (date) => {
     return new Date(date).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
-        day: 'numeric'
+        day: 'numeric',
     })
 }
 
-const getPercentage = (quantity) => {
-    const max = Math.max(...Object.values(props.stockByCategory))
-    return max > 0 ? (quantity / max) * 100 : 0
-}
-
-const getDaysLeftColor = (days) => {
-    if (days <= 7) return 'bg-red-100 text-red-800'
-    if (days <= 15) return 'bg-orange-100 text-orange-800'
-    return 'bg-yellow-100 text-yellow-800'
+const daysChipClass = (days) => {
+    if (days <= 7) return { 'is-warn': true }
+    if (days <= 15) return { 'is-caution': true }
+    return { 'is-pending': true }
 }
 
 const daysUntilExpiry = (expiryDate) => {
@@ -230,7 +147,58 @@ const daysUntilExpiry = (expiryDate) => {
     const today = new Date()
     const expiry = new Date(expiryDate)
     const diffTime = expiry - today
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 }
 </script>
+
+<style scoped>
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    background: var(--shell-panel-bg, #f8f9fc);
+    border-radius: var(--pf-radius, 999px);
+    padding: 0.22rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.status-chip.is-pending {
+    border-color: #ffeaa7;
+    background: #fff8e6;
+    color: #d68910;
+}
+
+.status-chip.is-caution {
+    border-color: #ffd8a8;
+    background: #fff3e0;
+    color: #e67e22;
+}
+
+.status-chip.is-warn {
+    border-color: #f5c6cb;
+    background: #fdecea;
+    color: #c0392b;
+}
+
+.status-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--shell-panel-muted, #adb5bd);
+}
+
+.status-chip.is-pending .status-dot {
+    background: #f1b44c;
+}
+
+.status-chip.is-caution .status-dot {
+    background: #e67e22;
+}
+
+.status-chip.is-warn .status-dot {
+    background: #f46a6a;
+}
+</style>

@@ -1,13 +1,15 @@
 <template>
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                System Settings
-            </h2>
+            <h4 class="mb-sm-0 font-size-18">General</h4>
         </template>
 
-        <div class="py-12">
-            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-2">
+            <div class="settings-shell">
+                <aside class="settings-shell-nav">
+                    <SettingsNav active="general" />
+                </aside>
+                <div class="settings-shell-main">
                 <!-- Simple error display -->
                 <div v-if="Object.keys(props.errors).length > 0" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
                     <h3 class="text-sm font-medium text-red-800 mb-2">Please fix the following errors:</h3>
@@ -677,6 +679,7 @@
                         </div>
                     </div>
                 </form>
+                </div>
             </div>
         </div>
     </AuthenticatedLayout>
@@ -723,6 +726,7 @@
 import { ref, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import SettingsNav from '@/Components/SettingsNav.vue'
 import { useToastNotifications } from '@/Composables/useToast'
 // Simple approach - no complex imports needed
 
@@ -1087,3 +1091,18 @@ const getCustomResponseMessage = (remoteResponse) => {
     return null
 }
 </script>
+
+<style scoped>
+.settings-shell {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+@media (max-width: 991.98px) {
+    .settings-shell {
+        grid-template-columns: 1fr;
+    }
+}
+</style>

@@ -1,265 +1,216 @@
 <template>
-  <AuthenticatedLayout>
     <Head title="Backup Management" />
-
-    <div class="py-12">
-      <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-          <div class="p-6 text-gray-900">
-            <div class="flex justify-between items-center mb-6">
-              <h2 class="text-2xl font-bold text-gray-900">Backup Management</h2>
-              <button
-                @click="createBackup"
-                :disabled="isCreating"
-                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
-              >
-                <span v-if="isCreating">Creating...</span>
-                <span v-else>Create Backup</span>
-              </button>
-            </div>
-
-            <!-- Restore Section -->
-            <div class="mb-8 p-6 bg-gray-50 rounded-lg">
-              <h3 class="text-lg font-semibold mb-4">Restore from Backup</h3>
-              <form @submit.prevent="restoreBackup" class="flex items-center gap-4">
-                <input
-                  type="file"
-                  ref="backupFile"
-                  accept=".zip"
-                  class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                />
+    <AuthenticatedLayout>
+        <template #header>
+            <h4 class="mb-sm-0 font-size-18">Backup management</h4>
+            <div class="page-title-right d-flex flex-wrap align-items-center gap-2">
                 <button
-                  type="submit"
-                  :disabled="isRestoring"
-                  class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    :disabled="isCreating"
+                    @click="createBackup"
                 >
-                  <span v-if="isRestoring">Restoring...</span>
-                  <span v-else>Restore</span>
+                    <span v-if="isCreating">Creating...</span>
+                    <span v-else>Create backup</span>
                 </button>
-              </form>
             </div>
+        </template>
 
-            <!-- Backups List -->
-            <div class="overflow-x-auto">
-              <LunaTable title="Backup">
-<table class="table table-striped table-hover min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Backup Name
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Size
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Created At
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                  <tr v-for="backup in backups" :key="backup.name">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {{ backup.name }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ formatFileSize(backup.size) }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ formatDate(backup.created_at) }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div class="flex space-x-2">
-                        <a
-                          :href="backup.download_url"
-                          class="text-blue-600 hover:text-blue-900"
-                        >
-                          Download
-                        </a>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Restore from backup</h5>
+                <form class="row g-3 align-items-end" @submit.prevent="restoreBackup">
+                    <div class="col-md-8">
+                        <label class="form-label">Backup file (.zip)</label>
+                        <input
+                            ref="backupFile"
+                            type="file"
+                            accept=".zip"
+                            class="form-control"
+                        />
+                    </div>
+                    <div class="col-md-4">
                         <button
-                          @click="deleteBackup(backup.name)"
-                          class="text-red-600 hover:text-red-900"
+                            type="submit"
+                            class="btn btn-success w-100"
+                            :disabled="isRestoring"
                         >
-                          Delete
+                            <span v-if="isRestoring">Restoring...</span>
+                            <span v-else>Restore</span>
                         </button>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr v-if="backups.length === 0">
-                    <td colspan="4" class="px-6 py-4 text-center text-gray-500">
-                      No backups found
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-</LunaTable>
+                    </div>
+                </form>
             </div>
-          </div>
         </div>
-      </div>
-    </div>
-  </AuthenticatedLayout>
+
+        <LunaTable title="Backups" empty-text="No backups found">
+            <table class="table table-striped table-hover mb-0 w-100">
+                <thead>
+                    <tr>
+                        <th>Backup name</th>
+                        <th>Size</th>
+                        <th>Created at</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="backup in backups" :key="backup.name">
+                        <td class="fw-semibold">{{ backup.name }}</td>
+                        <td>{{ formatFileSize(backup.size) }}</td>
+                        <td>{{ formatDate(backup.created_at) }}</td>
+                        <td>
+                            <div class="dt-actions">
+                                <a
+                                    :href="backup.download_url"
+                                    class="btn btn-sm btn-icon btn-soft-primary"
+                                    title="Download"
+                                >
+                                    <i class="bi bi-download"></i>
+                                </a>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-icon btn-soft-danger"
+                                    title="Delete"
+                                    @click="deleteBackup(backup.name)"
+                                >
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </LunaTable>
+    </AuthenticatedLayout>
 </template>
 
 <script setup>
-import LunaTable from '@/Components/LunaTable.vue'
-
-import { ref, onMounted } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { ref } from 'vue'
+import { router, Head } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import { Head } from '@inertiajs/vue3'
-import Swal from 'sweetalert2'
+import LunaTable from '@/Components/LunaTable.vue'
 import { confirmDelete, notify } from '@/Composables/confirmDelete'
 
-const props = defineProps({
-  backups: Array
+defineProps({
+    backups: Array,
 })
 
 const isCreating = ref(false)
 const isRestoring = ref(false)
 const backupFile = ref(null)
 
+const csrfToken = () => document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+
 const createBackup = async () => {
-  isCreating.value = true
+    isCreating.value = true
 
-  try {
-    const response = await fetch('/backup', {
-      method: 'POST',
-      headers: {
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-        'Content-Type': 'application/json',
-      },
-    })
+    try {
+        const response = await fetch('/backup', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken(),
+                'Content-Type': 'application/json',
+            },
+        })
 
-    const result = await response.json()
+        const result = await response.json()
 
-    if (result.success) {
-      await Swal.fire({
-        icon: 'success',
-        title: 'Success!',
-        text: result.message,
-      })
-
-      // Reload the page to show the new backup
-      router.reload()
-    } else {
-      throw new Error(result.message)
+        if (result.success) {
+            await notify({ title: 'Success', text: result.message })
+            router.reload()
+        } else {
+            throw new Error(result.message)
+        }
+    } catch (error) {
+        await notify({ title: 'Error', text: error.message, tone: 'error' })
+    } finally {
+        isCreating.value = false
     }
-  } catch (error) {
-    await Swal.fire({
-      icon: 'error',
-      title: 'Error!',
-      text: error.message,
-    })
-  } finally {
-    isCreating.value = false
-  }
 }
 
 const restoreBackup = async () => {
-  if (!backupFile.value.files[0]) {
-    await Swal.fire({
-      icon: 'warning',
-      title: 'Warning!',
-      text: 'Please select a backup file',
-    })
-    return
-  }
-
-  const confirmed = await Swal.fire({
-    title: 'Are you sure?',
-    text: "This will restore the backup and may overwrite current data. This action cannot be undone!",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#3085d6',
-    confirmButtonText: 'Yes, restore it!'
-  })
-
-  if (!confirmed.isConfirmed) return
-
-  isRestoring.value = true
-
-  try {
-    const formData = new FormData()
-    formData.append('backup_file', backupFile.value.files[0])
-
-    const response = await fetch('/backup/restore', {
-      method: 'POST',
-      headers: {
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-      },
-      body: formData,
-    })
-
-    const result = await response.json()
-
-    if (result.success) {
-      await Swal.fire({
-        icon: 'success',
-        title: 'Success!',
-        text: result.message,
-      })
-
-      // Reload the page
-      router.reload()
-    } else {
-      throw new Error(result.message)
+    if (!backupFile.value?.files?.[0]) {
+        await notify({ title: 'Warning', text: 'Please select a backup file', tone: 'error' })
+        return
     }
-  } catch (error) {
-    await Swal.fire({
-      icon: 'error',
-      title: 'Error!',
-      text: error.message,
+
+    const confirmed = await confirmDelete({
+        title: 'Restore this backup?',
+        text: 'This will restore the backup and may overwrite current data. This action cannot be undone.',
     })
-  } finally {
-    isRestoring.value = false
-    backupFile.value.value = ''
-  }
+
+    if (!confirmed.isConfirmed) return
+
+    isRestoring.value = true
+
+    try {
+        const formData = new FormData()
+        formData.append('backup_file', backupFile.value.files[0])
+
+        const response = await fetch('/backup/restore', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken(),
+            },
+            body: formData,
+        })
+
+        const result = await response.json()
+
+        if (result.success) {
+            await notify({ title: 'Success', text: result.message })
+            router.reload()
+        } else {
+            throw new Error(result.message)
+        }
+    } catch (error) {
+        await notify({ title: 'Error', text: error.message, tone: 'error' })
+    } finally {
+        isRestoring.value = false
+        if (backupFile.value) {
+            backupFile.value.value = ''
+        }
+    }
 }
 
 const deleteBackup = async (backupName) => {
-  const confirmed = await confirmDelete({ title: 'Delete this backup?' })
+    const confirmed = await confirmDelete({ title: 'Delete this backup?' })
 
-  if (!confirmed.isConfirmed) return
+    if (!confirmed.isConfirmed) return
 
-  try {
-    const response = await fetch(`/backup/${backupName}`, {
-      method: 'DELETE',
-      headers: {
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-        'Content-Type': 'application/json',
-      },
-    })
+    try {
+        const response = await fetch(`/backup/${backupName}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken(),
+                'Content-Type': 'application/json',
+            },
+        })
 
-    const result = await response.json()
+        const result = await response.json()
 
-    if (result.success) {
-      await notify({ title: 'Deleted', text: result.message })
-
-      // Reload the page
-      router.reload()
-    } else {
-      throw new Error(result.message)
+        if (result.success) {
+            await notify({ title: 'Deleted', text: result.message })
+            router.reload()
+        } else {
+            throw new Error(result.message)
+        }
+    } catch (error) {
+        await notify({ title: 'Could not delete', text: error.message, tone: 'error' })
     }
-  } catch (error) {
-    await notify({ title: 'Could not delete', text: error.message, tone: 'error' })
-  }
 }
 
 const formatFileSize = (bytes) => {
-  if (bytes === 0) return '0 Bytes'
+    if (bytes === 0) return '0 Bytes'
 
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
 
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
 }
 
 const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleString()
+    return new Date(dateString).toLocaleString()
 }
 </script>

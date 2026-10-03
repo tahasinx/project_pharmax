@@ -48,4 +48,17 @@ class Customer extends Model
     {
         return $this->hasMany(Account::class);
     }
+
+    public static function walkIn(): self
+    {
+        return static::firstOrCreate(
+            ['mobile' => 'WALK-IN'],
+            [
+                'name' => 'Walk-in Customer',
+                'status' => true,
+                'email' => null,
+                'address' => null,
+            ]
+        );
+    }
 }

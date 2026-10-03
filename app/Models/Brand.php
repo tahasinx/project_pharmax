@@ -12,6 +12,11 @@ class Brand extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'is_active' => 'boolean',
+        'meta'      => 'array',
+    ];
+
     public function medicines(): HasMany
     {
         return $this->hasMany(Medicine::class);

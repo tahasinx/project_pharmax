@@ -8,172 +8,123 @@
             </div>
         </template>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <!-- Search -->
-                <div class="listing-filters bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                    <div class="p-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                                <input v-model="search"
-                                       type="text"
-                                       placeholder="Search users..."
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <LunaTable title="Users" :pagination="users" empty-text="No users found">
+            <table class="table table-striped table-hover mb-0 w-100">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Roles</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="user in users.data" :key="user.id">
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="user-avatar">{{ user.name.charAt(0).toUpperCase() }}</span>
+                                <span class="fw-semibold">{{ user.name }}</span>
                             </div>
-                            <div class="flex items-end">
-                                <button @click="clearSearch"
-                                        class="w-full bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                                    Clear Search
+                        </td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                <span v-for="role in user.roles" :key="role.id" class="status-chip is-on">{{ role.name }}</span>
+                                <span v-if="!user.roles?.length">—</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-chip is-on">
+                                <span class="status-dot" />
+                                Active
+                            </span>
+                        </td>
+                        <td>{{ formatDate(user.created_at) }}</td>
+                        <td>
+                            <div class="dt-actions">
+                                <Link :href="route('users.show', user.id)" class="btn btn-sm btn-icon btn-soft-primary" title="View"><i class="bi bi-eye"></i></Link>
+                                <Link :href="route('users.edit', user.id)" class="btn btn-sm btn-icon btn-soft-secondary" title="Edit"><i class="bi bi-pencil"></i></Link>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-icon btn-soft-danger"
+                                    title="Delete"
+                                    :disabled="user.id === $page.props.auth.user.id"
+                                    @click="deleteUser(user.id)"
+                                >
+                                    <i class="bi bi-trash"></i>
                                 </button>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Users Table -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="overflow-x-auto">
-                        <LunaTable title="Users" :pagination="users">
-<table class="table table-striped table-hover min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        User
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Email
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Roles
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Status
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Created
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-for="user in filteredUsers" :key="user.id">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <div class="flex-shrink-0 h-10 w-10">
-                                                <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                                    <span class="text-blue-600 font-bold text-sm">
-                                                        {{ user.name.charAt(0).toUpperCase() }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div class="ml-4">
-                                                <div class="text-sm font-medium text-gray-900">{{ user.name }}</div>
-                                                <div class="text-sm text-gray-500">ID: {{ user.id }}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {{ user.email }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex flex-wrap gap-1">
-                                            <span v-for="role in user.roles" :key="role.id"
-                                                  class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                                                  :class="getRoleColor(role.name)">
-                                                {{ role.name }}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                            Active
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {{ formatDate(user.created_at) }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex space-x-2">
-                                            <Link :href="route('users.show', user.id)"
-                                                  class="text-blue-600 hover:text-blue-900">
-                                                View
-                                            </Link>
-                                            <Link :href="route('users.edit', user.id)"
-                                                  class="text-indigo-600 hover:text-indigo-900">
-                                                Edit
-                                            </Link>
-                                            <button @click="deleteUser(user.id)"
-                                                    :disabled="user.id === $page.props.auth.user.id"
-                                                    class="text-red-600 hover:text-red-900 disabled:text-gray-400 disabled:cursor-not-allowed">
-                                                Delete
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-</LunaTable>
-                    </div>
-                </div>
-            </div>
-        </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </LunaTable>
     </AuthenticatedLayout>
 </template>
 
 <script setup>
+import { Head, Link } from '@inertiajs/vue3'
+import { destroyRecord } from '@/Composables/confirmDelete'
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import LunaTable from '@/Components/LunaTable.vue'
 
-import { ref, computed } from 'vue'
-import { Link, router, Head } from '@inertiajs/vue3'
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import Pagination from '@/Components/Pagination.vue'
-import { destroyRecord } from '@/Composables/confirmDelete'
-
-const props = defineProps({
-    users: Object
+defineProps({
+    users: Object,
 })
-
-const search = ref('')
-
-const filteredUsers = computed(() => {
-    let filtered = props.users.data
-
-    if (search.value) {
-        filtered = filtered.filter(user =>
-            user.name.toLowerCase().includes(search.value.toLowerCase()) ||
-            user.email.toLowerCase().includes(search.value.toLowerCase())
-        )
-    }
-
-    return filtered
-})
-
-const clearSearch = () => {
-    search.value = ''
-}
-
-const getRoleColor = (roleName) => {
-    const colors = {
-        'admin': 'bg-red-100 text-red-800',
-        'manager': 'bg-blue-100 text-blue-800',
-        'cashier': 'bg-green-100 text-green-800',
-        'pharmacist': 'bg-purple-100 text-purple-800'
-    }
-    return colors[roleName] || 'bg-gray-100 text-gray-800'
-}
 
 const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-    })
+    if (!date) return '—'
+    return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
 const deleteUser = (id) => {
     destroyRecord('users.destroy', id, 'Delete this user?', 'The user has been deleted.')
 }
 </script>
+
+<style scoped>
+.user-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: var(--pf-radius, 999px);
+    background: rgba(var(--pf-accent-rgb, 81, 86, 190), 0.12);
+    color: var(--pf-accent, #5156be);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    background: var(--shell-panel-bg, #f8f9fc);
+    border-radius: var(--pf-radius, 999px);
+    padding: 0.22rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.status-chip.is-on {
+    border-color: var(--shell-panel-accent-border, #b7ebd6);
+    background: var(--shell-panel-accent-bg, #e8f8f1);
+    color: var(--shell-panel-accent-text, #1e8f68);
+}
+
+.status-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--shell-panel-muted, #adb5bd);
+}
+
+.status-chip.is-on .status-dot {
+    background: #34c38f;
+}
+</style>

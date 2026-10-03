@@ -153,8 +153,9 @@ jobs:
              find storage/framework/cache -type f -exec chmod 664 {} + 2>/dev/null || true
              rm -f storage/framework/views/*.php 2>/dev/null || true
              php artisan migrate --force --database=mysql_central --path=database/migrations/central || true
+             php artisan tenants:migrate --central --all || true
              php artisan config:clear || true
              php artisan view:clear || true
              php artisan optimize:clear || true
-             echo "Post-deploy cache clear done."
+             echo "Post-deploy cache clear + tenant schema upgrade done."
              cat .deploy_marker'

@@ -1,4 +1,5 @@
 <template>
+    <Head title="Customers" />
     <AuthenticatedLayout>
         <template #header>
             <h4 class="mb-sm-0 font-size-18">Customers</h4>
@@ -7,162 +8,95 @@
             </div>
         </template>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <!-- Search and Filter -->
-                <div class="listing-filters bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                    <div class="p-6">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                                <input v-model="search"
-                                       type="text"
-                                       placeholder="Search by name, mobile, email..."
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <LunaTable title="Customers" :pagination="customers" empty-text="No customers found">
+            <table class="table table-striped table-hover mb-0 w-100">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Contact</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Invoices</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="customer in customers.data" :key="customer.id">
+                        <td>
+                            <div class="fw-semibold">{{ customer.name }}</div>
+                        </td>
+                        <td>
+                            <div>{{ customer.mobile || '—' }}</div>
+                            <div class="text-muted font-size-12">{{ customer.email || '—' }}</div>
+                        </td>
+                        <td>
+                            <div>{{ customer.city || '—' }}</div>
+                            <div class="text-muted font-size-12">{{ customer.state || '—' }}</div>
+                        </td>
+                        <td>
+                            <span class="status-chip" :class="{ 'is-on': customer.status }">
+                                <span class="status-dot" />
+                                {{ customer.status ? 'Active' : 'Inactive' }}
+                            </span>
+                        </td>
+                        <td>{{ customer.invoices_count || 0 }}</td>
+                        <td>
+                            <div class="dt-actions">
+                                <Link :href="route('customers.show', customer.id)" class="btn btn-sm btn-icon btn-soft-primary" title="View"><i class="bi bi-eye"></i></Link>
+                                <Link :href="route('customers.edit', customer.id)" class="btn btn-sm btn-icon btn-soft-secondary" title="Edit"><i class="bi bi-pencil"></i></Link>
+                                <button type="button" class="btn btn-sm btn-icon btn-soft-danger" title="Delete" @click="deleteCustomer(customer.id)"><i class="bi bi-trash"></i></button>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                                <select v-model="statusFilter"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="">All Customers</option>
-                                    <option value="1">Active</option>
-                                    <option value="0">Inactive</option>
-                                </select>
-                            </div>
-                            <div class="flex items-end">
-                                <button @click="clearFilters"
-                                        class="w-full bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                                    Clear Filters
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Customer List -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div v-if="!customers?.data || customers.data.length === 0" class="text-center py-8 text-gray-500">
-                            No customers found
-                        </div>
-                        <div v-else class="overflow-x-auto">
-                            <LunaTable title="Customers" :pagination="customers">
-<table class="table table-striped table-hover min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Customer
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Contact
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Location
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Status
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Total Invoices
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr v-for="customer in filteredCustomers" :key="customer.id">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div>
-                                                <div class="text-sm font-medium text-gray-900">{{ customer.name }}</div>
-                                                <div class="text-sm text-gray-500">ID: {{ customer.id }}</div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div>
-                                                <div class="text-sm text-gray-900">{{ customer.mobile }}</div>
-                                                <div class="text-sm text-gray-500">{{ customer.email || 'No email' }}</div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div>
-                                                <div class="text-sm text-gray-900">{{ customer.city || 'N/A' }}</div>
-                                                <div class="text-sm text-gray-500">{{ customer.state || 'N/A' }}</div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span :class="customer.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                                                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                                                {{ customer.status ? 'Active' : 'Inactive' }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ customer.invoices_count || 0 }}
-                                        </td>
-                                        <td class="whitespace-nowrap">
-                                            <div class="dt-actions">
-                                                <Link :href="route('customers.show', customer.id)" class="btn btn-sm btn-icon btn-soft-primary" title="View"><i class="bi bi-eye"></i></Link>
-                                                <Link :href="route('customers.edit', customer.id)" class="btn btn-sm btn-icon btn-soft-secondary" title="Edit"><i class="bi bi-pencil"></i></Link>
-                                                <button type="button" class="btn btn-sm btn-icon btn-soft-danger" title="Delete" @click="deleteCustomer(customer.id)"><i class="bi bi-trash"></i></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-</LunaTable>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </LunaTable>
     </AuthenticatedLayout>
 </template>
 
 <script setup>
+import { Head, Link } from '@inertiajs/vue3'
+import { destroyRecord } from '@/Composables/confirmDelete'
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import LunaTable from '@/Components/LunaTable.vue'
 
-import { ref, computed } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import Pagination from '@/Components/Pagination.vue'
-import { destroyRecord } from '@/Composables/confirmDelete'
-
-defineOptions({
-    title: 'Customers'
+defineProps({
+    customers: Object,
 })
-
-const props = defineProps({
-    customers: Object
-})
-
-const search = ref('')
-const statusFilter = ref('')
-
-const filteredCustomers = computed(() => {
-    let filtered = props.customers?.data || []
-
-    if (search.value) {
-        const searchLower = search.value.toLowerCase()
-        filtered = filtered.filter(customer =>
-            customer.name.toLowerCase().includes(searchLower) ||
-            customer.mobile.toLowerCase().includes(searchLower) ||
-            (customer.email && customer.email.toLowerCase().includes(searchLower))
-        )
-    }
-
-    if (statusFilter.value !== '') {
-        filtered = filtered.filter(customer => customer.status == statusFilter.value)
-    }
-
-    return filtered
-})
-
-const clearFilters = () => {
-    search.value = ''
-    statusFilter.value = ''
-}
 
 const deleteCustomer = (id) => {
     destroyRecord('customers.destroy', id, 'Delete this customer?', 'The customer has been deleted.')
 }
 </script>
+
+<style scoped>
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid var(--shell-panel-border, #e6e8ee);
+    background: var(--shell-panel-bg, #f8f9fc);
+    border-radius: var(--pf-radius, 999px);
+    padding: 0.22rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--shell-panel-muted, #74788d);
+}
+
+.status-chip.is-on {
+    border-color: var(--shell-panel-accent-border, #b7ebd6);
+    background: var(--shell-panel-accent-bg, #e8f8f1);
+    color: var(--shell-panel-accent-text, #1e8f68);
+}
+
+.status-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--shell-panel-muted, #adb5bd);
+}
+
+.status-chip.is-on .status-dot {
+    background: #34c38f;
+}
+</style>

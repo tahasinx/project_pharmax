@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Audit\AuditRecorder;
+use App\Domain\Compliance\ControlledDispenseRecorder;
 use App\Domain\Finance\JournalPoster;
 use App\Domain\Inventory\FefoAllocator;
 use App\Domain\Organization\BranchContext;
@@ -84,21 +85,24 @@ class PharmacyController extends Controller
         $data          = $request->validate(['branch_id' => 'nullable|exists:branches,branch_id']);
         $user          = $request->user();
         $branchLocalId = ! empty($data['branch_id']) ? Branch::localIdOrFail($data['branch_id']) : null;
-        if ($branchLocalId && ! BranchContext::canUse($branchLocalId, $user)) {
-            abort(403);
-        }
+
         if (! $branchLocalId) {
+            abort_unless(BranchContext::canSwitch($user), 403);
             session()->forget('branch_id');
-        } else {
-            session(['branch_id' => $branchLocalId]);
+
+            return back()->with('success', 'Showing all branches.');
         }
 
-        return back();
+        abort_unless(BranchContext::canUse($branchLocalId, $user), 403);
+        session(['branch_id' => $branchLocalId]);
+        $name = Branch::query()->whereKey($branchLocalId)->value('name') ?: 'branch';
+
+        return back()->with('success', 'Switched to '.$name.'.');
     }
 
     public function generics()
     {
-        return $this->nameCatalog(Generic::class, 'Generic Name', 'generics');
+        return $this->nameCatalog(Generic::class, 'Generics', 'generics', 'Generic');
     }
 
     public function storeGeneric(Request $request)
@@ -118,7 +122,7 @@ class PharmacyController extends Controller
 
     public function medicineTypes()
     {
-        return $this->nameCatalog(MedicineType::class, 'Medicine Type', 'medicine-types');
+        return $this->nameCatalog(MedicineType::class, 'Medicine Types', 'medicine-types', 'Medicine type');
     }
 
     public function storeMedicineType(Request $request)
@@ -148,6 +152,7 @@ class PharmacyController extends Controller
 
         return Inertia::render('Catalog/Index', [
             'title'        => 'Units',
+            'itemLabel'    => 'Unit',
             'rows'         => $rows,
             'storeRoute'   => 'units.store',
             'updateRoute'  => 'units.update',
@@ -189,7 +194,7 @@ class PharmacyController extends Controller
 
     public function brands()
     {
-        return $this->nameCatalog(Brand::class, 'Brands', 'brands');
+        return $this->nameCatalog(Brand::class, 'Brands', 'brands', 'Brand');
     }
 
     public function updateBrand(Request $request, Brand $brand)
@@ -656,27 +661,12 @@ class PharmacyController extends Controller
 
     public function clinicalRules()
     {
-        $this->authorizePermission('manage-medicines');
-
-        return Inertia::render('Prescription/Rules', [
-            'rules'     => ClinicalRule::latest()->limit(50)->get(),
-            'medicines' => Medicine::orderBy('name')->get(),
-            'notice'    => 'These warnings are text you enter. The system does not treat them as clinical advice.',
-        ]);
+        return app(ComplianceController::class)->clinicalRules();
     }
 
     public function storeClinicalRule(Request $request)
     {
-        $this->authorizePermission('manage-medicines');
-        $data = $request->validate([
-            'medicine_id'       => 'nullable|exists:medicines,medicine_id',
-            'other_medicine_id' => 'nullable|exists:medicines,medicine_id',
-            'rule_type'         => 'required|string|max:32',
-            'message'           => 'required|string|max:500',
-        ]);
-        ClinicalRule::create($data + ['is_active' => true]);
-
-        return back()->with('success', 'Rule saved. It appears when that medicine is dispensed.');
+        return app(ComplianceController::class)->storeClinicalRule($request);
     }
 
     public function setPrescriptionStatus(Request $request, Prescription $prescription)
@@ -946,19 +936,16 @@ class PharmacyController extends Controller
                 if ($stock->quantity <= 0) {
                     $stock->update(['is_active' => false]);
                 }
-                if ($medicine->is_controlled || $medicine->is_narcotic) {
-                    ControlledDrugRegister::create([
-                        'branch_id'       => $prescription->branch_id,
-                        'customer_id'     => $prescription->customer_id,
-                        'medicine_id'     => $medicine->id,
-                        'stock_id'        => $stock->id,
-                        'prescription_id' => $prescription->id,
-                        'quantity'        => $line['quantity'],
-                        'user_id'         => $request->user()->id,
-                        'dispensed_at'    => now(),
-                    ]);
-                }
             }
+            app(ControlledDispenseRecorder::class)->record(
+                $medicine,
+                $result['lines'],
+                $prescription->customer_id,
+                $prescription->branch_id,
+                $request->user()->id,
+                'prescription',
+                $prescription,
+            );
             $item->increment('dispensed_quantity', $data['quantity']);
             $prescription->load('items');
             $pending = $prescription->items->contains(fn ($row) => $row->dispensed_quantity < $row->quantity);
@@ -974,13 +961,9 @@ class PharmacyController extends Controller
         return back()->with('success', 'Dispensed using the earliest usable expiry.');
     }
 
-    public function controlledRegister()
+    public function controlledRegister(Request $request)
     {
-        $this->authorizePermission('manage-controlled');
-
-        return Inertia::render('Compliance/Register', [
-            'rows' => ControlledDrugRegister::with('customer', 'medicine', 'user')->latest('dispensed_at')->limit(100)->get(),
-        ]);
+        return app(ComplianceController::class)->controlledRegister($request);
     }
 
     public function finance()
@@ -1005,21 +988,18 @@ class PharmacyController extends Controller
         ]);
     }
 
-    public function audit()
+    public function audit(Request $request)
     {
-        $this->authorizePermission('view-audit');
-
-        return Inertia::render('Audit/Index', [
-            'logs' => AuditLog::with('user')->latest()->limit(100)->get(),
-        ]);
+        return app(ComplianceController::class)->audit($request);
     }
 
-    private function nameCatalog(string $model, string $title, string $routeName)
+    private function nameCatalog(string $model, string $title, string $routeName, ?string $itemLabel = null)
     {
         $this->authorizePermission('manage-medicines');
 
         return Inertia::render('Catalog/Index', [
             'title'        => $title,
+            'itemLabel'    => $itemLabel ?: rtrim($title, 's'),
             'rows'         => $model::withCount('medicines')->orderBy('name')->get(),
             'storeRoute'   => $routeName.'.store',
             'updateRoute'  => $routeName.'.update',
@@ -1031,7 +1011,14 @@ class PharmacyController extends Controller
     {
         $this->authorizePermission('manage-medicines');
         $data = $request->validate(['name' => 'required|string|max:255|unique:'.$table.',name']);
-        $model::create($data);
+        $payload = ['name' => trim($data['name'])];
+        if (\Illuminate\Support\Facades\Schema::hasColumn($table, 'is_active')) {
+            $payload['is_active'] = true;
+        }
+        if (\Illuminate\Support\Facades\Schema::hasColumn($table, 'status')) {
+            $payload['status'] = true;
+        }
+        $model::create($payload);
 
         return back()->with('success', $label.' saved.');
     }
@@ -1058,8 +1045,6 @@ class PharmacyController extends Controller
 
     private function authorizePermission(string $permission): void
     {
-        if (! auth()->check()) {
-            abort(403);
-        }
+        abort_unless(auth()->check() && auth()->user()->can($permission), 403);
     }
 }
