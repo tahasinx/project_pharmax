@@ -25,7 +25,16 @@ class CompanyLoginController extends Controller
             return back()->withErrors(['login' => 'The pharmacy must be active and its database must exist.']);
         }
 
-        $adminId = TenantRuntime::runOn($company->database_name, function () use ($company) {
+        $requestedUserId = (int) $request->input('user_id', 0);
+
+        $adminId = TenantRuntime::runOn($company->database_name, function () use ($company, $requestedUserId) {
+            if ($requestedUserId > 0) {
+                $exists = User::query()->whereKey($requestedUserId)->value('id');
+                if ($exists) {
+                    return (int) $exists;
+                }
+            }
+
             $byEmail = $company->admin_email
                 ? User::query()->where('email', $company->admin_email)->value('id')
                 : null;
@@ -53,13 +62,25 @@ class CompanyLoginController extends Controller
             return redirect()->route('login')->withErrors(['email' => 'This pharmacy login link expired.']);
         }
 
-        $user = User::query()->whereKey((int) ($payload['user_id'] ?? 0))->first();
+        $database = (string) ($payload['database'] ?? '');
+        $userId = (int) ($payload['user_id'] ?? 0);
+        if ($database === '' || $userId < 1 || ! TenantRuntime::databaseExists($database)) {
+            return redirect()->route('login')->withErrors(['email' => 'The pharmacy login payload is invalid.']);
+        }
+
+        // Switch to the tenant DB for this request (tenant host middleware also does this).
+        config(['database.connections.mysql.database' => $database]);
+        \Illuminate\Support\Facades\DB::purge('mysql');
+        \Illuminate\Support\Facades\DB::reconnect('mysql');
+
+        $user = User::query()->whereKey($userId)->first();
         if (! $user) {
             return redirect()->route('login')->withErrors(['email' => 'The pharmacy user was not found.']);
         }
 
         Auth::login($user);
         request()->session()->regenerate();
+        request()->session()->put('auth_database', $database);
 
         return redirect()->route('dashboard');
     }

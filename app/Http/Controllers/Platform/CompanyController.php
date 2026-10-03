@@ -182,6 +182,29 @@ class CompanyController extends Controller
     {
         $rows         = $schema->companies();
         $subscription = $company->subscriptions()->with('plan')->latest('id')->first();
+        $users        = [];
+
+        if ($company->database_name && \App\Services\Platform\TenantRuntime::databaseExists($company->database_name)) {
+            try {
+                $users = \App\Services\Platform\TenantRuntime::runOn($company->database_name, function () {
+                    return \App\Models\User::query()
+                        ->with('roles:id,name')
+                        ->orderBy('name')
+                        ->limit(100)
+                        ->get(['id', 'name', 'email'])
+                        ->map(fn ($user) => [
+                            'id'    => $user->id,
+                            'name'  => $user->name,
+                            'email' => $user->email,
+                            'roles' => $user->roles->pluck('name')->values()->all(),
+                        ])
+                        ->values()
+                        ->all();
+                });
+            } catch (\Throwable) {
+                $users = [];
+            }
+        }
 
         return Inertia::render('Platform/Companies/Show', [
             'company'      => $company,
@@ -193,6 +216,7 @@ class CompanyController extends Controller
             ] : null,
             'schema' => collect($rows)->firstWhere('company_id', $company->id),
             'files'  => $company->database_name ? $backups->listFor($company) : [],
+            'users'  => $users,
         ]);
     }
 

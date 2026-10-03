@@ -1,47 +1,98 @@
 <script setup>
-import LunaTable from '@/Components/LunaTable.vue'
-
+import { computed, ref } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
+import FormScreen from '@/Components/FormScreen.vue';
+import OpsNav from '@/Components/Platform/OpsNav.vue';
 import Layout from './Layout.vue';
 
-defineProps({ catalog: Array, output: String, ran: String, exitCode: Number });
+const props = defineProps({ catalog: Array, output: String, ran: String, exitCode: Number });
 const form = useForm({ password: '', command_line: '' });
+const showCatalog = ref(false);
+const catalogQuery = ref('');
+
+const filteredCatalog = computed(() => {
+    const q = catalogQuery.value.trim().toLowerCase();
+    if (!q) return props.catalog || [];
+    return (props.catalog || []).filter((command) => (
+        command.name.toLowerCase().includes(q) || String(command.description || '').toLowerCase().includes(q)
+    ));
+});
+
+const pick = (name) => {
+    form.command_line = name;
+    showCatalog.value = false;
+};
 </script>
 
 <template>
     <Head title="Commands" />
     <Layout>
-        <section class="overflow-hidden rounded-xl border border-[#e4e4e7] bg-white">
-            <div class="border-b border-[#f4f4f5] px-5 py-4">
-                <h1>Commands</h1>
-                <p class="mt-1 text-sm text-[#71717a]">Runs one Artisan command on this host. Shell operators are rejected.</p>
+        <OpsNav />
+        <div class="pf-page-head">
+            <div>
+                <h1>Artisan commands</h1>
+                <p class="pf-page-sub">Runs one Artisan command on this host. Shell operators are rejected.</p>
             </div>
-            <form class="flex flex-wrap items-end gap-3 border-b border-[#f4f4f5] px-5 py-4" @submit.prevent="form.post('/platform/commands')">
-                <label class="min-w-64 flex-1 text-sm"><span class="mb-1 block text-[#71717a]">Command</span>
-                    <input v-model="form.command_line" class="w-full font-mono" placeholder="migrate --force" required>
-                </label>
-                <label class="text-sm"><span class="mb-1 block text-[#71717a]">Password</span>
-                    <input v-model="form.password" type="password" placeholder="Your password" required>
-                </label>
-                <button class="rounded-md bg-[#17342b] px-3 py-2 text-sm font-medium text-white">Run</button>
-            </form>
-            <pre v-if="output" class="overflow-auto border-b border-[#f4f4f5] bg-[#18181b] p-4 text-xs text-[#e4e4e7]">{{ ran }} ({{ exitCode }}){{ '\n' }}{{ output }}</pre>
-            <LunaTable title="Commands">
-<table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>Command</th>
-                        <th>Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="command in catalog" :key="command.name">
-                        <td><button class="font-mono text-[13px] text-[#17342b]" @click="form.command_line = command.name">{{ command.name }}</button></td>
-                        <td class="text-[#71717a]">{{ command.description }}</td>
-                    </tr>
-                </tbody>
-            </table>
-</LunaTable>
+            <button type="button" class="btn btn-outline-secondary btn-sm" @click="showCatalog = true">
+                <i class="bi bi-journal-code me-1" />
+                Browse catalog
+            </button>
+        </div>
+
+        <section class="pf-card mb-3">
+            <div class="pf-card-body">
+                <form class="row g-2 align-items-end" @submit.prevent="form.post('/platform/commands')">
+                    <div class="col-lg-7">
+                        <label class="pf-field mb-0">
+                            <span>Command</span>
+                            <input v-model="form.command_line" class="font-monospace" placeholder="tenants:migrate --all" required autocomplete="off">
+                        </label>
+                    </div>
+                    <div class="col-lg-3">
+                        <label class="pf-field mb-0">
+                            <span>Platform password</span>
+                            <input v-model="form.password" type="password" required autocomplete="current-password">
+                        </label>
+                    </div>
+                    <div class="col-lg-2">
+                        <button class="btn btn-primary w-100" :disabled="form.processing">Run</button>
+                    </div>
+                </form>
+            </div>
+            <pre v-if="output" class="pf-console border-top">{{ ran }} (exit {{ exitCode }})
+{{ output }}</pre>
         </section>
+
+        <FormScreen v-if="showCatalog" title="Command catalog" size="fullscreen" @close="showCatalog = false">
+            <div class="mb-3">
+                <label class="pf-field mb-0">
+                    <span>Search commands</span>
+                    <input v-model="catalogQuery" type="search" placeholder="migrate, cache, queue…">
+                </label>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Command</th>
+                            <th>Description</th>
+                            <th />
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="command in filteredCatalog" :key="command.name">
+                            <td class="font-monospace small">{{ command.name }}</td>
+                            <td class="small text-muted">{{ command.description }}</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-primary" @click="pick(command.name)">Use</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <template #footer="{ close }">
+                <button type="button" class="btn btn-outline-danger" @click="close">Close</button>
+            </template>
+        </FormScreen>
     </Layout>
 </template>

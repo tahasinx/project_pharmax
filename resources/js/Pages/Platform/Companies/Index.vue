@@ -1,8 +1,10 @@
 <script setup>
-import LunaTable from '@/Components/LunaTable.vue'
-
+import { computed, reactive, ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { reactive } from 'vue';
+import LunaTable from '@/Components/LunaTable.vue';
+import FilterDrawer from '@/Components/FilterDrawer.vue';
+import FilterSummary from '@/Components/FilterSummary.vue';
+import StatusBadge from '@/Components/Platform/StatusBadge.vue';
 import Layout from '../Layout.vue';
 
 const props = defineProps({
@@ -11,80 +13,139 @@ const props = defineProps({
     provision: String,
     baseDomain: String,
 });
+
+const showFilters = ref(false);
 const filters = reactive({ q: props.q || '', provision: props.provision || '' });
 
-function apply() {
-    router.get('/platform/companies', filters, { preserveState: true, replace: true });
-}
+const chips = computed(() => {
+    const list = [];
+    if (filters.q) list.push({ key: 'q', label: 'Search', value: filters.q });
+    if (filters.provision) list.push({ key: 'provision', label: 'Provision', value: filters.provision });
+    return list;
+});
+
+const apply = () => {
+    showFilters.value = false;
+    router.get('/platform/companies', { ...filters }, { preserveState: true, replace: true });
+};
+const clear = () => {
+    filters.q = '';
+    filters.provision = '';
+    apply();
+};
+const removeChip = (key) => {
+    filters[key] = '';
+    apply();
+};
 </script>
 
 <template>
     <Head title="Pharmacies" />
     <Layout>
-        <section class="overflow-hidden rounded-xl border border-[#e4e4e7] bg-white">
-            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-[#f4f4f5] px-5 py-4">
-                <div>
-                    <h1>Pharmacies</h1>
-                    <p class="mt-1 text-sm text-[#71717a]">{{ companies.total }} on this platform</p>
-                </div>
-                <Link href="/platform/companies/create" class="rounded-md bg-[#17342b] px-3 py-2 text-sm font-medium text-white">New pharmacy</Link>
+        <div class="pf-page-head">
+            <div class="min-w-0">
+                <h1>Pharmacies</h1>
+                <p class="pf-page-sub">{{ companies.total }} tenants on this platform</p>
+                <FilterSummary
+                    class="mt-2"
+                    :chips="chips"
+                    :show-button="false"
+                    @clear="clear"
+                    @remove="removeChip"
+                />
             </div>
-            <form class="flex flex-wrap items-end gap-3 border-b border-[#f4f4f5] px-5 py-4" @submit.prevent="apply">
-                <label class="text-sm">
-                    <span class="mb-1 block text-[#71717a]">Search</span>
-                    <input v-model="filters.q" class="w-64" placeholder="Name, slug, database, email">
-                </label>
-                <label class="text-sm">
-                    <span class="mb-1 block text-[#71717a]">Provision</span>
-                    <select v-model="filters.provision" class="min-w-36">
-                        <option value="">All</option>
-                        <option value="pending">Pending</option>
-                        <option value="running">Running</option>
-                        <option value="active">Active</option>
-                        <option value="degraded">Degraded</option>
-                        <option value="failed">Failed</option>
-                    </select>
-                </label>
-                <button class="rounded-md border border-[#e4e4e7] px-3 py-2 text-sm">Filter</button>
-                <button v-if="q || provision" type="button" class="text-sm text-[#71717a]" @click="filters.q = ''; filters.provision = ''; apply()">Clear</button>
-            </form>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" @click="showFilters = true">
+                    <i class="bi bi-funnel me-1" />
+                    Filters
+                    <span v-if="chips.length" class="badge bg-primary ms-1">{{ chips.length }}</span>
+                </button>
+                <Link href="/platform/companies/create" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-lg me-1" />
+                    New pharmacy
+                </Link>
+            </div>
+        </div>
+
+        <FilterDrawer
+            :show="showFilters"
+            title="Pharmacy filters"
+            @close="showFilters = false"
+            @apply="apply"
+            @clear="clear"
+        >
+            <div class="filter-field">
+                <label class="field-label">Search</label>
+                <input v-model="filters.q" type="search" class="field" placeholder="Name, slug, database, email…">
+            </div>
+            <div class="filter-field">
+                <label class="field-label">Provision</label>
+                <select v-model="filters.provision" class="field">
+                    <option value="">All</option>
+                    <option value="pending">Pending</option>
+                    <option value="running">Running</option>
+                    <option value="active">Active</option>
+                    <option value="degraded">Degraded</option>
+                    <option value="failed">Failed</option>
+                </select>
+            </div>
+        </FilterDrawer>
+
+        <section class="pf-card">
             <LunaTable title="Companies">
-<table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Host</th>
-                        <th>Database</th>
-                        <th>Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-if="!companies.data.length">
-                        <td colspan="5" class="py-10 text-center text-sm text-[#71717a]">No pharmacies match.</td>
-                    </tr>
-                    <tr v-for="company in companies.data" :key="company.id">
-                        <td>
-                            <Link :href="`/platform/companies/${company.id}`" class="font-medium text-[#17342b]">{{ company.name }}</Link>
-                            <p class="text-[12px] text-[#71717a]">{{ company.email || company.admin_email || 'No contact email' }}</p>
-                        </td>
-                        <td>{{ company.slug }}.{{ baseDomain }}</td>
-                        <td class="font-mono text-[13px]">{{ company.database_name }}</td>
-                        <td>{{ company.status }} · {{ company.provision_status }}</td>
-                        <td class="space-x-3 text-right text-sm">
-                            <Link :href="`/platform/companies/${company.id}`" class="font-medium text-[#17342b]">Profile</Link>
-                            <Link :href="`/platform/companies/${company.id}/provision`" class="text-[#71717a]">Provision</Link>
-                            <Link :href="`/platform/companies/${company.id}/edit`" class="text-[#71717a]">Edit</Link>
-                            <Link :href="`/platform/subscriptions?company=${company.id}`" class="text-[#71717a]">Subscribe</Link>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-</LunaTable>
-            <div v-if="companies.last_page > 1" class="flex justify-end gap-2 border-t border-[#f4f4f5] px-5 py-3 text-sm">
-                <Link v-if="companies.prev_page_url" :href="companies.prev_page_url">Previous</Link>
-                <span class="text-[#71717a]">{{ companies.current_page }} / {{ companies.last_page }}</span>
-                <Link v-if="companies.next_page_url" :href="companies.next_page_url">Next</Link>
+                <table class="table table-striped table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Host</th>
+                            <th>Database</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-if="!companies.data.length">
+                            <td colspan="5" class="py-5 text-center text-muted">No pharmacies match.</td>
+                        </tr>
+                        <tr v-for="company in companies.data" :key="company.id">
+                            <td>
+                                <Link :href="`/platform/companies/${company.id}`" class="fw-semibold text-decoration-none">
+                                    {{ company.name }}
+                                </Link>
+                                <div class="small text-muted">{{ company.email || company.admin_email || 'No contact email' }}</div>
+                            </td>
+                            <td class="font-monospace small">{{ company.slug }}.{{ baseDomain }}</td>
+                            <td class="font-monospace small">{{ company.database_name }}</td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <StatusBadge :status="company.status" />
+                                    <StatusBadge :status="company.provision_status" kind="provision" />
+                                </div>
+                            </td>
+                            <td>
+                                <div class="dt-actions justify-content-end">
+                                    <Link :href="`/platform/companies/${company.id}`" class="btn btn-sm btn-icon btn-soft-primary" title="Control">
+                                        <i class="bi bi-sliders" />
+                                    </Link>
+                                    <Link :href="`/platform/companies/${company.id}/provision`" class="btn btn-sm btn-icon btn-soft-secondary" title="Provision">
+                                        <i class="bi bi-cpu" />
+                                    </Link>
+                                    <Link :href="`/platform/companies/${company.id}/edit`" class="btn btn-sm btn-icon btn-soft-secondary" title="Edit">
+                                        <i class="bi bi-pencil" />
+                                    </Link>
+                                    <Link :href="`/platform/subscriptions?company=${company.id}`" class="btn btn-sm btn-icon btn-soft-success" title="Subscribe">
+                                        <i class="bi bi-credit-card" />
+                                    </Link>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </LunaTable>
+            <div v-if="companies.last_page > 1" class="d-flex justify-content-end align-items-center gap-3 px-3 py-3 border-top">
+                <Link v-if="companies.prev_page_url" :href="companies.prev_page_url" class="btn btn-sm btn-outline-secondary">Previous</Link>
+                <span class="small text-muted">{{ companies.current_page }} / {{ companies.last_page }}</span>
+                <Link v-if="companies.next_page_url" :href="companies.next_page_url" class="btn btn-sm btn-outline-secondary">Next</Link>
             </div>
         </section>
     </Layout>

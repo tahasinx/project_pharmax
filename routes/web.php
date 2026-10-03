@@ -69,6 +69,7 @@ Route::middleware(['auth', 'central.host', 'platform.admin'])->prefix('platform'
     Route::get('/backups/{company}/{filename}', [PlatformOperationsController::class, 'downloadBackup'])->name('backups.download')->where('filename', '[A-Za-z0-9_-]+\.sql\.gz');
     Route::delete('/backups/{company}/{filename}', [PlatformOperationsController::class, 'destroyBackup'])->name('backups.destroy')->where('filename', '[A-Za-z0-9_-]+\.sql\.gz');
     Route::get('/deploy', [PlatformOperationsController::class, 'deploy'])->name('deploy');
+    Route::get('/deploy/status', [PlatformOperationsController::class, 'deployStatus'])->name('deploy.status');
     Route::post('/deploy', [PlatformOperationsController::class, 'promote'])->name('deploy.promote');
     Route::get('/companies', [PlatformCompanyController::class, 'index'])->name('companies.index');
     Route::get('/companies/create', [PlatformCompanyController::class, 'create'])->name('companies.create');

@@ -1,7 +1,7 @@
 <script setup>
-import LunaTable from '@/Components/LunaTable.vue'
-
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
+import LunaTable from '@/Components/LunaTable.vue';
+import OpsNav from '@/Components/Platform/OpsNav.vue';
 import Layout from './Layout.vue';
 
 defineProps({ rows: Array });
@@ -10,44 +10,48 @@ defineProps({ rows: Array });
 <template>
     <Head title="Backups" />
     <Layout>
-        <section class="overflow-hidden rounded-xl border border-[#e4e4e7] bg-white">
-            <div class="border-b border-[#f4f4f5] px-5 py-4">
-                <h1>Backups</h1>
-                <p class="mt-1 text-sm text-[#71717a]">Database dumps for each pharmacy. Create one only after a pharmacy exists.</p>
+        <OpsNav />
+        <div class="pf-page-head">
+            <div>
+                <h1>Database backups</h1>
+                <p class="pf-page-sub">Create and download dumps for each pharmacy tenant database.</p>
             </div>
+        </div>
+
+        <section class="pf-card">
             <LunaTable title="Backups">
-<table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>Pharmacy</th>
-                        <th>Latest files</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-if="!rows.length">
-                        <td colspan="3" class="py-10 text-center text-sm text-[#71717a]">No pharmacies yet, so there is nothing to back up.</td>
-                    </tr>
-                    <tr v-for="row in rows" :key="row.id">
-                        <td class="font-medium">{{ row.name }}</td>
-                        <td>
-                            <p v-if="!row.files.length" class="text-[#71717a]">No backups</p>
-                            <ul v-else class="space-y-1">
-                                <li v-for="file in row.files" :key="file.name" class="flex flex-wrap items-center gap-3">
-                                    <span class="font-mono text-[13px]">{{ file.name }}</span>
-                                    <span class="text-[#71717a]">{{ file.created_at }}</span>
-                                    <Link :href="`/platform/backups/${row.id}/${file.name}`" class="text-sm font-medium text-[#17342b]">Download</Link>
-                                    <button class="text-sm text-[#b91c1c]" @click="$inertia.delete(`/platform/backups/${row.id}/${file.name}`)">Delete</button>
-                                </li>
-                            </ul>
-                        </td>
-                        <td class="text-right">
-                            <button class="rounded-md bg-[#17342b] px-3 py-1.5 text-sm font-medium text-white" @click="$inertia.post(`/platform/backups/${row.id}`)">Create</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-</LunaTable>
+                <table class="table table-striped table-hover mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>Pharmacy</th>
+                            <th>Latest files</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-if="!rows.length">
+                            <td colspan="3" class="py-5 text-center text-muted">No pharmacies yet, so there is nothing to back up.</td>
+                        </tr>
+                        <tr v-for="row in rows" :key="row.id">
+                            <td class="fw-semibold">{{ row.name }}</td>
+                            <td>
+                                <p v-if="!row.files.length" class="text-muted mb-0 small">No backups</p>
+                                <ul v-else class="list-unstyled mb-0 small">
+                                    <li v-for="file in row.files" :key="file.name" class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                        <span class="font-monospace">{{ file.name }}</span>
+                                        <span class="text-muted">{{ file.created_at }}</span>
+                                        <Link :href="`/platform/backups/${row.id}/${file.name}`" class="btn btn-link btn-sm px-0">Download</Link>
+                                        <button class="btn btn-link btn-sm px-0 text-danger" @click="router.delete(`/platform/backups/${row.id}/${file.name}`)">Delete</button>
+                                    </li>
+                                </ul>
+                            </td>
+                            <td class="text-end">
+                                <button class="btn btn-primary btn-sm" @click="router.post(`/platform/backups/${row.id}`)">Create</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </LunaTable>
         </section>
     </Layout>
 </template>

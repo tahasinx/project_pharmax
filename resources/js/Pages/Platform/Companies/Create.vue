@@ -1,6 +1,7 @@
 <script setup>
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import FormScreen from '@/Components/FormScreen.vue';
 import Layout from '../Layout.vue';
 
 const props = defineProps({
@@ -48,85 +49,69 @@ async function validateDatabase() {
 <template>
     <Head title="New pharmacy" />
     <Layout>
-        <form class="mx-auto max-w-3xl space-y-4" @submit.prevent="form.post('/platform/companies')">
-            <section class="rounded-xl border border-[#e4e4e7] bg-white">
-                <header class="border-b border-[#f4f4f5] px-5 py-4">
-                    <h1>New pharmacy</h1>
-                    <p class="mt-1 text-sm text-[#71717a]">
-                        Host <span class="font-medium text-[#18181b]">{{ form.slug || 'name' }}.{{ baseDomain }}</span>.
-                        This creates the tenant database, pharmacy admin, menus, and
-                        {{ hostEnabled ? 'the server hostname and certificate.' : 'asks the server for a hostname when the host script is installed.' }}
-                    </p>
-                </header>
-                <div class="grid gap-3 p-5 sm:grid-cols-2">
-                    <label class="block text-sm">
-                        <span class="mb-1 block text-[#3f3f46]">Pharmacy name</span>
-                        <input v-model="form.name" class="w-full" required>
-                    </label>
-                    <label class="block text-sm">
-                        <span class="mb-1 block text-[#3f3f46]">Slug</span>
-                        <input v-model="form.slug" class="w-full" required placeholder="city-care" pattern="[a-z0-9]+(-[a-z0-9]+)*">
-                        <span class="mt-1 block text-xs text-[#71717a]">Lowercase. This becomes the subdomain.</span>
-                    </label>
-                    <label class="block text-sm">
-                        <span class="mb-1 block text-[#3f3f46]">Contact email</span>
-                        <input v-model="form.email" type="email" class="w-full" required autocomplete="off">
-                    </label>
-                    <label class="block text-sm">
-                        <span class="mb-1 block text-[#3f3f46]">Phone</span>
-                        <input v-model="form.phone" class="w-full">
-                    </label>
-                    <label class="block text-sm sm:col-span-2">
-                        <span class="mb-1 block text-[#3f3f46]">Address</span>
-                        <textarea v-model="form.address" class="w-full" rows="2" />
-                    </label>
-                    <p v-if="form.errors.slug" class="text-sm text-red-700 sm:col-span-2">{{ form.errors.slug }}</p>
-                </div>
-            </section>
-
-            <section class="rounded-xl border border-[#e4e4e7] bg-white">
-                <header class="border-b border-[#f4f4f5] px-5 py-4">
-                    <h1>Tenant database</h1>
-                    <p class="mt-1 text-sm text-[#71717a]">Leave blank to use {{ prefix }}{{ (form.slug || 'name').replaceAll('-', '_') }}.</p>
-                </header>
-                <div class="grid items-end gap-3 p-5 sm:grid-cols-2">
-                    <label class="block text-sm">
-                        <span class="mb-1 block text-[#3f3f46]">Database name</span>
-                        <input v-model="form.database_name" class="w-full" :placeholder="prefix + (form.slug || 'name').replaceAll('-', '_')">
-                    </label>
-                    <div>
-                        <button type="button" class="rounded-lg border border-[#e4e4e7] px-3 py-2 text-sm" @click="validateDatabase">Check availability</button>
-                        <p v-if="check" class="mt-2 text-sm" :class="checkOk ? 'text-[#2f6f4e]' : 'text-red-700'">{{ check }}</p>
-                        <p v-if="form.errors.database_name" class="mt-2 text-sm text-red-700">{{ form.errors.database_name }}</p>
+        <FormScreen title="New pharmacy" :close-href="route('platform.companies.index')">
+            <form id="platform-company-create" class="d-grid gap-3" @submit.prevent="form.post('/platform/companies')">
+                <section class="pf-card">
+                    <div class="pf-card-head"><h2>Pharmacy identity</h2></div>
+                    <div class="pf-card-body">
+                        <p class="small text-muted mb-3">
+                            Host <strong>{{ form.slug || 'name' }}.{{ baseDomain }}</strong>.
+                            Creates the tenant database, pharmacy admin, menus, and
+                            {{ hostEnabled ? 'the server hostname and certificate.' : 'asks the server for a hostname when the host script is installed.' }}
+                        </p>
+                        <div class="row g-3">
+                            <div class="col-md-6"><label class="pf-field mb-0"><span>Pharmacy name</span><input v-model="form.name" required></label></div>
+                            <div class="col-md-6">
+                                <label class="pf-field mb-0">
+                                    <span>Slug</span>
+                                    <input v-model="form.slug" required placeholder="city-care" pattern="[a-z0-9]+(-[a-z0-9]+)*">
+                                </label>
+                            </div>
+                            <div class="col-md-6"><label class="pf-field mb-0"><span>Contact email</span><input v-model="form.email" type="email" required autocomplete="off"></label></div>
+                            <div class="col-md-6"><label class="pf-field mb-0"><span>Phone</span><input v-model="form.phone"></label></div>
+                            <div class="col-12"><label class="pf-field mb-0"><span>Address</span><textarea v-model="form.address" rows="2" /></label></div>
+                        </div>
+                        <p v-if="form.errors.slug" class="text-danger small mt-2 mb-0">{{ form.errors.slug }}</p>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <section class="rounded-xl border border-[#e4e4e7] bg-white">
-                <header class="border-b border-[#f4f4f5] px-5 py-4">
-                    <h1>Pharmacy admin</h1>
-                    <p class="mt-1 text-sm text-[#71717a]">This login is created inside the new pharmacy database. It is not the platform admin.</p>
-                </header>
-                <div class="grid gap-3 p-5 sm:grid-cols-3">
-                    <label class="block text-sm">
-                        <span class="mb-1 block text-[#3f3f46]">Admin name</span>
-                        <input v-model="form.admin_name" class="w-full" required autocomplete="off">
-                    </label>
-                    <label class="block text-sm">
-                        <span class="mb-1 block text-[#3f3f46]">Admin email</span>
-                        <input v-model="form.admin_email" type="email" class="w-full" required autocomplete="off">
-                    </label>
-                    <label class="block text-sm">
-                        <span class="mb-1 block text-[#3f3f46]">Admin password</span>
-                        <input v-model="form.admin_password" type="password" class="w-full" required minlength="8" autocomplete="new-password">
-                    </label>
-                </div>
-            </section>
+                <section class="pf-card">
+                    <div class="pf-card-head"><h2>Tenant database</h2></div>
+                    <div class="pf-card-body">
+                        <p class="small text-muted mb-3">Leave blank to use {{ prefix }}{{ (form.slug || 'name').replaceAll('-', '_') }}.</p>
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-7">
+                                <label class="pf-field mb-0">
+                                    <span>Database name</span>
+                                    <input v-model="form.database_name" :placeholder="prefix + (form.slug || 'name').replaceAll('-', '_')">
+                                </label>
+                            </div>
+                            <div class="col-md-5">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" @click="validateDatabase">Check availability</button>
+                                <p v-if="check" class="small mt-2 mb-0" :class="checkOk ? 'text-success' : 'text-danger'">{{ check }}</p>
+                                <p v-if="form.errors.database_name" class="small text-danger mt-2 mb-0">{{ form.errors.database_name }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
-            <div class="flex justify-end gap-2">
-                <Link href="/platform/companies" class="rounded-lg border border-[#e4e4e7] bg-white px-4 py-2 text-sm">Cancel</Link>
-                <button class="pf-accent rounded-lg px-4 py-2 text-sm" :disabled="form.processing">Start provisioning</button>
-            </div>
-        </form>
+                <section class="pf-card">
+                    <div class="pf-card-head"><h2>Pharmacy admin</h2></div>
+                    <div class="pf-card-body">
+                        <p class="small text-muted mb-3">Created inside the new pharmacy database — not the platform admin.</p>
+                        <div class="row g-3">
+                            <div class="col-md-4"><label class="pf-field mb-0"><span>Admin name</span><input v-model="form.admin_name" required autocomplete="off"></label></div>
+                            <div class="col-md-4"><label class="pf-field mb-0"><span>Admin email</span><input v-model="form.admin_email" type="email" required autocomplete="off"></label></div>
+                            <div class="col-md-4"><label class="pf-field mb-0"><span>Admin password</span><input v-model="form.admin_password" type="password" required minlength="8" autocomplete="new-password"></label></div>
+                        </div>
+                    </div>
+                </section>
+            </form>
+
+            <template #footer="{ close }">
+                <button type="button" class="btn btn-outline-danger" @click="close">Cancel</button>
+                <button form="platform-company-create" class="btn btn-primary" :disabled="form.processing">Start provisioning</button>
+            </template>
+        </FormScreen>
     </Layout>
 </template>

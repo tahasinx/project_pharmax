@@ -7,7 +7,7 @@ const visible = ref(false);
 const title = ref('Loading…');
 let hideTimer = null;
 
-const formPathPattern = /\/(medicines|manufacturers|customers|users|categories)\/(create|(?:[^/]+\/(?:edit|codes|show)))$/;
+const formPathPattern = /\/(?:medicines|manufacturers|customers|users|categories|platform\/companies)\/(create|(?:[^/]+\/(?:edit|codes|show)))$/;
 
 const titleForPath = (path) => {
     if (path.includes('/codes')) return 'Codes';

@@ -257,21 +257,18 @@ class OperationsController extends Controller
     public function deploy(GitHubDeployService $github): Response
     {
         abort_unless(StagingDeployHost::matches(), 404);
-        $status = $github->settings();
-        try {
-            if ($github->isConfigured()) {
-                $status = array_merge($status, $github->status());
-            } else {
-                $status['message'] = 'Set GITHUB_TOKEN on this staging host, then reload.';
-            }
-        } catch (RuntimeException $e) {
-            $status['message'] = $e->getMessage();
-        }
 
         return Inertia::render('Platform/Deploy', [
-            'status'   => $status,
+            'status'   => $this->deploySnapshot($github),
             'settings' => $github->settings(),
         ]);
+    }
+
+    public function deployStatus(GitHubDeployService $github): \Illuminate\Http\JsonResponse
+    {
+        abort_unless(StagingDeployHost::matches(), 404);
+
+        return response()->json($this->deploySnapshot($github));
     }
 
     public function promote(Request $request, GitHubDeployService $github): RedirectResponse
@@ -294,6 +291,25 @@ class OperationsController extends Controller
         }
 
         return back()->with('success', $result['detail']);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function deploySnapshot(GitHubDeployService $github): array
+    {
+        $status = $github->settings();
+        try {
+            if ($github->isConfigured()) {
+                $status = array_merge($status, $github->status());
+            } else {
+                $status['message'] = 'Set GITHUB_TOKEN on this staging host, then reload.';
+            }
+        } catch (RuntimeException $e) {
+            $status['message'] = $e->getMessage();
+        }
+
+        return $status;
     }
 
     /**
